@@ -94,16 +94,16 @@ func (uc *UserController) GetProfile(c echo.Context) error {
 		})
 	}
 
-	user, err := uc.userUC.GetByID(userID)
+	user, statusCode, err := uc.userUC.GetByID(userID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, helper.BaseResponse{
-			Status:  http.StatusInternalServerError,
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
 			Message: err.Error(),
 		})
 	}
 
-	return c.JSON(http.StatusOK, helper.BaseResponse{
-		Status:  http.StatusOK,
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
 		Message: "berhasil mendapatkan data user",
 		Data:    response.FromDomain(user),
 	})
@@ -137,16 +137,16 @@ func (uc *UserController) UpdateProfile(c echo.Context) error {
 	userDomain := userInput.ToDomain()
 	userDomain.ID = userID
 
-	user, err := uc.userUC.UpdateProfile(userDomain)
+	user, statusCode, err := uc.userUC.UpdateProfile(userDomain)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, helper.BaseResponse{
-			Status:  http.StatusInternalServerError,
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
 			Message: err.Error(),
 		})
 	}
 
-	return c.JSON(http.StatusOK, helper.BaseResponse{
-		Status:  http.StatusOK,
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
 		Message: "berhasil update data user",
 		Data:    response.FromDomain(user),
 	})

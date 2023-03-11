@@ -28,17 +28,12 @@ func (ur *userRepository) Create(domain *users.Domain) (users.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	res, err := ur.collection.InsertOne(ctx, FromDomain(domain))
+	_, err := ur.collection.InsertOne(ctx, FromDomain(domain))
 	if err != nil {
 		return users.Domain{}, err
 	}
 
-	result, err := ur.GetByID(res.InsertedID.(primitive.ObjectID))
-	if err != nil {
-		return users.Domain{}, err
-	}
-
-	return result, err
+	return *domain, err
 }
 
 /*
@@ -89,12 +84,7 @@ func (ur *userRepository) Update(domain *users.Domain) (users.Domain, error) {
 		return users.Domain{}, err
 	}
 
-	result, err := ur.GetByID(domain.ID)
-	if err != nil {
-		return users.Domain{}, err
-	}
-
-	return result, nil
+	return *domain, nil
 }
 
 /*

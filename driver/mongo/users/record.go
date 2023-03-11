@@ -7,15 +7,15 @@ import (
 )
 
 type Model struct {
-	ID          primitive.ObjectID `json:"_id" bson:"_id"`
-	Name        string             `json:"name" bson:"name"`
-	Email       string             `json:"email" bson:"email"`
-	Description string             `json:"description" bson:"description"`
-	PhoneNumber string             `json:"phoneNumber" bson:"phoneNumber"`
-	Password    string             `json:"password" bson:"password"`
-	Role        string             `json:"role" bson:"role"`
-	CreatedAt   primitive.DateTime `json:"createdAt" bson:"createdAt"`
-	UpdatedAt   primitive.DateTime `json:"updatedAt" bson:"updatedAt"`
+	ID          primitive.ObjectID `bson:"_id"`
+	Name        string             `bson:"name"`
+	Email       string             `bson:"email"`
+	Description string             `bson:"description"`
+	PhoneNumber string             `bson:"phoneNumber"`
+	Password    string             `bson:"password"`
+	Role        string             `bson:"role"`
+	CreatedAt   primitive.DateTime `bson:"createdAt"`
+	UpdatedAt   primitive.DateTime `bson:"updatedAt"`
 }
 
 func FromDomain(domain *users.Domain) *Model {
