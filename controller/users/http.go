@@ -4,6 +4,7 @@ import (
 	"marketplace-backend/business/users"
 	"marketplace-backend/controller/users/request"
 	"marketplace-backend/helper"
+	"marketplace-backend/util"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -47,9 +48,7 @@ func (uc *UserController) Register(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "registrasi sukses",
-		Data: map[string]interface{}{
-			"token": token,
-		},
+		Data:    token,
 	})
 }
 
@@ -81,9 +80,31 @@ func (uc *UserController) Login(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "login sukses",
-		Data: map[string]interface{}{
-			"token": token,
-		},
+		Data:    token,
+	})
+}
+
+func (uc *UserController) GetProfile(c echo.Context) error {
+	userID, err := util.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	user, err := uc.userUC.GetByID(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, helper.BaseResponse{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "berhasil mendapatkan data user",
+		Data:    user,
 	})
 }
 

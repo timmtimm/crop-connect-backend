@@ -28,10 +28,5 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	user := apiV1.Group("/user")
 	user.POST("/register", cl.UserController.Register)
 	user.POST("/login", cl.UserController.Login)
-	user.GET("/profile", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"message": "Hello test!",
-		})
-	}, _middleware.Authenticated())
-
+	user.GET("/profile", cl.UserController.GetProfile, _middleware.Authenticated())
 }

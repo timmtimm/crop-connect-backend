@@ -15,7 +15,7 @@ func Authenticated() echo.MiddlewareFunc {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
 					Status:  http.StatusBadRequest,
-					Message: "invalid token",
+					Message: "token tidak valid",
 					Data:    nil,
 				})
 			}
@@ -32,7 +32,7 @@ func Check(roles []string) echo.MiddlewareFunc {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
 					Status:  http.StatusBadRequest,
-					Message: "invalid token",
+					Message: "token tidak valid",
 					Data:    nil,
 				})
 			}
