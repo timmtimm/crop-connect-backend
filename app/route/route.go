@@ -29,4 +29,5 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	user.POST("/register", cl.UserController.Register)
 	user.POST("/login", cl.UserController.Login)
 	user.GET("/profile", cl.UserController.GetProfile, _middleware.Authenticated())
+	user.PUT("/profile", cl.UserController.UpdateProfile, _middleware.Authenticated())
 }

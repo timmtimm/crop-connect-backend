@@ -79,6 +79,33 @@ func (uu *UserUseCase) GetByID(id primitive.ObjectID) (Domain, error) {
 Update
 */
 
+func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, error) {
+	user, err := uu.userRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, errors.New("user tidak ditemukan")
+	}
+
+	if domain.Email != user.Email {
+		_, err := uu.userRepository.GetByEmail(domain.Email)
+		if err == nil {
+			return Domain{}, errors.New("email telah terdaftar")
+		}
+	}
+
+	user.Name = domain.Name
+	user.Description = domain.Description
+	user.Email = domain.Email
+	user.PhoneNumber = domain.PhoneNumber
+	user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	user, err = uu.userRepository.Update(&user)
+	if err != nil {
+		return Domain{}, errors.New("gagal mengupdate user")
+	}
+
+	return user, nil
+}
+
 /*
 Delete
 */
