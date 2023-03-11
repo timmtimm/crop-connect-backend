@@ -26,6 +26,11 @@ Create
 */
 
 func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
+	isRoleAvailable := util.CheckStringOnArray([]string{"buyer", "farmer"}, domain.Role)
+	if !isRoleAvailable {
+		return "", http.StatusBadRequest, errors.New("role tidak valid")
+	}
+
 	_, err := uu.userRepository.GetByEmail(domain.Email)
 	if err == nil {
 		return "", http.StatusConflict, errors.New("email telah terdaftar")
@@ -34,7 +39,6 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
 	domain.ID = primitive.NewObjectID()
 	domain.Password = string(encryptedPassword)
-	domain.Role = "buyer"
 	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
@@ -78,6 +82,33 @@ func (uu *UserUseCase) GetByID(id primitive.ObjectID) (Domain, error) {
 /*
 Update
 */
+
+func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, error) {
+	user, err := uu.userRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, errors.New("user tidak ditemukan")
+	}
+
+	if domain.Email != user.Email {
+		_, err := uu.userRepository.GetByEmail(domain.Email)
+		if err == nil {
+			return Domain{}, errors.New("email telah terdaftar")
+		}
+	}
+
+	user.Name = domain.Name
+	user.Description = domain.Description
+	user.Email = domain.Email
+	user.PhoneNumber = domain.PhoneNumber
+	user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	user, err = uu.userRepository.Update(&user)
+	if err != nil {
+		return Domain{}, errors.New("gagal mengupdate user")
+	}
+
+	return user, nil
+}
 
 /*
 Delete

@@ -23,6 +23,7 @@ type Repository interface {
 	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByEmail(email string) (Domain, error)
 	// Update
+	Update(domain *Domain) (Domain, error)
 	// Delete
 }
 
@@ -33,5 +34,6 @@ type UseCase interface {
 	Login(domain *Domain) (string, int, error)
 	GetByID(id primitive.ObjectID) (Domain, error)
 	// Update
+	UpdateProfile(domain *Domain) (Domain, error)
 	// Delete
 }

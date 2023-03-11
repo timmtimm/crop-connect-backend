@@ -76,6 +76,27 @@ func (ur *userRepository) GetByEmail(email string) (users.Domain, error) {
 Update
 */
 
+func (ur *userRepository) Update(domain *users.Domain) (users.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := ur.collection.UpdateOne(ctx, bson.M{
+		"_id": domain.ID,
+	}, bson.M{
+		"$set": FromDomain(domain),
+	})
+	if err != nil {
+		return users.Domain{}, err
+	}
+
+	result, err := ur.GetByID(domain.ID)
+	if err != nil {
+		return users.Domain{}, err
+	}
+
+	return result, nil
+}
+
 /*
 Delete
 */
