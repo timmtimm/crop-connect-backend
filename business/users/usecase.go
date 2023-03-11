@@ -26,6 +26,11 @@ Create
 */
 
 func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
+	isRoleAvailable := util.CheckStringOnArray([]string{"buyer", "farmer"}, domain.Role)
+	if !isRoleAvailable {
+		return "", http.StatusBadRequest, errors.New("role tidak valid")
+	}
+
 	_, err := uu.userRepository.GetByEmail(domain.Email)
 	if err == nil {
 		return "", http.StatusConflict, errors.New("email telah terdaftar")
@@ -34,7 +39,6 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
 	domain.ID = primitive.NewObjectID()
 	domain.Password = string(encryptedPassword)
-	domain.Role = "buyer"
 	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 

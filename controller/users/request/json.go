@@ -16,6 +16,7 @@ type Register struct {
 	Email       string `json:"email" validate:"required,email"`
 	PhoneNumber string `json:"phoneNumber" validate:"required,min=10,max=13,number"`
 	Password    string `json:"password" validate:"required,min=8,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=!@#$%^&*,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+	Role        string `json:"role" validate:"required"`
 }
 
 func (req *Register) ToDomain() *users.Domain {
@@ -25,6 +26,7 @@ func (req *Register) ToDomain() *users.Domain {
 		Email:       req.Email,
 		PhoneNumber: req.PhoneNumber,
 		Password:    req.Password,
+		Role:        req.Role,
 	}
 }
 
