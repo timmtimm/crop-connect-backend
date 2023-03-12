@@ -2,7 +2,7 @@ package users
 
 import (
 	"errors"
-	"marketplace-backend/util"
+	"marketplace-backend/helper"
 	"net/http"
 	"time"
 
@@ -26,9 +26,9 @@ Create
 */
 
 func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
-	isRoleAvailable := util.CheckStringOnArray([]string{"buyer", "farmer"}, domain.Role)
+	isRoleAvailable := helper.CheckStringOnArray([]string{"buyer", "farmer"}, domain.Role)
 	if !isRoleAvailable {
-		return "", http.StatusBadRequest, errors.New("role tidak valid")
+		return "", http.StatusBadRequest, errors.New("role tersedia hanya buyer dan farmer")
 	}
 
 	_, err := uu.userRepository.GetByEmail(domain.Email)
@@ -40,14 +40,14 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 	domain.ID = primitive.NewObjectID()
 	domain.Password = string(encryptedPassword)
 	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Time{})
 
 	user, err := uu.userRepository.Create(domain)
 	if err != nil {
 		return "", http.StatusInternalServerError, err
 	}
 
-	token := util.GenerateToken(user.ID.Hex(), user.Role)
+	token := helper.GenerateToken(user.ID.Hex(), user.Role)
 	return token, http.StatusCreated, nil
 }
 
@@ -66,7 +66,7 @@ func (uu *UserUseCase) Login(domain *Domain) (string, int, error) {
 		return "", http.StatusUnauthorized, errors.New("password salah")
 	}
 
-	token := util.GenerateToken(user.ID.Hex(), user.Role)
+	token := helper.GenerateToken(user.ID.Hex(), user.Role)
 	return token, http.StatusOK, nil
 }
 

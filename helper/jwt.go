@@ -1,7 +1,8 @@
-package util
+package helper
 
 import (
 	"errors"
+	"marketplace-backend/util"
 	"strings"
 	"time"
 
@@ -16,7 +17,7 @@ type JWTCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-var JWTSecretKey = GetConfig("JWT_SECRET_KEY")
+var JWTSecretKey = util.GetConfig("JWT_SECRET_KEY")
 
 func GenerateToken(uid string, role string) string {
 	claims := JWTCustomClaims{

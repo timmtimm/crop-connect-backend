@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"marketplace-backend/helper"
-	"marketplace-backend/util"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -11,7 +10,7 @@ import (
 func Authenticated() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			_, err := util.GetPayloadFromToken(c)
+			_, err := helper.GetPayloadFromToken(c)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
 					Status:  http.StatusBadRequest,
@@ -25,10 +24,35 @@ func Authenticated() echo.MiddlewareFunc {
 	}
 }
 
-func Check(roles []string) echo.MiddlewareFunc {
+func CheckOneRole(role string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			token, err := util.GetPayloadFromToken(c)
+			token, err := helper.GetPayloadFromToken(c)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
+					Status:  http.StatusBadRequest,
+					Message: "token tidak valid",
+					Data:    nil,
+				})
+			}
+
+			if token.Role == role {
+				return next(c)
+			}
+
+			return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+				Status:  http.StatusUnauthorized,
+				Message: "unauthorized",
+				Data:    nil,
+			})
+		}
+	}
+}
+
+func CheckManyRole(roles []string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			token, err := helper.GetPayloadFromToken(c)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
 					Status:  http.StatusBadRequest,
