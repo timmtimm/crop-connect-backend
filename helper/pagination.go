@@ -3,6 +3,8 @@ package helper
 import (
 	"errors"
 	"strconv"
+
+	"github.com/labstack/echo/v4"
 )
 
 type PaginationParam struct {
@@ -19,7 +21,14 @@ type QueryPagination struct {
 	Order int
 }
 
-func PaginationToQuery(pagination PaginationParam, availableSort []string) (QueryPagination, error) {
+func PaginationToQuery(c echo.Context, availableSort []string) (QueryPagination, error) {
+	pagination := PaginationParam{
+		Page:  c.Param("page"),
+		Limit: c.QueryParam("limit"),
+		Sort:  c.QueryParam("sort"),
+		Order: c.QueryParam("order"),
+	}
+
 	if pagination.Limit == "" {
 		pagination.Limit = "10"
 	}

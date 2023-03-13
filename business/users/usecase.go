@@ -40,7 +40,6 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 	domain.ID = primitive.NewObjectID()
 	domain.Password = string(encryptedPassword)
 	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Time{})
 
 	user, err := uu.userRepository.Create(domain)
 	if err != nil {

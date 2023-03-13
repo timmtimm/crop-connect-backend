@@ -17,8 +17,8 @@ type Model struct {
 	PricePerKg     int                `bson:"pricePerKg"`
 	IsAvailable    bool               `bson:"isAvailable"`
 	CreatedAt      primitive.DateTime `bson:"createdAt"`
-	UpdatedAt      primitive.DateTime `bson:"updatedAt"`
-	DeletedAt      primitive.DateTime `bson:"deletedAt"`
+	UpdatedAt      primitive.DateTime `bson:"updatedAt,omitempty"`
+	DeletedAt      primitive.DateTime `bson:"deletedAt,omitempty"`
 }
 
 func FromDomain(domain *commodities.Domain) *Model {

@@ -26,27 +26,31 @@ type Query struct {
 	Order    int
 	Name     string
 	FarmerID []primitive.ObjectID
+	MinPrice int
+	MaxPrice int
 }
 
 type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
+	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	GetByName(name string) (Domain, error)
 	GetByNameAndFarmerID(name string, farmerID primitive.ObjectID) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
+	Update(domain *Domain) (Domain, error)
 	// Delete
+	Delete(id primitive.ObjectID) error
 }
 
 type UseCase interface {
 	// Create
 	Create(domain *Domain) (int, error)
 	// Read
-	// GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
-	// Update(domain *Domain) (Domain, int, error)
+	Update(domain *Domain) (int, error)
 	// Delete
-	// Delete(id primitive.ObjectID) (int, error)
+	Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error)
 }

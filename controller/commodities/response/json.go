@@ -19,8 +19,8 @@ type Commodity struct {
 	PricePerKg     int                `json:"pricePerKg"`
 	IsAvailable    bool               `json:"isAvailable"`
 	CreatedAt      primitive.DateTime `json:"createdAt"`
-	UpdatedAt      primitive.DateTime `json:"updatedAt"`
-	DeletedAt      primitive.DateTime `json:"deletedAt"`
+	UpdatedAt      primitive.DateTime `json:"updatedAt,omitempty"`
+	DeletedAt      primitive.DateTime `json:"deletedAt,omitempty"`
 }
 
 func FromDomain(domain commodities.Domain, userUC users.UseCase) (Commodity, int, error) {

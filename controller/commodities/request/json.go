@@ -10,7 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type Create struct {
+type Commodity struct {
 	Name           string `form:"name" json:"name" validate:"required,min=3,max=100"`
 	Description    string `form:"description" json:"description"`
 	Seed           string `form:"seed" json:"seed" validate:"required,min=3,max=100"`
@@ -18,7 +18,7 @@ type Create struct {
 	PricePerKg     int    `form:"pricePerKg" json:"pricePerKg" validate:"required,number"`
 }
 
-func (req *Create) ToDomain() *commodities.Domain {
+func (req *Commodity) ToDomain() *commodities.Domain {
 	return &commodities.Domain{
 		Name:           req.Name,
 		Description:    req.Description,
@@ -28,7 +28,7 @@ func (req *Create) ToDomain() *commodities.Domain {
 	}
 }
 
-func (req *Create) Validate() []helper.ValidationError {
+func (req *Commodity) Validate() []helper.ValidationError {
 	var ve validator.ValidationErrors
 
 	if err := validator.New().Struct(req); err != nil {
