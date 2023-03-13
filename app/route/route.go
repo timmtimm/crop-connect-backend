@@ -3,6 +3,7 @@ package route
 import (
 	_middleware "marketplace-backend/app/middleware"
 	"marketplace-backend/controller/commodities"
+	"marketplace-backend/controller/proposals"
 	"marketplace-backend/controller/users"
 	"net/http"
 
@@ -13,6 +14,7 @@ type ControllerList struct {
 	LoggerMiddleware    echo.MiddlewareFunc
 	UserController      *users.Controller
 	CommodityController *commodities.Controller
+	ProposalController  *proposals.Controller
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
@@ -39,4 +41,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	commodity.GET("/:commodity-id", cl.CommodityController.GetByID)
 	commodity.PUT("/:commodity-id", cl.CommodityController.Update, _middleware.CheckOneRole("farmer"))
 	commodity.DELETE("/:commodity-id", cl.CommodityController.Delete, _middleware.CheckOneRole("farmer"))
+
+	proposal := apiV1.Group("/proposal")
+	proposal.POST("/:commodity-id", cl.ProposalController.Create, _middleware.CheckOneRole("farmer"))
 }
