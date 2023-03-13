@@ -54,6 +54,15 @@ func (cu *CommoditiesUseCase) GetByPaginationAndQuery(query Query) ([]Domain, in
 	return commodities, totalData, http.StatusOK, nil
 }
 
+func (cu *CommoditiesUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
+	commodity, err := cu.commoditiesRepository.GetByID(id)
+	if err != nil {
+		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	}
+
+	return commodity, http.StatusOK, nil
+}
+
 /*
 Update
 */

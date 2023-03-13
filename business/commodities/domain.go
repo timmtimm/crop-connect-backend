@@ -34,6 +34,7 @@ type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
+	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	GetByName(name string) (Domain, error)
 	GetByNameAndFarmerID(name string, farmerID primitive.ObjectID) (Domain, error)
@@ -49,6 +50,7 @@ type UseCase interface {
 	Create(domain *Domain) (int, error)
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	GetByID(id primitive.ObjectID) (Domain, int, error)
 	// Update
 	Update(domain *Domain) (int, error)
 	// Delete

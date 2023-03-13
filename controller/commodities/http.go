@@ -71,7 +71,7 @@ Read
 */
 
 func (cc *Controller) GetForBuyer(c echo.Context) error {
-	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "plantingPeriod", "pricePerKg", "createdAt"})
+	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "plantingPeriod", "pricePerKg", "isAvailable", "createdAt"})
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -116,6 +116,38 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		Message:    "berhasil mendapatkan komoditas",
 		Data:       commodityResponse,
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
+func (cc *Controller) GetByID(c echo.Context) error {
+	commodityID, err := primitive.ObjectIDFromHex(c.Param("commodity-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id komoditas tidak valid",
+		})
+	}
+
+	commodity, statusCode, err := cc.commodityUC.GetByID(commodityID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	commodityResponse, statusCode, err := response.FromDomain(commodity, cc.userUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan komoditas",
+		Data:    commodityResponse,
 	})
 }
 

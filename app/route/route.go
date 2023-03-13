@@ -34,9 +34,9 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	user.PUT("/profile", cl.UserController.UpdateProfile, _middleware.Authenticated())
 
 	commodity := apiV1.Group("/commodity")
-	commodity.GET("/:page", cl.CommodityController.GetForBuyer)
+	commodity.GET("/page/:page", cl.CommodityController.GetForBuyer)
 	commodity.POST("", cl.CommodityController.Create, _middleware.CheckOneRole("farmer"))
-	// commodity.GET("/:commodity-id", cl.CommodityController.GetByID)
+	commodity.GET("/:commodity-id", cl.CommodityController.GetByID)
 	commodity.PUT("/:commodity-id", cl.CommodityController.Update, _middleware.CheckOneRole("farmer"))
 	commodity.DELETE("/:commodity-id", cl.CommodityController.Delete, _middleware.CheckOneRole("farmer"))
 }
