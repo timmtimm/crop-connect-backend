@@ -32,8 +32,8 @@ type UseCase interface {
 	Register(domain *Domain) (string, int, error)
 	// Read
 	Login(domain *Domain) (string, int, error)
-	GetByID(id primitive.ObjectID) (Domain, error)
+	GetByID(id primitive.ObjectID) (Domain, int, error)
 	// Update
-	UpdateProfile(domain *Domain) (Domain, error)
+	UpdateProfile(domain *Domain) (Domain, int, error)
 	// Delete
 }

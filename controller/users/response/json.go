@@ -14,7 +14,7 @@ type User struct {
 	PhoneNumber string             `json:"phoneNumber"`
 	Role        string             `json:"role"`
 	CreatedAt   primitive.DateTime `json:"createdAt"`
-	UpdatedAt   primitive.DateTime `json:"updatedAt"`
+	UpdatedAt   primitive.DateTime `json:"updatedAt,omitempty"`
 }
 
 func FromDomain(domain users.Domain) User {

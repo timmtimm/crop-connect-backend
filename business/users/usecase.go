@@ -2,7 +2,7 @@ package users
 
 import (
 	"errors"
-	"marketplace-backend/util"
+	"marketplace-backend/helper"
 	"net/http"
 	"time"
 
@@ -26,9 +26,9 @@ Create
 */
 
 func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
-	isRoleAvailable := util.CheckStringOnArray([]string{"buyer", "farmer"}, domain.Role)
+	isRoleAvailable := helper.CheckStringOnArray([]string{"buyer", "farmer"}, domain.Role)
 	if !isRoleAvailable {
-		return "", http.StatusBadRequest, errors.New("role tidak valid")
+		return "", http.StatusBadRequest, errors.New("role tersedia hanya buyer dan farmer")
 	}
 
 	_, err := uu.userRepository.GetByEmail(domain.Email)
@@ -40,14 +40,13 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 	domain.ID = primitive.NewObjectID()
 	domain.Password = string(encryptedPassword)
 	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	user, err := uu.userRepository.Create(domain)
 	if err != nil {
 		return "", http.StatusInternalServerError, err
 	}
 
-	token := util.GenerateToken(user.ID.Hex(), user.Role)
+	token := helper.GenerateToken(user.ID.Hex(), user.Role)
 	return token, http.StatusCreated, nil
 }
 
@@ -66,33 +65,33 @@ func (uu *UserUseCase) Login(domain *Domain) (string, int, error) {
 		return "", http.StatusUnauthorized, errors.New("password salah")
 	}
 
-	token := util.GenerateToken(user.ID.Hex(), user.Role)
+	token := helper.GenerateToken(user.ID.Hex(), user.Role)
 	return token, http.StatusOK, nil
 }
 
-func (uu *UserUseCase) GetByID(id primitive.ObjectID) (Domain, error) {
+func (uu *UserUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
 	user, err := uu.userRepository.GetByID(id)
 	if err != nil {
-		return Domain{}, errors.New("gagal mendapatkan user")
+		return Domain{}, http.StatusNotFound, errors.New("gagal mendapatkan user")
 	}
 
-	return user, nil
+	return user, http.StatusOK, nil
 }
 
 /*
 Update
 */
 
-func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, error) {
+func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, int, error) {
 	user, err := uu.userRepository.GetByID(domain.ID)
 	if err == mongo.ErrNoDocuments {
-		return Domain{}, errors.New("user tidak ditemukan")
+		return Domain{}, http.StatusNotFound, errors.New("user tidak ditemukan")
 	}
 
 	if domain.Email != user.Email {
 		_, err := uu.userRepository.GetByEmail(domain.Email)
 		if err == nil {
-			return Domain{}, errors.New("email telah terdaftar")
+			return Domain{}, http.StatusConflict, errors.New("email telah terdaftar")
 		}
 	}
 
@@ -104,10 +103,10 @@ func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, error) {
 
 	user, err = uu.userRepository.Update(&user)
 	if err != nil {
-		return Domain{}, errors.New("gagal mengupdate user")
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate user")
 	}
 
-	return user, nil
+	return user, http.StatusOK, nil
 }
 
 /*

@@ -11,12 +11,12 @@ import (
 )
 
 type Register struct {
-	Name        string `json:"name" validate:"required"`
-	Description string `json:"description,omitempty"`
-	Email       string `json:"email" validate:"required,email"`
-	PhoneNumber string `json:"phoneNumber" validate:"required,min=10,max=13,number"`
-	Password    string `json:"password" validate:"required,min=8,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=!@#$%^&*,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
-	Role        string `json:"role" validate:"required"`
+	Name        string `form:"name" json:"name" validate:"required"`
+	Description string `form:"description" json:"description"`
+	Email       string `form:"email" json:"email" validate:"required,email"`
+	PhoneNumber string `form:"phoneNumber" json:"phoneNumber" validate:"required,min=10,max=13,number"`
+	Password    string `form:"password" json:"password" validate:"required,min=8,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=!@#$%^&*,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+	Role        string `form:"role" json:"role" validate:"required"`
 }
 
 func (req *Register) ToDomain() *users.Domain {
@@ -61,8 +61,8 @@ func (req *Register) Validate() []helper.ValidationError {
 }
 
 type Login struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=!@#$%^&*,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+	Email    string `form:"email" json:"email" validate:"required,email"`
+	Password string `form:"password" json:"password" validate:"required,min=8,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=!@#$%^&*,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
 }
 
 func (req *Login) ToDomain() *users.Domain {
@@ -103,10 +103,10 @@ func (req *Login) Validate() []helper.ValidationError {
 }
 
 type Update struct {
-	Name        string `json:"name" validate:"required"`
-	Description string `json:"description,omitempty"`
-	Email       string `json:"email" validate:"required,email"`
-	PhoneNumber string `json:"phoneNumber" validate:"required,min=10,max=13,number"`
+	Name        string `form:"name" json:"name" validate:"required"`
+	Description string `form:"description" json:"description"`
+	Email       string `form:"email" json:"email" validate:"required,email"`
+	PhoneNumber string `form:"phoneNumber" json:"phoneNumber" validate:"required,min=10,max=13,number"`
 }
 
 func (req *Update) ToDomain() *users.Domain {

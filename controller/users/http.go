@@ -5,18 +5,17 @@ import (
 	"marketplace-backend/controller/users/request"
 	"marketplace-backend/controller/users/response"
 	"marketplace-backend/helper"
-	"marketplace-backend/util"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-type UserController struct {
+type Controller struct {
 	userUC users.UseCase
 }
 
-func NewUserController(userUC users.UseCase) *UserController {
-	return &UserController{
+func NewUserController(userUC users.UseCase) *Controller {
+	return &Controller{
 		userUC: userUC,
 	}
 }
@@ -25,7 +24,7 @@ func NewUserController(userUC users.UseCase) *UserController {
 Create
 */
 
-func (uc *UserController) Register(c echo.Context) error {
+func (uc *Controller) Register(c echo.Context) error {
 	userInput := request.Register{}
 	c.Bind(&userInput)
 
@@ -57,7 +56,7 @@ func (uc *UserController) Register(c echo.Context) error {
 Read
 */
 
-func (uc *UserController) Login(c echo.Context) error {
+func (uc *Controller) Login(c echo.Context) error {
 	userInput := request.Login{}
 	c.Bind(&userInput)
 
@@ -85,8 +84,8 @@ func (uc *UserController) Login(c echo.Context) error {
 	})
 }
 
-func (uc *UserController) GetProfile(c echo.Context) error {
-	userID, err := util.GetUIDFromToken(c)
+func (uc *Controller) GetProfile(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
 			Status:  http.StatusUnauthorized,
@@ -94,16 +93,16 @@ func (uc *UserController) GetProfile(c echo.Context) error {
 		})
 	}
 
-	user, err := uc.userUC.GetByID(userID)
+	user, statusCode, err := uc.userUC.GetByID(userID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, helper.BaseResponse{
-			Status:  http.StatusInternalServerError,
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
 			Message: err.Error(),
 		})
 	}
 
-	return c.JSON(http.StatusOK, helper.BaseResponse{
-		Status:  http.StatusOK,
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
 		Message: "berhasil mendapatkan data user",
 		Data:    response.FromDomain(user),
 	})
@@ -113,8 +112,8 @@ func (uc *UserController) GetProfile(c echo.Context) error {
 Update
 */
 
-func (uc *UserController) UpdateProfile(c echo.Context) error {
-	userID, err := util.GetUIDFromToken(c)
+func (uc *Controller) UpdateProfile(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
 			Status:  http.StatusUnauthorized,
@@ -137,16 +136,16 @@ func (uc *UserController) UpdateProfile(c echo.Context) error {
 	userDomain := userInput.ToDomain()
 	userDomain.ID = userID
 
-	user, err := uc.userUC.UpdateProfile(userDomain)
+	user, statusCode, err := uc.userUC.UpdateProfile(userDomain)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, helper.BaseResponse{
-			Status:  http.StatusInternalServerError,
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
 			Message: err.Error(),
 		})
 	}
 
-	return c.JSON(http.StatusOK, helper.BaseResponse{
-		Status:  http.StatusOK,
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
 		Message: "berhasil update data user",
 		Data:    response.FromDomain(user),
 	})
