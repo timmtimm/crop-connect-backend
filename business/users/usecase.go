@@ -58,6 +58,8 @@ func (uu *UserUseCase) Login(domain *Domain) (string, int, error) {
 	user, err := uu.userRepository.GetByEmail(domain.Email)
 	if err == mongo.ErrNoDocuments {
 		return "", http.StatusNotFound, errors.New("email tidak terdaftar")
+	} else if err != nil {
+		return "", http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(domain.Password))
@@ -86,6 +88,8 @@ func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, int, error) {
 	user, err := uu.userRepository.GetByID(domain.ID)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, http.StatusNotFound, errors.New("user tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data pengguna")
 	}
 
 	if domain.Email != user.Email {

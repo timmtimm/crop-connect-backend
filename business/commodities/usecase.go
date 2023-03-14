@@ -2,6 +2,7 @@ package commodities
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -67,10 +68,10 @@ func (cu *CommoditiesUseCase) GetByID(id primitive.ObjectID) (Domain, int, error
 Update
 */
 
-func (cu *CommoditiesUseCase) Update(domain *Domain) (int, error) {
+func (cu *CommoditiesUseCase) Update(domain *Domain) (Domain, int, error) {
 	commodity, err := cu.commoditiesRepository.GetByIDAndFarmerID(domain.ID, domain.FarmerID)
 	if err != nil {
-		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	}
 
 	if domain.Name == commodity.Name &&
@@ -78,31 +79,32 @@ func (cu *CommoditiesUseCase) Update(domain *Domain) (int, error) {
 		domain.Seed == commodity.Seed &&
 		domain.PlantingPeriod == commodity.PlantingPeriod &&
 		domain.PricePerKg == commodity.PricePerKg {
-		return http.StatusConflict, errors.New("tidak ada perubahan data")
+		return Domain{}, http.StatusConflict, errors.New("tidak ada perubahan data")
 	}
 
 	if commodity.Name != domain.Name {
 		_, err = cu.commoditiesRepository.GetByNameAndFarmerID(domain.Name, domain.FarmerID)
 		if err == nil {
-			return http.StatusConflict, errors.New("nama komoditas telah terdaftar")
+			return Domain{}, http.StatusConflict, errors.New("nama komoditas telah terdaftar")
 		}
 	}
 
 	err = cu.commoditiesRepository.Delete(domain.ID)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal menghapus komoditas")
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal menghapus komoditas")
 	}
 
 	domain.ID = primitive.NewObjectID()
 	domain.CreatedAt = commodity.CreatedAt
 	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-	_, err = cu.commoditiesRepository.Create(domain)
+	commodity, err = cu.commoditiesRepository.Create(domain)
+	fmt.Println(commodity)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mengupdate komoditas")
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate komoditas")
 	}
 
-	return http.StatusOK, nil
+	return commodity, http.StatusOK, nil
 }
 
 /*

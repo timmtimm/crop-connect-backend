@@ -3,6 +3,7 @@ package response
 import (
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/users"
+	userReponse "marketplace-backend/controller/users/response"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -10,7 +11,7 @@ import (
 
 type Commodity struct {
 	ID             primitive.ObjectID `json:"_id"`
-	Farmer         users.Domain       `json:"farmer"`
+	Farmer         userReponse.User   `json:"farmer"`
 	Name           string             `json:"name"`
 	Description    string             `json:"description"`
 	Seed           string             `json:"seed"`
@@ -31,7 +32,7 @@ func FromDomain(domain commodities.Domain, userUC users.UseCase) (Commodity, int
 
 	return Commodity{
 		ID:             domain.ID,
-		Farmer:         farmer,
+		Farmer:         userReponse.FromDomain(farmer),
 		Name:           domain.Name,
 		Description:    domain.Description,
 		Seed:           domain.Seed,

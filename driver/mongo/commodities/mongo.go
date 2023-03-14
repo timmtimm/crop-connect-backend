@@ -2,7 +2,6 @@ package commodities
 
 import (
 	"context"
-	"fmt"
 	"marketplace-backend/business/commodities"
 	"time"
 
@@ -115,8 +114,6 @@ func (cr *commoditiesRepository) GetByQuery(query commodities.Query) ([]commodit
 		filter["pricePerKg"] = bson.M{"$gte": query.MinPrice, "$lte": query.MaxPrice}
 	}
 
-	fmt.Println(filter)
-
 	cursor, err := cr.collection.Find(ctx, filter, &options.FindOptions{
 		Skip:  &query.Skip,
 		Limit: &query.Limit,
@@ -150,7 +147,9 @@ func (cr *commoditiesRepository) Update(domain *commodities.Domain) (commodities
 	_, err := cr.collection.UpdateOne(ctx, bson.M{
 		"_id":       domain.ID,
 		"deletedAt": bson.M{"$exists": false},
-	}, FromDomain(domain))
+	}, bson.M{
+		"$set": FromDomain(domain),
+	})
 	if err != nil {
 		return commodities.Domain{}, err
 	}
