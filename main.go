@@ -33,9 +33,7 @@ func main() {
 	proposalUsecase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository)
 
 	userController := _userController.NewUserController(userUsecase)
-	commodityController := _commodityController.NewCommodityController(
-		commodityUsecase,
-		userUsecase)
+	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUsecase, proposalUsecase)
 	proposalController := _proposalController.NewProposalController(proposalUsecase, commodityUsecase)
 
 	routeController := _route.ControllerList{

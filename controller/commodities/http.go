@@ -2,6 +2,7 @@ package commodities
 
 import (
 	"marketplace-backend/business/commodities"
+	"marketplace-backend/business/proposals"
 	"marketplace-backend/business/users"
 	"marketplace-backend/controller/commodities/request"
 	"marketplace-backend/controller/commodities/response"
@@ -15,12 +16,14 @@ import (
 type Controller struct {
 	commodityUC commodities.UseCase
 	userUC      users.UseCase
+	proposalUC  proposals.UseCase
 }
 
-func NewCommodityController(commodityUC commodities.UseCase, userUC users.UseCase) *Controller {
+func NewCommodityController(commodityUC commodities.UseCase, userUC users.UseCase, proposalUC proposals.UseCase) *Controller {
 	return &Controller{
 		commodityUC: commodityUC,
 		userUC:      userUC,
+		proposalUC:  proposalUC,
 	}
 }
 
@@ -188,7 +191,15 @@ func (cc *Controller) Update(c echo.Context) error {
 	userDomain.ID = commodityID
 	userDomain.FarmerID = userID
 
-	statusCode, err := cc.commodityUC.Update(userDomain)
+	commodity, statusCode, err := cc.commodityUC.Update(userDomain)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	statusCode, err = cc.proposalUC.UpdateCommodityID(commodityID, commodity.ID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -224,6 +235,14 @@ func (cc *Controller) Delete(c echo.Context) error {
 	}
 
 	statusCode, err := cc.commodityUC.Delete(commodityID, farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	statusCode, err = cc.proposalUC.DeleteByCommodityID(commodityID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

@@ -52,7 +52,7 @@ type UseCase interface {
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	// Update
-	Update(domain *Domain) (int, error)
+	Update(domain *Domain) (Domain, int, error)
 	// Delete
 	Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error)
 }

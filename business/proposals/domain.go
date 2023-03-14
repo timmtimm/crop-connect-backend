@@ -39,6 +39,8 @@ type UseCase interface {
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
+	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)
 	// Delete
 	Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error)
+	DeleteByCommodityID(commodityID primitive.ObjectID) (int, error)
 }

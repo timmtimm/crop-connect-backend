@@ -153,3 +153,19 @@ func (pr *proposalRepository) Delete(id primitive.ObjectID) error {
 
 	return nil
 }
+
+func (pr *proposalRepository) DeleteByCommodityID(commodityID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := pr.collection.UpdateMany(ctx, bson.M{
+		"commodityID": commodityID,
+		"deletedAt":   bson.M{"$exists": false},
+	}, bson.M{
+		"$set": bson.M{
+			"deletedAt": primitive.NewDateTimeFromTime(time.Now()),
+		},
+	})
+
+	return err
+}

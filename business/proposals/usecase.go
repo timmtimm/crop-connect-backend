@@ -129,6 +129,29 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 	}
 }
 
+func (pr *ProposalUseCase) UpdateCommodityID(oldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error) {
+	proposals, err := pr.proposalRepository.GetByCommodityID(oldCommodityID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusOK, nil
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	for _, proposal := range proposals {
+		proposal.CommodityID = NewCommodityID
+		proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		_, err = pr.proposalRepository.Update(&proposal)
+		if err == mongo.ErrNilDocument {
+			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		} else if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+		}
+	}
+
+	return http.StatusOK, nil
+}
+
 /*
 Delete
 */
@@ -153,6 +176,26 @@ func (pr *ProposalUseCase) Delete(id primitive.ObjectID, farmerID primitive.Obje
 		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
 		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (pr *ProposalUseCase) DeleteByCommodityID(commodityID primitive.ObjectID) (int, error) {
+	proposals, err := pr.proposalRepository.GetByCommodityID(commodityID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusOK, nil
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	for _, proposal := range proposals {
+		err = pr.proposalRepository.Delete(proposal.ID)
+		if err == mongo.ErrNilDocument {
+			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		} else if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal menghapus proposal")
+		}
 	}
 
 	return http.StatusOK, nil
