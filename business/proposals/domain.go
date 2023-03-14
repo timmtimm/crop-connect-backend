@@ -26,7 +26,6 @@ type Repository interface {
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
 	GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, isAvailable bool) ([]Domain, error)
 	GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (Domain, error)
-	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete

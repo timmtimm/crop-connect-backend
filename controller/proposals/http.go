@@ -179,3 +179,34 @@ func (pc *Controller) Update(c echo.Context) error {
 /*
 Delete
 */
+
+func (pc *Controller) Delete(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "token tidak valid",
+		})
+	}
+
+	id, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id proposal tidak valid",
+		})
+	}
+
+	statusCode, err := pc.proposalUC.Delete(id, userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil dihapus",
+	})
+}

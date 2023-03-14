@@ -110,20 +110,6 @@ func (pr *proposalRepository) GetByCommodityIDAndName(commodityID primitive.Obje
 	return result.ToDomain(), err
 }
 
-func (pr *proposalRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (proposals.Domain, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	var result Model
-	err := pr.collection.FindOne(ctx, bson.M{
-		"_id":       id,
-		"farmerID":  farmerID,
-		"deletedAt": bson.M{"$exists": false},
-	}).Decode(&result)
-
-	return result.ToDomain(), err
-}
-
 /*
 Update
 */

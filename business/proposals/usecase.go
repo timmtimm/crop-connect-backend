@@ -134,7 +134,7 @@ Delete
 */
 
 func (pr *ProposalUseCase) Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
-	proposal, err := pr.proposalRepository.GetByIDAndFarmerID(id, farmerID)
+	proposal, err := pr.proposalRepository.GetByID(id)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
