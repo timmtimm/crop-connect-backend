@@ -4,6 +4,7 @@ import (
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
 	"marketplace-backend/controller/proposals/request"
+	"marketplace-backend/controller/proposals/response"
 	"marketplace-backend/helper"
 	"net/http"
 
@@ -92,6 +93,38 @@ func (pc *Controller) Create(c echo.Context) error {
 /*
 Read
 */
+
+func (pc *Controller) GetByCommodityIDForBuyer(c echo.Context) error {
+	commodityID, err := primitive.ObjectIDFromHex(c.Param("commodity-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id komoditas tidak valid",
+		})
+	}
+
+	_, statusCode, err := pc.commodityUC.GetByID(commodityID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: "komoditas tidak ditemukan",
+		})
+	}
+
+	proposals, statusCode, err := pc.proposalUC.GetByCommodityID(commodityID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil didapatkan",
+		Data:    response.FromDomainArrayToBuyer(proposals),
+	})
+}
 
 /*
 Update

@@ -55,6 +55,17 @@ func (pr *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (
 Read
 */
 
+func (pr *ProposalUseCase) GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error) {
+	proposals, err := pr.proposalRepository.GetByCommodityIDAndAvailability(commodityID, true)
+	if err == mongo.ErrNoDocuments {
+		return proposals, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return proposals, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	return proposals, http.StatusOK, nil
+}
+
 /*
 Update
 */
@@ -67,13 +78,9 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 	}
 
-	commodity, err := pr.commodityRepository.GetByIDAndFarmerID(proposal.CommodityID, farmerID)
+	_, err = pr.commodityRepository.GetByIDAndFarmerID(proposal.CommodityID, farmerID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
-	}
-
-	if commodity.FarmerID != farmerID {
-		return http.StatusForbidden, errors.New("anda tidak memiliki akses")
 	}
 
 	if proposal.Name != domain.Name {
@@ -125,3 +132,28 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 /*
 Delete
 */
+
+func (pr *ProposalUseCase) Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
+	proposal, err := pr.proposalRepository.GetByIDAndFarmerID(id, farmerID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	_, err = pr.commodityRepository.GetByIDAndFarmerID(proposal.CommodityID, farmerID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengambil data komoditas")
+	}
+
+	err = pr.proposalRepository.Delete(id)
+	if err == mongo.ErrNilDocument {
+		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
+}

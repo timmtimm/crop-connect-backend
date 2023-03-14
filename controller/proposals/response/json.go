@@ -23,8 +23,8 @@ type Admin struct {
 	Address               string                      `json:"address"`
 	IsAvailable           bool                        `json:"isAvailable"`
 	CreatedAt             primitive.DateTime          `json:"createdAt"`
-	UpdatedAt             primitive.DateTime          `json:"updatedAt"`
-	DeletedAt             primitive.DateTime          `json:"deletedAt"`
+	UpdatedAt             primitive.DateTime          `json:"updatedAt,omitempty"`
+	DeletedAt             primitive.DateTime          `json:"deletedAt,omitempty"`
 }
 
 func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase) (Admin, int, error) {
@@ -58,4 +58,35 @@ func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodity
 		UpdatedAt:             domain.UpdatedAt,
 		DeletedAt:             domain.DeletedAt,
 	}, http.StatusOK, nil
+}
+
+type Buyer struct {
+	ID                    primitive.ObjectID `json:"_id"`
+	Name                  string             `json:"name"`
+	Description           string             `json:"description"`
+	EstimatedTotalHarvest float64            `json:"estimatedTotalHarvest"`
+	PlantingArea          float64            `json:"plantingArea"`
+	Address               string             `json:"address"`
+	IsAvailable           bool               `json:"isAvailable"`
+}
+
+func FromDomainToBuyer(domain *proposals.Domain) Buyer {
+	return Buyer{
+		ID:                    domain.ID,
+		Name:                  domain.Name,
+		Description:           domain.Description,
+		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,
+		PlantingArea:          domain.PlantingArea,
+		Address:               domain.Address,
+		IsAvailable:           domain.IsAvailable,
+	}
+}
+
+func FromDomainArrayToBuyer(domain []proposals.Domain) []Buyer {
+	var response []Buyer
+	for _, value := range domain {
+		response = append(response, FromDomainToBuyer(&value))
+	}
+
+	return response
 }

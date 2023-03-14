@@ -53,6 +53,49 @@ func (pr *proposalRepository) GetByID(id primitive.ObjectID) (proposals.Domain, 
 	return result.ToDomain(), err
 }
 
+func (pr *proposalRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result []Model
+	cursor, err := pr.collection.Find(ctx, bson.M{
+		"commodityID": commodityID,
+		"deletedAt":   bson.M{"$exists": false},
+	})
+	if err != nil {
+		return []proposals.Domain{}, err
+	}
+
+	err = cursor.All(ctx, &result)
+	if err != nil {
+		return []proposals.Domain{}, err
+	}
+
+	return ToDomainArray(result), err
+}
+
+func (pr *proposalRepository) GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, isAvailable bool) ([]proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result []Model
+	cursor, err := pr.collection.Find(ctx, bson.M{
+		"commodityID": commodityID,
+		"isAvailable": isAvailable,
+		"deletedAt":   bson.M{"$exists": false},
+	})
+	if err != nil {
+		return []proposals.Domain{}, err
+	}
+
+	err = cursor.All(ctx, &result)
+	if err != nil {
+		return []proposals.Domain{}, err
+	}
+
+	return ToDomainArray(result), err
+}
+
 func (pr *proposalRepository) GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()

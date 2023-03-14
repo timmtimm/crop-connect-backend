@@ -57,3 +57,11 @@ func (model *Model) ToDomain() proposals.Domain {
 		DeletedAt:             model.DeletedAt,
 	}
 }
+
+func ToDomainArray(model []Model) []proposals.Domain {
+	var result []proposals.Domain
+	for _, proposal := range model {
+		result = append(result, proposal.ToDomain())
+	}
+	return result
+}

@@ -43,6 +43,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	commodity.DELETE("/:commodity-id", cl.CommodityController.Delete, _middleware.CheckOneRole("farmer"))
 
 	proposal := apiV1.Group("/proposal")
+	proposal.GET("/:commodity-id", cl.ProposalController.GetByCommodityIDForBuyer)
 	proposal.POST("/:commodity-id", cl.ProposalController.Create, _middleware.CheckOneRole("farmer"))
 	proposal.PUT("/:proposal-id", cl.ProposalController.Update, _middleware.CheckOneRole("farmer"))
 }
