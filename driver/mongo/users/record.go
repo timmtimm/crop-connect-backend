@@ -15,7 +15,7 @@ type Model struct {
 	Password    string             `bson:"password"`
 	Role        string             `bson:"role"`
 	CreatedAt   primitive.DateTime `bson:"createdAt"`
-	UpdatedAt   primitive.DateTime `bson:"updatedAt"`
+	UpdatedAt   primitive.DateTime `bson:"updatedAt,omitempty"`
 }
 
 func FromDomain(domain *users.Domain) *Model {

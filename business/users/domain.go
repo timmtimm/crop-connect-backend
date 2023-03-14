@@ -30,6 +30,7 @@ type Repository interface {
 type UseCase interface {
 	// Create
 	Register(domain *Domain) (string, int, error)
+	RegisterValidator(domain *Domain) (string, int, error)
 	// Read
 	Login(domain *Domain) (string, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
