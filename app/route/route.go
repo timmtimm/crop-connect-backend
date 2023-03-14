@@ -31,6 +31,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 
 	user := apiV1.Group("/user")
 	user.POST("/register", cl.UserController.Register)
+	user.POST("/register-validator", cl.UserController.RegisterValidator, _middleware.CheckOneRole("admin"))
 	user.POST("/login", cl.UserController.Login)
 	user.GET("/profile", cl.UserController.GetProfile, _middleware.Authenticated())
 	user.PUT("/profile", cl.UserController.UpdateProfile, _middleware.Authenticated())

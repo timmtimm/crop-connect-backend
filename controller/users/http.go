@@ -25,7 +25,7 @@ Create
 */
 
 func (uc *Controller) Register(c echo.Context) error {
-	userInput := request.Register{}
+	userInput := request.RegisterUser{}
 	c.Bind(&userInput)
 
 	validationErr := userInput.Validate()
@@ -48,6 +48,34 @@ func (uc *Controller) Register(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "registrasi sukses",
+		Data:    token,
+	})
+}
+
+func (uc *Controller) RegisterValidator(c echo.Context) error {
+	userInput := request.RegisterValidator{}
+	c.Bind(&userInput)
+
+	validationErr := userInput.Validate()
+	if validationErr != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "validasi gagal",
+			Error:   validationErr,
+		})
+	}
+
+	token, statusCode, err := uc.userUC.RegisterValidator(userInput.ToDomain())
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "registrasi validasi sukses",
 		Data:    token,
 	})
 }
