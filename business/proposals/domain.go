@@ -7,6 +7,7 @@ type Domain struct {
 	AccepterID            primitive.ObjectID
 	CommodityID           primitive.ObjectID
 	Name                  string
+	Description           string
 	IsAccepted            bool
 	EstimatedTotalHarvest float64
 	PlantingArea          float64
@@ -21,9 +22,13 @@ type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
+	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (Domain, error)
+	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	// Update
+	Update(domain *Domain) (Domain, error)
 	// Delete
+	Delete(id primitive.ObjectID) error
 }
 
 type UseCase interface {
@@ -31,5 +36,6 @@ type UseCase interface {
 	Create(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Read
 	// Update
+	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete
 }

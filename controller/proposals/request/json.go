@@ -12,6 +12,7 @@ import (
 
 type Create struct {
 	Name                  string  `form:"name" json:"name" validate:"required"`
+	Description           string  `form:"description" json:"description"`
 	EstimatedTotalHarvest float64 `form:"estimatedTotalHarvest" json:"estimatedTotalHarvest" validate:"required,number"`
 	PlantingArea          float64 `form:"plantingArea" json:"plantingArea" validate:"required,number"`
 	Address               string  `form:"address" json:"address" validate:"required"`
@@ -20,6 +21,7 @@ type Create struct {
 func (req *Create) ToDomain() *proposals.Domain {
 	return &proposals.Domain{
 		Name:                  req.Name,
+		Description:           req.Description,
 		EstimatedTotalHarvest: req.EstimatedTotalHarvest,
 		PlantingArea:          req.PlantingArea,
 		Address:               req.Address,

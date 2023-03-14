@@ -97,6 +97,52 @@ Read
 Update
 */
 
+func (pc *Controller) Update(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "token tidak valid",
+		})
+	}
+
+	id, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id proposal tidak valid",
+		})
+	}
+
+	userInput := request.Create{}
+	c.Bind(&userInput)
+
+	validationErr := userInput.Validate()
+	if validationErr != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "validasi gagal",
+			Error:   validationErr,
+		})
+	}
+
+	inputDomain := userInput.ToDomain()
+	inputDomain.ID = id
+
+	statusCode, err := pc.proposalUC.Update(inputDomain, userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil diubah",
+	})
+}
+
 /*
 Delete
 */

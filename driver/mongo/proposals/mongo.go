@@ -40,6 +40,19 @@ func (pr *proposalRepository) Create(domain *proposals.Domain) (proposals.Domain
 Read
 */
 
+func (pr *proposalRepository) GetByID(id primitive.ObjectID) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := pr.collection.FindOne(ctx, bson.M{
+		"_id":       id,
+		"deletedAt": bson.M{"$exists": false},
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
 func (pr *proposalRepository) GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -54,10 +67,60 @@ func (pr *proposalRepository) GetByCommodityIDAndName(commodityID primitive.Obje
 	return result.ToDomain(), err
 }
 
+func (pr *proposalRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := pr.collection.FindOne(ctx, bson.M{
+		"_id":       id,
+		"farmerID":  farmerID,
+		"deletedAt": bson.M{"$exists": false},
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
 /*
 Update
 */
 
+func (pr *proposalRepository) Update(domain *proposals.Domain) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := pr.collection.UpdateOne(ctx, bson.M{
+		"_id":       domain.ID,
+		"deletedAt": bson.M{"$exists": false},
+	}, bson.M{
+		"$set": FromDomain(domain),
+	})
+	if err != nil {
+		return proposals.Domain{}, err
+	}
+
+	return *domain, nil
+}
+
 /*
 Delete
 */
+
+func (pr *proposalRepository) Delete(id primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := pr.collection.UpdateOne(ctx, bson.M{
+		"_id":       id,
+		"deletedAt": bson.M{"$exists": false},
+	}, bson.M{
+		"$set": bson.M{
+			"deletedAt": primitive.NewDateTimeFromTime(time.Now()),
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

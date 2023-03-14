@@ -16,6 +16,7 @@ type Admin struct {
 	Accepter              userReponse.User            `json:"accepter"`
 	Commodity             commodityResponse.Commodity `json:"commodity"`
 	Name                  string                      `json:"name"`
+	Description           string                      `json:"description"`
 	IsAccepted            bool                        `json:"isAccepted"`
 	EstimatedTotalHarvest float64                     `json:"estimatedTotalHarvest"`
 	PlantingArea          float64                     `json:"plantingArea"`
@@ -47,6 +48,7 @@ func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodity
 		Accepter:              userReponse.FromDomain(accepter),
 		Commodity:             commodityResponse,
 		Name:                  domain.Name,
+		Description:           domain.Description,
 		IsAccepted:            domain.IsAccepted,
 		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,
 		PlantingArea:          domain.PlantingArea,

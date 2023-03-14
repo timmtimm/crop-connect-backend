@@ -11,11 +11,12 @@ type Model struct {
 	AccepterID            primitive.ObjectID `bson:"accepterID,omitempty"`
 	CommodityID           primitive.ObjectID `bson:"commodityID"`
 	Name                  string             `bson:"name"`
+	Description           string             `bson:"description"`
 	IsAccepted            bool               `bson:"isAccepted"`
 	EstimatedTotalHarvest float64            `bson:"estimatedTotalHarvest"`
 	PlantingArea          float64            `bson:"plantingArea"`
 	Address               string             `bson:"address"`
-	IsAvailable           bool               `bson:"isAvailable"`
+	IsAvailable           bool               `bson:"isAvailable,omitempty"`
 	CreatedAt             primitive.DateTime `bson:"createdAt"`
 	UpdatedAt             primitive.DateTime `bson:"updatedAt,omitempty"`
 	DeletedAt             primitive.DateTime `bson:"deletedAt,omitempty"`
@@ -27,6 +28,7 @@ func FromDomain(domain *proposals.Domain) *Model {
 		AccepterID:            domain.AccepterID,
 		CommodityID:           domain.CommodityID,
 		Name:                  domain.Name,
+		Description:           domain.Description,
 		IsAccepted:            domain.IsAccepted,
 		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,
 		PlantingArea:          domain.PlantingArea,
@@ -44,6 +46,7 @@ func (model *Model) ToDomain() proposals.Domain {
 		AccepterID:            model.AccepterID,
 		CommodityID:           model.CommodityID,
 		Name:                  model.Name,
+		Description:           model.Description,
 		IsAccepted:            model.IsAccepted,
 		EstimatedTotalHarvest: model.EstimatedTotalHarvest,
 		PlantingArea:          model.PlantingArea,

@@ -44,4 +44,5 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 
 	proposal := apiV1.Group("/proposal")
 	proposal.POST("/:commodity-id", cl.ProposalController.Create, _middleware.CheckOneRole("farmer"))
+	proposal.PUT("/:proposal-id", cl.ProposalController.Update, _middleware.CheckOneRole("farmer"))
 }
