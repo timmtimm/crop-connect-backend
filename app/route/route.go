@@ -48,4 +48,5 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	proposal.POST("/:commodity-id", cl.ProposalController.Create, _middleware.CheckOneRole("farmer"))
 	proposal.PUT("/:proposal-id", cl.ProposalController.Update, _middleware.CheckOneRole("farmer"))
 	proposal.DELETE("/:proposal-id", cl.ProposalController.Delete, _middleware.CheckOneRole("farmer"))
+	proposal.PUT("/validate/:proposal-id", cl.ProposalController.ValidateByValidator, _middleware.CheckOneRole("validator"))
 }

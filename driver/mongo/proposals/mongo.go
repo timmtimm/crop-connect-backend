@@ -131,6 +131,52 @@ func (pr *proposalRepository) Update(domain *proposals.Domain) (proposals.Domain
 	return *domain, nil
 }
 
+func (pr *proposalRepository) UnsetRejectReason(id primitive.ObjectID) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := pr.collection.UpdateOne(ctx, bson.M{
+		"_id":       id,
+		"deletedAt": bson.M{"$exists": false},
+	}, bson.M{
+		"$unset": bson.M{"rejectReason": ""},
+	})
+	if err != nil {
+		return proposals.Domain{}, err
+	}
+
+	updatedProposal, err := pr.GetByID(id)
+	if err != nil {
+		return proposals.Domain{}, err
+	}
+
+	return updatedProposal, nil
+}
+
+func (pr *proposalRepository) UpdateIsAccepted(id primitive.ObjectID, isAccepted bool) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := pr.collection.UpdateOne(ctx, bson.M{
+		"_id":       id,
+		"deletedAt": bson.M{"$exists": false},
+	}, bson.M{
+		"$set": bson.M{
+			"isAccepted": isAccepted,
+		},
+	})
+	if err != nil {
+		return proposals.Domain{}, err
+	}
+
+	updatedProposal, err := pr.GetByID(id)
+	if err != nil {
+		return proposals.Domain{}, err
+	}
+
+	return updatedProposal, nil
+}
+
 /*
 Delete
 */

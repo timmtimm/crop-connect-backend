@@ -8,11 +8,12 @@ import (
 
 type Model struct {
 	ID                    primitive.ObjectID `bson:"_id"`
-	AccepterID            primitive.ObjectID `bson:"accepterID,omitempty"`
+	ValidatorID           primitive.ObjectID `bson:"validatorID,omitempty"`
 	CommodityID           primitive.ObjectID `bson:"commodityID"`
 	Name                  string             `bson:"name"`
 	Description           string             `bson:"description"`
-	IsAccepted            bool               `bson:"isAccepted"`
+	IsAccepted            bool               `bson:"isAccepted,omitempty"`
+	RejectReason          string             `bson:"rejectReason,omitempty"`
 	EstimatedTotalHarvest float64            `bson:"estimatedTotalHarvest"`
 	PlantingArea          float64            `bson:"plantingArea"`
 	Address               string             `bson:"address"`
@@ -25,11 +26,12 @@ type Model struct {
 func FromDomain(domain *proposals.Domain) *Model {
 	return &Model{
 		ID:                    domain.ID,
-		AccepterID:            domain.AccepterID,
+		ValidatorID:           domain.ValidatorID,
 		CommodityID:           domain.CommodityID,
 		Name:                  domain.Name,
 		Description:           domain.Description,
 		IsAccepted:            domain.IsAccepted,
+		RejectReason:          domain.RejectReason,
 		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,
 		PlantingArea:          domain.PlantingArea,
 		Address:               domain.Address,
@@ -43,7 +45,7 @@ func FromDomain(domain *proposals.Domain) *Model {
 func (model *Model) ToDomain() proposals.Domain {
 	return proposals.Domain{
 		ID:                    model.ID,
-		AccepterID:            model.AccepterID,
+		ValidatorID:           model.ValidatorID,
 		CommodityID:           model.CommodityID,
 		Name:                  model.Name,
 		Description:           model.Description,
