@@ -13,7 +13,7 @@ import (
 
 type Admin struct {
 	ID                    primitive.ObjectID          `json:"_id"`
-	Accepter              userReponse.User            `json:"accepter"`
+	Validator             userReponse.User            `json:"validator"`
 	Commodity             commodityResponse.Commodity `json:"commodity"`
 	Name                  string                      `json:"name"`
 	Description           string                      `json:"description"`
@@ -28,7 +28,7 @@ type Admin struct {
 }
 
 func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase) (Admin, int, error) {
-	accepter, statusCode, err := userUC.GetByID(domain.AccepterID)
+	validator, statusCode, err := userUC.GetByID(domain.ValidatorID)
 	if err != nil {
 		return Admin{}, statusCode, err
 	}
@@ -45,7 +45,7 @@ func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodity
 
 	return Admin{
 		ID:                    domain.ID,
-		Accepter:              userReponse.FromDomain(accepter),
+		Validator:             userReponse.FromDomain(validator),
 		Commodity:             commodityResponse,
 		Name:                  domain.Name,
 		Description:           domain.Description,

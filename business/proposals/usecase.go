@@ -100,7 +100,6 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 
 		domain.ID = primitive.NewObjectID()
 		domain.CommodityID = proposal.CommodityID
-		domain.IsAccepted = false
 		domain.CreatedAt = proposal.CreatedAt
 		domain.UpdatedAt = proposal.UpdatedAt
 
@@ -119,9 +118,7 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 		proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 		_, err = pr.proposalRepository.Update(&proposal)
-		if err == mongo.ErrNilDocument {
-			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
-		} else if err != nil {
+		if err != nil {
 			return http.StatusInternalServerError, err
 		}
 
@@ -142,9 +139,44 @@ func (pr *ProposalUseCase) UpdateCommodityID(oldCommodityID primitive.ObjectID, 
 		proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 		_, err = pr.proposalRepository.Update(&proposal)
-		if err == mongo.ErrNilDocument {
-			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
-		} else if err != nil {
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+		}
+	}
+
+	return http.StatusOK, nil
+}
+
+func (pr *ProposalUseCase) ValidateProposal(domain *Domain, validatorID primitive.ObjectID) (int, error) {
+	proposal, err := pr.proposalRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	proposal.ValidatorID = validatorID
+	proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	if !domain.IsAccepted {
+		_, err = pr.proposalRepository.UpdateIsAccepted(proposal.ID, false)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+		}
+
+		proposal.RejectReason = domain.RejectReason
+		_, err = pr.proposalRepository.Update(&proposal)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+		}
+	} else {
+		_, err = pr.proposalRepository.UpdateIsAccepted(proposal.ID, true)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+		}
+
+		_, err = pr.proposalRepository.UnsetRejectReason(proposal.ID)
+		if err != nil {
 			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
 		}
 	}

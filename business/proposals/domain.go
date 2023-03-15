@@ -4,11 +4,12 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Domain struct {
 	ID                    primitive.ObjectID
-	AccepterID            primitive.ObjectID
+	ValidatorID           primitive.ObjectID
 	CommodityID           primitive.ObjectID
 	Name                  string
 	Description           string
 	IsAccepted            bool
+	RejectReason          string
 	EstimatedTotalHarvest float64
 	PlantingArea          float64
 	Address               string
@@ -28,6 +29,8 @@ type Repository interface {
 	GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
+	UpdateIsAccepted(id primitive.ObjectID, isAccepted bool) (Domain, error)
+	UnsetRejectReason(id primitive.ObjectID) (Domain, error)
 	// Delete
 	Delete(id primitive.ObjectID) error
 }
@@ -40,6 +43,7 @@ type UseCase interface {
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)
+	ValidateProposal(domain *Domain, adminID primitive.ObjectID) (int, error)
 	// Delete
 	Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error)
 	DeleteByCommodityID(commodityID primitive.ObjectID) (int, error)
