@@ -67,6 +67,28 @@ func (ur *userRepository) GetByEmail(email string) (users.Domain, error) {
 	return result.ToDomain(), err
 }
 
+func (ur *userRepository) GetByNameAndRole(name string, role string) ([]users.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result []Model
+	cursor, err := ur.collection.Find(ctx, bson.M{
+		"name": bson.M{
+			"$regex": name,
+		},
+		"role": role,
+	})
+	if err != nil {
+		return []users.Domain{}, err
+	}
+
+	if err = cursor.All(ctx, &result); err != nil {
+		return []users.Domain{}, err
+	}
+
+	return ToDomainArray(result), nil
+}
+
 /*
 Update
 */

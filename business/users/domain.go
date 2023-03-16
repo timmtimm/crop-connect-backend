@@ -22,6 +22,7 @@ type Repository interface {
 	// Read
 	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByEmail(email string) (Domain, error)
+	GetByNameAndRole(name string, role string) ([]Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -34,6 +35,7 @@ type UseCase interface {
 	// Read
 	Login(domain *Domain) (string, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
+	GetFarmerByName(name string) ([]Domain, int, error)
 	// Update
 	UpdateProfile(domain *Domain) (Domain, int, error)
 	// Delete

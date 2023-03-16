@@ -35,6 +35,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	user.POST("/login", cl.UserController.Login)
 	user.GET("/profile", cl.UserController.GetProfile, _middleware.Authenticated())
 	user.PUT("/profile", cl.UserController.UpdateProfile, _middleware.Authenticated())
+	user.GET("/find-farmer/:farmer-name", cl.UserController.GetFarmerByName)
 
 	commodity := apiV1.Group("/commodity")
 	commodity.GET("/page/:page", cl.CommodityController.GetForBuyer)

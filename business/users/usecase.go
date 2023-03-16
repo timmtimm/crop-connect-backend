@@ -101,6 +101,15 @@ func (uu *UserUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
 	return user, http.StatusOK, nil
 }
 
+func (uu *UserUseCase) GetFarmerByName(name string) ([]Domain, int, error) {
+	users, err := uu.userRepository.GetByNameAndRole(name, "farmer")
+	if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan user")
+	}
+
+	return users, http.StatusOK, nil
+}
+
 /*
 Update
 */
