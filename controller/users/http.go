@@ -136,6 +136,24 @@ func (uc *Controller) GetProfile(c echo.Context) error {
 	})
 }
 
+func (uc *Controller) GetFarmerByName(c echo.Context) error {
+	name := c.Param("farmer-name")
+
+	user, statusCode, err := uc.userUC.GetFarmerByName(name)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan data user",
+		Data:    response.FromDomainArray(user),
+	})
+}
+
 /*
 Update
 */
