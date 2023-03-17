@@ -2,8 +2,10 @@ package route
 
 import (
 	_middleware "marketplace-backend/app/middleware"
+	"marketplace-backend/constant"
 	"marketplace-backend/controller/commodities"
 	"marketplace-backend/controller/proposals"
+	"marketplace-backend/controller/transactions"
 	"marketplace-backend/controller/users"
 	"net/http"
 
@@ -11,10 +13,11 @@ import (
 )
 
 type ControllerList struct {
-	LoggerMiddleware    echo.MiddlewareFunc
-	UserController      *users.Controller
-	CommodityController *commodities.Controller
-	ProposalController  *proposals.Controller
+	LoggerMiddleware      echo.MiddlewareFunc
+	UserController        *users.Controller
+	CommodityController   *commodities.Controller
+	ProposalController    *proposals.Controller
+	TransactionController *transactions.Controller
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
@@ -39,15 +42,19 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 
 	commodity := apiV1.Group("/commodity")
 	commodity.GET("/page/:page", cl.CommodityController.GetForBuyer)
-	commodity.POST("", cl.CommodityController.Create, _middleware.CheckOneRole("farmer"))
+	commodity.POST("", cl.CommodityController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
 	commodity.GET("/:commodity-id", cl.CommodityController.GetByID)
-	commodity.PUT("/:commodity-id", cl.CommodityController.Update, _middleware.CheckOneRole("farmer"))
-	commodity.DELETE("/:commodity-id", cl.CommodityController.Delete, _middleware.CheckOneRole("farmer"))
+	commodity.PUT("/:commodity-id", cl.CommodityController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
+	commodity.DELETE("/:commodity-id", cl.CommodityController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	proposal := apiV1.Group("/proposal")
 	proposal.GET("/:commodity-id", cl.ProposalController.GetByCommodityIDForBuyer)
-	proposal.POST("/:commodity-id", cl.ProposalController.Create, _middleware.CheckOneRole("farmer"))
-	proposal.PUT("/:proposal-id", cl.ProposalController.Update, _middleware.CheckOneRole("farmer"))
-	proposal.DELETE("/:proposal-id", cl.ProposalController.Delete, _middleware.CheckOneRole("farmer"))
-	proposal.PUT("/validate/:proposal-id", cl.ProposalController.ValidateByValidator, _middleware.CheckOneRole("validator"))
+	proposal.POST("/:commodity-id", cl.ProposalController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.PUT("/:proposal-id", cl.ProposalController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.DELETE("/:proposal-id", cl.ProposalController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.PUT("/validate/:proposal-id", cl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
+
+	transaction := apiV1.Group("/transaction")
+	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
+
 }

@@ -3,6 +3,8 @@ package proposals
 import (
 	"errors"
 	"marketplace-backend/business/commodities"
+	"marketplace-backend/constant"
+	"marketplace-backend/util"
 	"net/http"
 	"time"
 
@@ -40,7 +42,7 @@ func (pr *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (
 	}
 
 	domain.ID = primitive.NewObjectID()
-	domain.IsAccepted = false
+	domain.Status = constant.ProposalStatusPending
 	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	_, err = pr.proposalRepository.Create(domain)
@@ -56,11 +58,11 @@ Read
 */
 
 func (pr *ProposalUseCase) GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error) {
-	proposals, err := pr.proposalRepository.GetByCommodityIDAndAvailability(commodityID, true)
+	proposals, err := pr.proposalRepository.GetByCommodityIDAndAvailability(commodityID, constant.ProposalStatusApproved)
 	if err == mongo.ErrNoDocuments {
-		return proposals, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		return []Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
-		return proposals, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 	}
 
 	return proposals, http.StatusOK, nil
@@ -90,7 +92,7 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 		}
 	}
 
-	if proposal.IsAccepted {
+	if proposal.Status == constant.ProposalStatusApproved {
 		err = pr.proposalRepository.Delete(proposal.ID)
 		if err == mongo.ErrNilDocument {
 			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
@@ -100,6 +102,7 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 
 		domain.ID = primitive.NewObjectID()
 		domain.CommodityID = proposal.CommodityID
+		domain.Status = constant.ProposalStatusPending
 		domain.CreatedAt = proposal.CreatedAt
 		domain.UpdatedAt = proposal.UpdatedAt
 
@@ -107,11 +110,10 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 		if err != nil {
 			return http.StatusInternalServerError, errors.New("gagal membuat proposal")
 		}
-
-		return http.StatusOK, nil
-	} else {
+	} else if proposal.Status == constant.ProposalStatusPending || proposal.Status == constant.ProposalStatusRejected {
 		proposal.Name = domain.Name
 		proposal.Description = domain.Description
+		proposal.Status = constant.ProposalStatusPending
 		proposal.EstimatedTotalHarvest = domain.EstimatedTotalHarvest
 		proposal.PlantingArea = domain.PlantingArea
 		proposal.Address = domain.Address
@@ -119,11 +121,14 @@ func (pr *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 
 		_, err = pr.proposalRepository.Update(&proposal)
 		if err != nil {
-			return http.StatusInternalServerError, err
+			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
 		}
-
-		return http.StatusOK, nil
+	} else {
+		return http.StatusInternalServerError, errors.New("status proposal tidak valid")
 	}
+
+	return http.StatusOK, nil
+
 }
 
 func (pr *ProposalUseCase) UpdateCommodityID(oldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error) {
@@ -155,30 +160,30 @@ func (pr *ProposalUseCase) ValidateProposal(domain *Domain, validatorID primitiv
 		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 	}
 
+	if proposal.Status != domain.Status {
+		isStatusAvailable := util.CheckStringOnArray([]string{constant.ProposalStatusRejected, constant.ProposalStatusApproved}, domain.Status)
+		if !isStatusAvailable {
+			return http.StatusBadRequest, errors.New("status proposal hanya tersedia approved dan rejected")
+		}
+	}
+
 	proposal.ValidatorID = validatorID
+	proposal.Status = domain.Status
 	proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-	if !domain.IsAccepted {
-		_, err = pr.proposalRepository.UpdateIsAccepted(proposal.ID, false)
-		if err != nil {
-			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
-		}
-
+	if domain.Status == constant.ProposalStatusRejected {
 		proposal.RejectReason = domain.RejectReason
-		_, err = pr.proposalRepository.Update(&proposal)
-		if err != nil {
-			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
-		}
 	} else {
-		_, err = pr.proposalRepository.UpdateIsAccepted(proposal.ID, true)
-		if err != nil {
-			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
-		}
-
+		proposal.IsAvailable = true
 		_, err = pr.proposalRepository.UnsetRejectReason(proposal.ID)
 		if err != nil {
 			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
 		}
+	}
+
+	_, err = pr.proposalRepository.Update(&proposal)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
 	}
 
 	return http.StatusOK, nil

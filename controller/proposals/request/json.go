@@ -59,13 +59,13 @@ func (req *Create) Validate() []helper.ValidationError {
 }
 
 type Validate struct {
-	IsAccepted   bool   `form:"isAccepted" json:"isAccepted"`
+	Status       string `form:"status" json:"status"`
 	RejectReason string `form:"rejectReason" json:"rejectReason"`
 }
 
 func (req *Validate) ToDomain() *proposals.Domain {
 	return &proposals.Domain{
-		IsAccepted:   req.IsAccepted,
+		Status:       req.Status,
 		RejectReason: req.RejectReason,
 	}
 }

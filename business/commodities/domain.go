@@ -5,18 +5,18 @@ import (
 )
 
 type Domain struct {
-	ID             primitive.ObjectID `json:"_id"`
-	FarmerID       primitive.ObjectID `json:"farmerID"`
-	Name           string             `json:"name"`
-	Description    string             `json:"description"`
-	Seed           string             `json:"seed"`
-	PlantingPeriod int                `json:"plantingPeriod"`
-	ImageURLs      []string           `json:"imageURLs"`
-	PricePerKg     int                `json:"pricePerKg"`
-	IsAvailable    bool               `json:"isAvailable"`
-	CreatedAt      primitive.DateTime `json:"createdAt"`
-	UpdatedAt      primitive.DateTime `json:"updatedAt"`
-	DeletedAt      primitive.DateTime `json:"deletedAt"`
+	ID             primitive.ObjectID
+	FarmerID       primitive.ObjectID
+	Name           string
+	Description    string
+	Seed           string
+	PlantingPeriod int
+	ImageURLs      []string
+	PricePerKg     int
+	IsAvailable    bool
+	CreatedAt      primitive.DateTime
+	UpdatedAt      primitive.DateTime
+	DeletedAt      primitive.DateTime
 }
 
 type Query struct {

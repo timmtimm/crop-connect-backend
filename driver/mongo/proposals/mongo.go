@@ -74,14 +74,14 @@ func (pr *proposalRepository) GetByCommodityID(commodityID primitive.ObjectID) (
 	return ToDomainArray(result), err
 }
 
-func (pr *proposalRepository) GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, isAvailable bool) ([]proposals.Domain, error) {
+func (pr *proposalRepository) GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, status string) ([]proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	var result []Model
 	cursor, err := pr.collection.Find(ctx, bson.M{
 		"commodityID": commodityID,
-		"isAvailable": isAvailable,
+		"status":      status,
 		"deletedAt":   bson.M{"$exists": false},
 	})
 	if err != nil {
@@ -140,30 +140,6 @@ func (pr *proposalRepository) UnsetRejectReason(id primitive.ObjectID) (proposal
 		"deletedAt": bson.M{"$exists": false},
 	}, bson.M{
 		"$unset": bson.M{"rejectReason": ""},
-	})
-	if err != nil {
-		return proposals.Domain{}, err
-	}
-
-	updatedProposal, err := pr.GetByID(id)
-	if err != nil {
-		return proposals.Domain{}, err
-	}
-
-	return updatedProposal, nil
-}
-
-func (pr *proposalRepository) UpdateIsAccepted(id primitive.ObjectID, isAccepted bool) (proposals.Domain, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	_, err := pr.collection.UpdateOne(ctx, bson.M{
-		"_id":       id,
-		"deletedAt": bson.M{"$exists": false},
-	}, bson.M{
-		"$set": bson.M{
-			"isAccepted": isAccepted,
-		},
 	})
 	if err != nil {
 		return proposals.Domain{}, err
