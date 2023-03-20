@@ -31,15 +31,15 @@ func main() {
 	proposalRepository := _driver.NewProposalRepository(database)
 	transactionRepository := _driver.NewTransactionRepository(database)
 
-	userUsecase := _userUseCase.NewUserUseCase(userRepository)
+	userUseCase := _userUseCase.NewUserUseCase(userRepository)
 	commodityUsecase := _commodityUseCase.NewCommodityUseCase(commodityRepository)
-	proposalUsecase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository)
+	proposalUseCase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository)
 	transactionUseCase := _transactionUseCase.NewTransactionUseCase(transactionRepository, commodityRepository, proposalRepository)
 
-	userController := _userController.NewUserController(userUsecase)
-	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUsecase, proposalUsecase)
-	proposalController := _proposalController.NewProposalController(proposalUsecase, commodityUsecase)
-	transactionController := _transactionController.NewTransactionController(transactionUseCase)
+	userController := _userController.NewUserController(userUseCase)
+	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUseCase, proposalUseCase)
+	proposalController := _proposalController.NewProposalController(proposalUseCase, commodityUsecase)
+	transactionController := _transactionController.NewTransactionController(transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
 
 	routeController := _route.ControllerList{
 		UserController:        userController,

@@ -24,6 +24,7 @@ type Repository interface {
 	Create(domain *Domain) (Domain, error)
 	// Read
 	GetByID(id primitive.ObjectID) (Domain, error)
+	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, error)
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
 	GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, status string) ([]Domain, error)
 	GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (Domain, error)
@@ -39,6 +40,7 @@ type UseCase interface {
 	Create(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Read
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
+	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)

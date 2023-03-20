@@ -34,7 +34,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 
 	user := apiV1.Group("/user")
 	user.POST("/register", cl.UserController.Register)
-	user.POST("/register-validator", cl.UserController.RegisterValidator, _middleware.CheckOneRole("admin"))
+	user.POST("/register-validator", cl.UserController.RegisterValidator, _middleware.CheckOneRole(constant.RoleAdmin))
 	user.POST("/login", cl.UserController.Login)
 	user.GET("/profile", cl.UserController.GetProfile, _middleware.Authenticated())
 	user.PUT("/profile", cl.UserController.UpdateProfile, _middleware.Authenticated())
@@ -56,5 +56,5 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 
 	transaction := apiV1.Group("/transaction")
 	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
-
+	transaction.GET("/:page", cl.TransactionController.GetUserTransaction, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 }

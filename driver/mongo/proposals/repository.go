@@ -53,6 +53,18 @@ func (pr *proposalRepository) GetByID(id primitive.ObjectID) (proposals.Domain, 
 	return result.ToDomain(), err
 }
 
+func (pr *proposalRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := pr.collection.FindOne(ctx, bson.M{
+		"_id": id,
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
 func (pr *proposalRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()

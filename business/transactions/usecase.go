@@ -6,6 +6,7 @@ import (
 	"marketplace-backend/business/proposals"
 	"marketplace-backend/constant"
 	"net/http"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,41 +30,66 @@ func NewTransactionUseCase(tr Repository, cr commodities.Repository, pr proposal
 Create
 */
 
-func (tc *TransactionUseCase) Create(domain *Domain) (int, error) {
+func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
+	_, err := tu.transactionRepository.GetByBuyerIDProposalIDAndStatus(domain.BuyerID, domain.ProposalID, constant.TransactionStatusPending)
 
-	proposal, err := tc.proposalRepository.GetByID(domain.ProposalID)
 	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
-	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+		proposal, err := tu.proposalRepository.GetByID(domain.ProposalID)
+		if err == mongo.ErrNoDocuments {
+			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		} else if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+		}
+
+		commodity, err := tu.commodityRepository.GetByID(proposal.CommodityID)
+		if err == mongo.ErrNoDocuments {
+			return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+		} else if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal mengambil data komoditas")
+		}
+
+		if !proposal.IsAvailable {
+			return http.StatusConflict, errors.New("proposal tidak tersedia")
+		}
+
+		domain.ID = primitive.NewObjectID()
+		domain.Status = constant.TransactionStatusPending
+		domain.TotalPrice = float64(commodity.PricePerKg) * proposal.EstimatedTotalHarvest
+		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		_, err = tu.transactionRepository.Create(domain)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal membuat transaksi")
+		}
+
+		return http.StatusOK, nil
+	} else {
+		return http.StatusConflict, errors.New("transaksi sedang diproses")
 	}
 
-	commodity, err := tc.commodityRepository.GetByID(proposal.CommodityID)
-	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
-	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mengambil data komoditas")
-	}
-
-	if !proposal.IsAvailable {
-		return http.StatusConflict, errors.New("proposal tidak tersedia")
-	}
-
-	domain.ID = primitive.NewObjectID()
-	domain.Status = constant.TransactionStatusPending
-	domain.TotalPrice = float64(commodity.PricePerKg) * proposal.EstimatedTotalHarvest
-
-	_, err = tc.transactionRepository.Create(domain)
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	return http.StatusOK, nil
 }
 
 /*
 Read
 */
+
+func (tu *TransactionUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
+	commodities, totalData, err := tu.transactionRepository.GetByQuery(query)
+	if err != nil {
+		return []Domain{}, 0, http.StatusInternalServerError, err
+	}
+
+	return commodities, totalData, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) GetTransactionsByCommodityName(query Query) ([]Domain, int, int, error) {
+	commodities, totalData, err := tu.transactionRepository.GetByQuery(query)
+	if err != nil {
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	return commodities, totalData, http.StatusOK, nil
+}
 
 /*
 Update

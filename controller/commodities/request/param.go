@@ -18,23 +18,28 @@ func QueryParamValidation(c echo.Context) (FilterQuery, error) {
 	filter := FilterQuery{}
 	var err error
 
-	if c.QueryParam("name") != "" {
-		filter.Name = c.QueryParam("name")
+	name := c.QueryParam("name")
+	farmer := c.QueryParam("farmer")
+	minPrice := c.QueryParam("minPrice")
+	maxPrice := c.QueryParam("maxPrice")
+
+	if name != "" {
+		filter.Name = name
 	}
 
-	if c.QueryParam("farmer") != "" {
-		filter.Farmer = c.QueryParam("farmer")
+	if farmer != "" {
+		filter.Farmer = farmer
 	}
 
-	if c.QueryParam("minPrice") != "" {
-		filter.MinPrice, err = strconv.Atoi(c.QueryParam("minPrice"))
+	if minPrice != "" {
+		filter.MinPrice, err = strconv.Atoi(minPrice)
 		if err != nil {
 			return FilterQuery{}, errors.New("harga minimal harus berupa angka")
 		}
 	}
 
-	if c.QueryParam("maxPrice") != "" {
-		filter.MaxPrice, err = strconv.Atoi(c.QueryParam("maxPrice"))
+	if maxPrice != "" {
+		filter.MaxPrice, err = strconv.Atoi(maxPrice)
 		if err != nil {
 			return FilterQuery{}, errors.New("harga maksimal harus berupa angka")
 		}

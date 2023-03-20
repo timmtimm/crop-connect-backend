@@ -17,6 +17,10 @@ type Model struct {
 	UpdatedAt  primitive.DateTime `bson:"updatedAt,omitempty"`
 }
 
+type TotalDocument struct {
+	TotalDocument int `bson:"totalDocument"`
+}
+
 func FromDomain(domain *transactions.Domain) *Model {
 	return &Model{
 		ID:         domain.ID,
@@ -30,8 +34,8 @@ func FromDomain(domain *transactions.Domain) *Model {
 	}
 }
 
-func (model *Model) ToDomain() *transactions.Domain {
-	return &transactions.Domain{
+func (model *Model) ToDomain() transactions.Domain {
+	return transactions.Domain{
 		ID:         model.ID,
 		BuyerID:    model.BuyerID,
 		ProposalID: model.ProposalID,
@@ -46,7 +50,7 @@ func (model *Model) ToDomain() *transactions.Domain {
 func ToDomainArray(models []Model) []transactions.Domain {
 	var domains []transactions.Domain
 	for _, model := range models {
-		domains = append(domains, *model.ToDomain())
+		domains = append(domains, model.ToDomain())
 	}
 	return domains
 }

@@ -34,43 +34,43 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 	}
 
 	_, err := uu.userRepository.GetByEmail(domain.Email)
-	if err == nil {
+	if err == mongo.ErrNoDocuments {
+		encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
+		domain.ID = primitive.NewObjectID()
+		domain.Password = string(encryptedPassword)
+		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		user, err := uu.userRepository.Create(domain)
+		if err != nil {
+			return "", http.StatusInternalServerError, errors.New("gagal melakuakn registrasi user")
+		}
+
+		token := helper.GenerateToken(user.ID.Hex(), user.Role)
+		return token, http.StatusCreated, nil
+	} else {
 		return "", http.StatusConflict, errors.New("email telah terdaftar")
 	}
-
-	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
-	domain.ID = primitive.NewObjectID()
-	domain.Password = string(encryptedPassword)
-	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-
-	user, err := uu.userRepository.Create(domain)
-	if err != nil {
-		return "", http.StatusInternalServerError, err
-	}
-
-	token := helper.GenerateToken(user.ID.Hex(), user.Role)
-	return token, http.StatusCreated, nil
 }
 
 func (uu *UserUseCase) RegisterValidator(domain *Domain) (string, int, error) {
 	_, err := uu.userRepository.GetByEmail(domain.Email)
-	if err == nil {
+	if err == mongo.ErrNoDocuments {
+		encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
+		domain.ID = primitive.NewObjectID()
+		domain.Password = string(encryptedPassword)
+		domain.Role = constant.RoleValidator
+		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		user, err := uu.userRepository.Create(domain)
+		if err != nil {
+			return "", http.StatusInternalServerError, err
+		}
+
+		token := helper.GenerateToken(user.ID.Hex(), user.Role)
+		return token, http.StatusCreated, nil
+	} else {
 		return "", http.StatusConflict, errors.New("email telah terdaftar")
 	}
-
-	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
-	domain.ID = primitive.NewObjectID()
-	domain.Password = string(encryptedPassword)
-	domain.Role = constant.RoleValidator
-	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-
-	user, err := uu.userRepository.Create(domain)
-	if err != nil {
-		return "", http.StatusInternalServerError, err
-	}
-
-	token := helper.GenerateToken(user.ID.Hex(), user.Role)
-	return token, http.StatusCreated, nil
 }
 
 /*

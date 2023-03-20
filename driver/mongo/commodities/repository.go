@@ -54,6 +54,18 @@ func (cr *commoditiesRepository) GetByID(id primitive.ObjectID) (commodities.Dom
 	return result.ToDomain(), err
 }
 
+func (cr *commoditiesRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (commodities.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := cr.collection.FindOne(ctx, bson.M{
+		"_id": id,
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
 func (cr *commoditiesRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()

@@ -82,7 +82,7 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		})
 	}
 
-	QueryParam, err := request.QueryParamValidation(c)
+	queryParam, err := request.QueryParamValidation(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -95,9 +95,9 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		Limit:    queryPagination.Limit,
 		Sort:     queryPagination.Sort,
 		Order:    queryPagination.Order,
-		Name:     QueryParam.Name,
-		MinPrice: QueryParam.MinPrice,
-		MaxPrice: QueryParam.MaxPrice,
+		Name:     queryParam.Name,
+		MinPrice: queryParam.MinPrice,
+		MaxPrice: queryParam.MaxPrice,
 	})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
