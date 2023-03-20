@@ -51,7 +51,7 @@ Read
 func (cu *CommoditiesUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := cu.commoditiesRepository.GetByQuery(query)
 	if err != nil {
-		return []Domain{}, 0, http.StatusInternalServerError, err
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
 	}
 
 	return commodities, totalData, http.StatusOK, nil
@@ -73,6 +73,15 @@ func (cu *CommoditiesUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Doma
 	}
 
 	return commodity, http.StatusOK, nil
+}
+
+func (cu *CommoditiesUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error) {
+	commodities, err := cu.commoditiesRepository.GetByFarmerID(farmerID)
+	if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	return commodities, http.StatusOK, nil
 }
 
 /*

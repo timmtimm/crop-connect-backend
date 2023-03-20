@@ -40,6 +40,7 @@ type Repository interface {
 	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	GetByName(name string) (Domain, error)
 	GetByNameAndFarmerID(name string, farmerID primitive.ObjectID) (Domain, error)
+	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
@@ -54,6 +55,7 @@ type UseCase interface {
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
+	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain) (Domain, int, error)
 	// Delete

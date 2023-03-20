@@ -42,7 +42,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 
 	commodity := apiV1.Group("/commodity")
 	commodity.GET("/page/:page", cl.CommodityController.GetForBuyer)
-	// commodity.GET("/farmer/page/:page", cl.CommodityController.GetForFarmer, _middleware.CheckOneRole(constant.RoleFarmer))
+	commodity.GET("/farmer", cl.CommodityController.GetForFarmer, _middleware.CheckOneRole(constant.RoleFarmer))
 	commodity.POST("", cl.CommodityController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
 	commodity.GET("/:commodity-id", cl.CommodityController.GetByID)
 	commodity.PUT("/:commodity-id", cl.CommodityController.Update, _middleware.CheckOneRole(constant.RoleFarmer))

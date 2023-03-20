@@ -155,6 +155,38 @@ func (cc *Controller) GetByID(c echo.Context) error {
 	})
 }
 
+func (cc *Controller) GetForFarmer(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	commodities, statusCode, err := cc.commodityUC.GetByFarmerID(userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	commodityResponse, statusCode, err := response.FromDomainArray(commodities, cc.userUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan komoditas",
+		Data:    commodityResponse,
+	})
+}
+
 /*
 Update
 */

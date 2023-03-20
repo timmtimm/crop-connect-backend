@@ -106,6 +106,27 @@ func (cr *commoditiesRepository) GetByNameAndFarmerID(name string, farmerID prim
 	return result.ToDomain(), err
 }
 
+func (cr *commoditiesRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]commodities.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result []Model
+	cursor, err := cr.collection.Find(ctx, bson.M{
+		"farmerID":  farmerID,
+		"deletedAt": bson.M{"$exists": false},
+	})
+	if err != nil {
+		return []commodities.Domain{}, err
+	}
+
+	err = cursor.All(ctx, &result)
+	if err != nil {
+		return []commodities.Domain{}, err
+	}
+
+	return ToDomainArray(result), err
+}
+
 func (cr *commoditiesRepository) GetByQuery(query commodities.Query) ([]commodities.Domain, int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
