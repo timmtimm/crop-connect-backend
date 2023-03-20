@@ -32,7 +32,11 @@ type Repository interface {
 	// Read
 	GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
+	GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (Domain, error)
+	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	// Update
+	Update(domain *Domain) (Domain, error)
+	RejectPendingByProposalID(proposalID primitive.ObjectID) error
 	// Delete
 }
 
@@ -42,5 +46,6 @@ type UseCase interface {
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
+	MakeDecision(domain *Domain) (int, error)
 	// Delete
 }

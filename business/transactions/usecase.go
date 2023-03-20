@@ -32,7 +32,6 @@ Create
 
 func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 	_, err := tu.transactionRepository.GetByBuyerIDProposalIDAndStatus(domain.BuyerID, domain.ProposalID, constant.TransactionStatusPending)
-
 	if err == mongo.ErrNoDocuments {
 		proposal, err := tu.proposalRepository.GetByID(domain.ProposalID)
 		if err == mongo.ErrNoDocuments {
@@ -94,6 +93,47 @@ func (tu *TransactionUseCase) GetTransactionsByCommodityName(query Query) ([]Dom
 /*
 Update
 */
+
+func (tu *TransactionUseCase) MakeDecision(domain *Domain) (int, error) {
+	transactions, err := tu.transactionRepository.GetByIDAndFarmerID(domain.ID, domain.BuyerID)
+	if err != nil {
+		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+	}
+
+	if transactions.Status != constant.TransactionStatusPending {
+		return http.StatusConflict, errors.New("transaksi sudah dibuat keputusan")
+	}
+
+	if domain.Status == constant.TransactionStatusAccepted {
+		proposal, err := tu.proposalRepository.GetByID(transactions.ProposalID)
+		if err != nil {
+			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		}
+
+		err = tu.transactionRepository.RejectPendingByProposalID(transactions.ProposalID)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
+		}
+
+		proposal.IsAvailable = false
+		proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		_, err = tu.proposalRepository.Update(&proposal)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal mengupdate proposal")
+		}
+	}
+
+	transactions.Status = domain.Status
+	transactions.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	_, err = tu.transactionRepository.Update(&transactions)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
+	}
+
+	return http.StatusOK, nil
+}
 
 /*
 Delete

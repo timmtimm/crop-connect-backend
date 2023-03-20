@@ -9,6 +9,7 @@ import (
 	"marketplace-backend/controller/transactions/request"
 	"marketplace-backend/controller/transactions/response"
 	"marketplace-backend/helper"
+	"marketplace-backend/util"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -171,6 +172,52 @@ func (tc *Controller) GetUserTransaction(c echo.Context) error {
 /*
 Update
 */
+
+func (tc *Controller) MakeDecision(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "token tidak valid",
+		})
+	}
+
+	transactionID, err := primitive.ObjectIDFromHex(c.Param("transaction-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "transaction id tidak valid",
+		})
+	}
+
+	userInput := request.Decision{}
+	c.Bind(&userInput)
+
+	isStatusValid := util.CheckStringOnArray([]string{constant.TransactionStatusAccepted, constant.TransactionStatusPending, constant.TransactionStatusRejected}, userInput.Decision)
+	if !isStatusValid {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "keputusan hanya tersedia untuk accepted, pending, dan rejected",
+		})
+	}
+
+	inputDomain := userInput.ToDomain()
+	inputDomain.ID = transactionID
+	inputDomain.BuyerID = userID
+
+	statusCode, err := tc.transactionUC.MakeDecision(inputDomain)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "transaksi berhasil dibuat keputusan",
+	})
+}
 
 /*
 Delete

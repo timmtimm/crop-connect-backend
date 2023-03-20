@@ -49,3 +49,13 @@ func (req *Create) Validate() []helper.ValidationError {
 
 	return nil
 }
+
+type Decision struct {
+	Decision string `form:"decision" json:"decision"`
+}
+
+func (req *Decision) ToDomain() *transactions.Domain {
+	return &transactions.Domain{
+		Status: req.Decision,
+	}
+}

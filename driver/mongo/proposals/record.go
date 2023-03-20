@@ -17,7 +17,7 @@ type Model struct {
 	EstimatedTotalHarvest float64            `bson:"estimatedTotalHarvest"`
 	PlantingArea          float64            `bson:"plantingArea"`
 	Address               string             `bson:"address"`
-	IsAvailable           bool               `bson:"isAvailable,omitempty"`
+	IsAvailable           bool               `bson:"isAvailable"`
 	CreatedAt             primitive.DateTime `bson:"createdAt"`
 	UpdatedAt             primitive.DateTime `bson:"updatedAt,omitempty"`
 	DeletedAt             primitive.DateTime `bson:"deletedAt,omitempty"`

@@ -3,6 +3,7 @@ package transactions
 import (
 	"context"
 	"marketplace-backend/business/transactions"
+	"marketplace-backend/constant"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -203,9 +204,101 @@ func (tr *transactionRepository) GetByQuery(query transactions.Query) ([]transac
 	return ToDomainArray(result), countResult.TotalDocument, nil
 }
 
+func (tr *transactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (transactions.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := tr.collection.FindOne(ctx, bson.M{
+		"_id":     id,
+		"buyerID": buyerID,
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
+func (tr *transactionRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (transactions.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	lookup1 := bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+
+	lookup2 := bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+
+	match := bson.M{
+		"$match": bson.M{
+			"commodity_info.farmerID": farmerID,
+		},
+	}
+
+	pipeline := bson.A{lookup1, lookup2, match}
+	cursor, err := tr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return transactions.Domain{}, err
+	}
+
+	var result Model
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&result)
+		if err != nil {
+			return transactions.Domain{}, err
+		}
+	}
+
+	return result.ToDomain(), nil
+}
+
 /*
 Update
 */
+
+func (tr *transactionRepository) Update(domain *transactions.Domain) (transactions.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := tr.collection.UpdateOne(ctx, bson.M{
+		"_id": domain.ID,
+	}, bson.M{
+		"$set": FromDomain(domain),
+	})
+
+	if err != nil {
+		return transactions.Domain{}, err
+	}
+
+	return *domain, nil
+}
+
+func (tr *transactionRepository) RejectPendingByProposalID(proposalID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := tr.collection.UpdateMany(ctx, bson.M{
+		"proposalID": proposalID,
+		"status":     constant.TransactionStatusPending,
+	}, bson.M{
+		"$set": bson.M{
+			"status":    constant.TransactionStatusRejected,
+			"updatedAt": primitive.NewDateTimeFromTime(time.Now()),
+		},
+	})
+
+	return err
+}
 
 /*
 Delete

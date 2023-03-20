@@ -56,6 +56,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	proposal.PUT("/validate/:proposal-id", cl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
 
 	transaction := apiV1.Group("/transaction")
+	transaction.GET("/page/:page", cl.TransactionController.GetUserTransaction, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
-	transaction.GET("/:page", cl.TransactionController.GetUserTransaction, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 }
