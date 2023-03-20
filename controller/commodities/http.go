@@ -96,6 +96,7 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		Sort:     queryPagination.Sort,
 		Order:    queryPagination.Order,
 		Name:     queryParam.Name,
+		Farmer:   queryParam.Farmer,
 		MinPrice: queryParam.MinPrice,
 		MaxPrice: queryParam.MaxPrice,
 	})

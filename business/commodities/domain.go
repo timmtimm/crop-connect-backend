@@ -25,7 +25,8 @@ type Query struct {
 	Sort     string
 	Order    int
 	Name     string
-	FarmerID []primitive.ObjectID
+	Farmer   string
+	FarmerID primitive.ObjectID
 	MinPrice int
 	MaxPrice int
 }

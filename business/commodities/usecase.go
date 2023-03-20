@@ -51,7 +51,7 @@ Read
 func (cu *CommoditiesUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := cu.commoditiesRepository.GetByQuery(query)
 	if err != nil {
-		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+		return []Domain{}, 0, http.StatusInternalServerError, err
 	}
 
 	return commodities, totalData, http.StatusOK, nil

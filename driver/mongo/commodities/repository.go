@@ -8,7 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type commoditiesRepository struct {
@@ -111,41 +110,109 @@ func (cr *commoditiesRepository) GetByQuery(query commodities.Query) ([]commodit
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	filter := bson.M{
-		"deletedAt": bson.M{"$exists": false},
-	}
-	if query.Name != "" {
-		filter["name"] = bson.M{"$regex": query.Name, "$options": "i"}
-	} else if len(query.FarmerID) != 0 {
-		filter["farmerID"] = query.FarmerID
-	} else if query.MinPrice != 0 && query.MaxPrice == 0 {
-		filter["pricePerKg"] = bson.M{"$gte": query.MinPrice}
-	} else if query.MaxPrice != 0 && query.MinPrice == 0 {
-		filter["pricePerKg"] = bson.M{"$lte": query.MaxPrice}
-	} else if query.MinPrice != 0 && query.MaxPrice != 0 {
-		filter["pricePerKg"] = bson.M{"$gte": query.MinPrice, "$lte": query.MaxPrice}
-	}
-
-	cursor, err := cr.collection.Find(ctx, filter, &options.FindOptions{
-		Skip:  &query.Skip,
-		Limit: &query.Limit,
-		Sort:  bson.M{query.Sort: query.Order},
+	pipeline := []interface{}{}
+	pipeline = append(pipeline, bson.M{
+		"$match": bson.M{
+			"deletedAt": bson.M{"$exists": false},
+		},
 	})
-	if err != nil {
-		return []commodities.Domain{}, 0, err
+
+	if query.Name != "" {
+		filterName := bson.M{"$regex": query.Name, "$options": "i"}
+		pipeline = append(pipeline, filterName)
 	}
 
-	totalData, err := cr.collection.CountDocuments(ctx, filter)
+	if query.FarmerID != primitive.NilObjectID {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"farmerID": query.FarmerID,
+			},
+		})
+	}
+
+	if query.MinPrice != 0 {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"pricePerKg": bson.M{
+					"$gte": query.MinPrice,
+				},
+			},
+		})
+	}
+
+	if query.MaxPrice != 0 {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"pricePerKg": bson.M{
+					"$lte": query.MaxPrice,
+				},
+			},
+		})
+	}
+
+	if query.Farmer != "" {
+		lookup := bson.M{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "farmerID",
+				"foreignField": "_id",
+				"as":           "farmer_info",
+			},
+		}
+
+		match := bson.M{
+			"$match": bson.M{
+				"farmer_info.name": bson.M{
+					"$regex":   query.Farmer,
+					"$options": "i",
+				},
+			},
+		}
+
+		pipeline = append(pipeline, lookup, match)
+	}
+
+	paginationSkip := bson.M{
+		"$skip": query.Skip,
+	}
+
+	paginationLimit := bson.M{
+		"$limit": query.Limit,
+	}
+
+	paginationSort := bson.M{
+		"$sort": bson.M{query.Sort: query.Order},
+	}
+
+	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
+	pipeline = append(pipeline, paginationSkip, paginationLimit, paginationSort)
+
+	cursor, err := cr.collection.Aggregate(ctx, pipeline)
 	if err != nil {
-		return []commodities.Domain{}, 0, err
+		return nil, 0, err
+	}
+
+	cursorCount, err := cr.collection.Aggregate(ctx, pipelineForCount)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	var result []Model
-	if err = cursor.All(ctx, &result); err != nil {
-		return []commodities.Domain{}, 0, err
+	countResult := TotalDocument{}
+
+	if err := cursor.All(ctx, &result); err != nil {
+		return nil, 0, err
 	}
 
-	return ToDomainArray(result), int(totalData), err
+	for cursorCount.Next(ctx) {
+		err := cursorCount.Decode(&countResult)
+		if err != nil {
+			return nil, 0, err
+		}
+
+	}
+
+	return ToDomainArray(result), countResult.TotalDocument, nil
 }
 
 /*

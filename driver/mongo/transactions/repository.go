@@ -60,49 +60,46 @@ func (tr *transactionRepository) GetByQuery(query transactions.Query) ([]transac
 	defer cancel()
 
 	pipeline := []interface{}{}
+	pipeline = append(pipeline, bson.M{
+		"$match": bson.M{
+			"deletedAt": bson.M{"$exists": false},
+		},
+	})
 
 	if query.BuyerID != primitive.NilObjectID {
-		filterBuyerID := bson.M{
+		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"buyerID": query.BuyerID,
 			},
-		}
-
-		pipeline = append(pipeline, filterBuyerID)
+		})
 	}
 
 	if query.Status != "" {
-		filterStatus := bson.M{
+		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"status": query.Status,
 			},
-		}
-
-		pipeline = append(pipeline, filterStatus)
+		})
 	}
 
 	if query.StartDate != 0 {
-		filterStartDate := bson.M{
+		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"createdAt": bson.M{
 					"$gte": query.StartDate,
 				},
 			},
-		}
-
-		pipeline = append(pipeline, filterStartDate)
+		})
 	}
 
 	if query.EndDate != 0 {
-		filterEndDate := bson.M{
+		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"createdAt": bson.M{
 					"$lte": query.EndDate,
 				},
 			},
-		}
-
-		pipeline = append(pipeline, filterEndDate)
+		})
 	}
 
 	if query.Commodity != "" {
