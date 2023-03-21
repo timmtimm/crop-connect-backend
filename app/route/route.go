@@ -3,6 +3,7 @@ package route
 import (
 	_middleware "marketplace-backend/app/middleware"
 	"marketplace-backend/constant"
+	"marketplace-backend/controller/batchs"
 	"marketplace-backend/controller/commodities"
 	"marketplace-backend/controller/proposals"
 	"marketplace-backend/controller/transactions"
@@ -18,6 +19,7 @@ type ControllerList struct {
 	CommodityController   *commodities.Controller
 	ProposalController    *proposals.Controller
 	TransactionController *transactions.Controller
+	BatchController       *batchs.Controller
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
@@ -59,4 +61,6 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	transaction.GET("/page/:page", cl.TransactionController.GetUserTransaction, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
+
+	// batch := apiV1.Group("/batch")
 }

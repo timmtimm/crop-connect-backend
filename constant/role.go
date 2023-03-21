@@ -1,6 +1,6 @@
 package constant
 
-var (
+const (
 	RoleAdmin     = "admin"
 	RoleValidator = "validator"
 	RoleFarmer    = "farmer"

@@ -9,12 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type CommoditiesUseCase struct {
+type CommodityUseCase struct {
 	commoditiesRepository Repository
 }
 
 func NewCommodityUseCase(cr Repository) UseCase {
-	return &CommoditiesUseCase{
+	return &CommodityUseCase{
 		commoditiesRepository: cr,
 	}
 }
@@ -23,7 +23,7 @@ func NewCommodityUseCase(cr Repository) UseCase {
 Create
 */
 
-func (cu *CommoditiesUseCase) Create(domain *Domain) (int, error) {
+func (cu *CommodityUseCase) Create(domain *Domain) (int, error) {
 	_, err := cu.commoditiesRepository.GetByNameAndFarmerID(domain.Name, domain.FarmerID)
 	if err == mongo.ErrNoDocuments {
 		domain.ID = primitive.NewObjectID()
@@ -48,7 +48,7 @@ func (cu *CommoditiesUseCase) Create(domain *Domain) (int, error) {
 Read
 */
 
-func (cu *CommoditiesUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
+func (cu *CommodityUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := cu.commoditiesRepository.GetByQuery(query)
 	if err != nil {
 		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
@@ -57,7 +57,7 @@ func (cu *CommoditiesUseCase) GetByPaginationAndQuery(query Query) ([]Domain, in
 	return commodities, totalData, http.StatusOK, nil
 }
 
-func (cu *CommoditiesUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
+func (cu *CommodityUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
 	commodity, err := cu.commoditiesRepository.GetByID(id)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
@@ -66,7 +66,7 @@ func (cu *CommoditiesUseCase) GetByID(id primitive.ObjectID) (Domain, int, error
 	return commodity, http.StatusOK, nil
 }
 
-func (cu *CommoditiesUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error) {
+func (cu *CommodityUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error) {
 	commodity, err := cu.commoditiesRepository.GetByID(id)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
@@ -75,7 +75,7 @@ func (cu *CommoditiesUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Doma
 	return commodity, http.StatusOK, nil
 }
 
-func (cu *CommoditiesUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error) {
+func (cu *CommodityUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error) {
 	commodities, err := cu.commoditiesRepository.GetByFarmerID(farmerID)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
@@ -88,7 +88,7 @@ func (cu *CommoditiesUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Doma
 Update
 */
 
-func (cu *CommoditiesUseCase) Update(domain *Domain) (Domain, int, error) {
+func (cu *CommodityUseCase) Update(domain *Domain) (Domain, int, error) {
 	commodity, err := cu.commoditiesRepository.GetByIDAndFarmerID(domain.ID, domain.FarmerID)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
@@ -130,7 +130,7 @@ func (cu *CommoditiesUseCase) Update(domain *Domain) (Domain, int, error) {
 Delete
 */
 
-func (cu *CommoditiesUseCase) Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
+func (cu *CommodityUseCase) Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
 	_, err := cu.commoditiesRepository.GetByIDAndFarmerID(id, farmerID)
 	if err != nil {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")

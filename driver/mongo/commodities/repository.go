@@ -3,6 +3,7 @@ package commodities
 import (
 	"context"
 	"marketplace-backend/business/commodities"
+	"marketplace-backend/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,12 +11,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type commoditiesRepository struct {
+type CommodityRepository struct {
 	collection *mongo.Collection
 }
 
 func NewMongoRepository(db *mongo.Database) commodities.Repository {
-	return &commoditiesRepository{
+	return &CommodityRepository{
 		collection: db.Collection("commodities"),
 	}
 }
@@ -24,7 +25,7 @@ func NewMongoRepository(db *mongo.Database) commodities.Repository {
 Create
 */
 
-func (cr *commoditiesRepository) Create(domain *commodities.Domain) (commodities.Domain, error) {
+func (cr *CommodityRepository) Create(domain *commodities.Domain) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -40,7 +41,7 @@ func (cr *commoditiesRepository) Create(domain *commodities.Domain) (commodities
 Read
 */
 
-func (cr *commoditiesRepository) GetByID(id primitive.ObjectID) (commodities.Domain, error) {
+func (cr *CommodityRepository) GetByID(id primitive.ObjectID) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -53,7 +54,7 @@ func (cr *commoditiesRepository) GetByID(id primitive.ObjectID) (commodities.Dom
 	return result.ToDomain(), err
 }
 
-func (cr *commoditiesRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (commodities.Domain, error) {
+func (cr *CommodityRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -65,7 +66,7 @@ func (cr *commoditiesRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (c
 	return result.ToDomain(), err
 }
 
-func (cr *commoditiesRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (commodities.Domain, error) {
+func (cr *CommodityRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -79,7 +80,7 @@ func (cr *commoditiesRepository) GetByIDAndFarmerID(id primitive.ObjectID, farme
 	return result.ToDomain(), err
 }
 
-func (cr *commoditiesRepository) GetByName(name string) (commodities.Domain, error) {
+func (cr *CommodityRepository) GetByName(name string) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -92,7 +93,7 @@ func (cr *commoditiesRepository) GetByName(name string) (commodities.Domain, err
 	return result.ToDomain(), err
 }
 
-func (cr *commoditiesRepository) GetByNameAndFarmerID(name string, farmerID primitive.ObjectID) (commodities.Domain, error) {
+func (cr *CommodityRepository) GetByNameAndFarmerID(name string, farmerID primitive.ObjectID) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -106,7 +107,7 @@ func (cr *commoditiesRepository) GetByNameAndFarmerID(name string, farmerID prim
 	return result.ToDomain(), err
 }
 
-func (cr *commoditiesRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]commodities.Domain, error) {
+func (cr *CommodityRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -127,7 +128,7 @@ func (cr *commoditiesRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]c
 	return ToDomainArray(result), err
 }
 
-func (cr *commoditiesRepository) GetByQuery(query commodities.Query) ([]commodities.Domain, int, error) {
+func (cr *CommodityRepository) GetByQuery(query commodities.Query) ([]commodities.Domain, int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -219,7 +220,7 @@ func (cr *commoditiesRepository) GetByQuery(query commodities.Query) ([]commodit
 	}
 
 	var result []Model
-	countResult := TotalDocument{}
+	countResult := dto.TotalDocument{}
 
 	if err := cursor.All(ctx, &result); err != nil {
 		return nil, 0, err
@@ -240,7 +241,7 @@ func (cr *commoditiesRepository) GetByQuery(query commodities.Query) ([]commodit
 Update
 */
 
-func (cr *commoditiesRepository) Update(domain *commodities.Domain) (commodities.Domain, error) {
+func (cr *CommodityRepository) Update(domain *commodities.Domain) (commodities.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -261,7 +262,7 @@ func (cr *commoditiesRepository) Update(domain *commodities.Domain) (commodities
 Delete
 */
 
-func (cr *commoditiesRepository) Delete(id primitive.ObjectID) error {
+func (cr *CommodityRepository) Delete(id primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 

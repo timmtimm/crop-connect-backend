@@ -21,10 +21,6 @@ type Model struct {
 	DeletedAt      primitive.DateTime `bson:"deletedAt,omitempty"`
 }
 
-type TotalDocument struct {
-	TotalDocument int `bson:"totalDocument"`
-}
-
 func FromDomain(domain *commodities.Domain) *Model {
 	return &Model{
 		ID:             domain.ID,

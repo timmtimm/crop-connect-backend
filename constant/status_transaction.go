@@ -1,7 +1,8 @@
 package constant
 
-var (
+const (
 	TransactionStatusPending  = "pending"
 	TransactionStatusAccepted = "accepted"
 	TransactionStatusRejected = "rejected"
+	TransactionStatusCancel   = "cancelled"
 )

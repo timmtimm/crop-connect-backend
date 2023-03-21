@@ -4,6 +4,7 @@ import (
 	"context"
 	"marketplace-backend/business/transactions"
 	"marketplace-backend/constant"
+	"marketplace-backend/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,12 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type transactionRepository struct {
+type TransactionRepository struct {
 	collection *mongo.Collection
 }
 
 func NewMongoRepository(db *mongo.Database) transactions.Repository {
-	return &transactionRepository{
+	return &TransactionRepository{
 		collection: db.Collection("transactions"),
 	}
 }
@@ -25,7 +26,7 @@ func NewMongoRepository(db *mongo.Database) transactions.Repository {
 Create
 */
 
-func (tr *transactionRepository) Create(domain *transactions.Domain) (transactions.Domain, error) {
+func (tr *TransactionRepository) Create(domain *transactions.Domain) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -41,7 +42,19 @@ func (tr *transactionRepository) Create(domain *transactions.Domain) (transactio
 Read
 */
 
-func (tr *transactionRepository) GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (transactions.Domain, error) {
+func (tr *TransactionRepository) GetByID(id primitive.ObjectID) (transactions.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := tr.collection.FindOne(ctx, bson.M{
+		"_id": id,
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
+func (tr *TransactionRepository) GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -50,22 +63,16 @@ func (tr *transactionRepository) GetByBuyerIDProposalIDAndStatus(buyerID primiti
 		"buyerID":    buyerID,
 		"proposalID": proposalID,
 		"status":     status,
-		"deletedAt":  bson.M{"$exists": false},
 	}).Decode(&result)
 
 	return result.ToDomain(), err
 }
 
-func (tr *transactionRepository) GetByQuery(query transactions.Query) ([]transactions.Domain, int, error) {
+func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transactions.Domain, int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	pipeline := []interface{}{}
-	pipeline = append(pipeline, bson.M{
-		"$match": bson.M{
-			"deletedAt": bson.M{"$exists": false},
-		},
-	})
 
 	if query.BuyerID != primitive.NilObjectID {
 		pipeline = append(pipeline, bson.M{
@@ -188,7 +195,7 @@ func (tr *transactionRepository) GetByQuery(query transactions.Query) ([]transac
 	}
 
 	var result []Model
-	countResult := TotalDocument{}
+	countResult := dto.TotalDocument{}
 
 	if err := cursor.All(ctx, &result); err != nil {
 		return nil, 0, err
@@ -204,7 +211,7 @@ func (tr *transactionRepository) GetByQuery(query transactions.Query) ([]transac
 	return ToDomainArray(result), countResult.TotalDocument, nil
 }
 
-func (tr *transactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (transactions.Domain, error) {
+func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -217,7 +224,7 @@ func (tr *transactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerI
 	return result.ToDomain(), err
 }
 
-func (tr *transactionRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (transactions.Domain, error) {
+func (tr *TransactionRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -266,7 +273,7 @@ func (tr *transactionRepository) GetByIDAndFarmerID(id primitive.ObjectID, farme
 Update
 */
 
-func (tr *transactionRepository) Update(domain *transactions.Domain) (transactions.Domain, error) {
+func (tr *TransactionRepository) Update(domain *transactions.Domain) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -283,7 +290,7 @@ func (tr *transactionRepository) Update(domain *transactions.Domain) (transactio
 	return *domain, nil
 }
 
-func (tr *transactionRepository) RejectPendingByProposalID(proposalID primitive.ObjectID) error {
+func (tr *TransactionRepository) RejectPendingByProposalID(proposalID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 

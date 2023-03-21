@@ -14,7 +14,7 @@ import (
 )
 
 type Buyer struct {
-	ID         primitive.ObjectID          `json:"id"`
+	ID         primitive.ObjectID          `json:"_id"`
 	Commodity  commodityResponse.Commodity `json:"commodity"`
 	Proposal   proposalResponse.Buyer      `json:"proposal"`
 	Address    string                      `json:"address"`

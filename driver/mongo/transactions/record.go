@@ -17,10 +17,6 @@ type Model struct {
 	UpdatedAt  primitive.DateTime `bson:"updatedAt,omitempty"`
 }
 
-type TotalDocument struct {
-	TotalDocument int `bson:"totalDocument"`
-}
-
 func FromDomain(domain *transactions.Domain) *Model {
 	return &Model{
 		ID:         domain.ID,

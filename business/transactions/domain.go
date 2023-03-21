@@ -30,6 +30,7 @@ type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
+	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (Domain, error)

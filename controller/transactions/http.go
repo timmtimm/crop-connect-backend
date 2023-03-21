@@ -1,6 +1,7 @@
 package transactions
 
 import (
+	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
 	"marketplace-backend/business/transactions"
@@ -21,14 +22,16 @@ type Controller struct {
 	proposalUC    proposals.UseCase
 	commodityUC   commodities.UseCase
 	userUC        users.UseCase
+	batchUC       batchs.UseCase
 }
 
-func NewTransactionController(transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) *Controller {
+func NewTransactionController(transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, batchUC batchs.UseCase) *Controller {
 	return &Controller{
 		transactionUC: transactionUC,
 		proposalUC:    proposalUC,
 		commodityUC:   commodityUC,
 		userUC:        userUC,
+		batchUC:       batchUC,
 	}
 }
 
@@ -206,6 +209,14 @@ func (tc *Controller) MakeDecision(c echo.Context) error {
 	inputDomain.BuyerID = userID
 
 	statusCode, err := tc.transactionUC.MakeDecision(inputDomain)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	statusCode, err = tc.batchUC.Create(inputDomain.ID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

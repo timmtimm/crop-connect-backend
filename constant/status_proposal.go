@@ -1,6 +1,6 @@
 package constant
 
-var (
+const (
 	ProposalStatusPending  = "pending"
 	ProposalStatusApproved = "approved"
 	ProposalStatusRejected = "rejected"

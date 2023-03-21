@@ -10,12 +10,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type proposalRepository struct {
+type ProposalRepository struct {
 	collection *mongo.Collection
 }
 
 func NewMongoRepository(db *mongo.Database) proposals.Repository {
-	return &proposalRepository{
+	return &ProposalRepository{
 		collection: db.Collection("proposals"),
 	}
 }
@@ -24,7 +24,7 @@ func NewMongoRepository(db *mongo.Database) proposals.Repository {
 Create
 */
 
-func (pr *proposalRepository) Create(domain *proposals.Domain) (proposals.Domain, error) {
+func (pr *ProposalRepository) Create(domain *proposals.Domain) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -40,7 +40,7 @@ func (pr *proposalRepository) Create(domain *proposals.Domain) (proposals.Domain
 Read
 */
 
-func (pr *proposalRepository) GetByID(id primitive.ObjectID) (proposals.Domain, error) {
+func (pr *ProposalRepository) GetByID(id primitive.ObjectID) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -53,7 +53,7 @@ func (pr *proposalRepository) GetByID(id primitive.ObjectID) (proposals.Domain, 
 	return result.ToDomain(), err
 }
 
-func (pr *proposalRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (proposals.Domain, error) {
+func (pr *ProposalRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -65,7 +65,7 @@ func (pr *proposalRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (prop
 	return result.ToDomain(), err
 }
 
-func (pr *proposalRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]proposals.Domain, error) {
+func (pr *ProposalRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -86,7 +86,7 @@ func (pr *proposalRepository) GetByCommodityID(commodityID primitive.ObjectID) (
 	return ToDomainArray(result), err
 }
 
-func (pr *proposalRepository) GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, status string) ([]proposals.Domain, error) {
+func (pr *ProposalRepository) GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, status string) ([]proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -108,7 +108,7 @@ func (pr *proposalRepository) GetByCommodityIDAndAvailability(commodityID primit
 	return ToDomainArray(result), err
 }
 
-func (pr *proposalRepository) GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (proposals.Domain, error) {
+func (pr *ProposalRepository) GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -126,7 +126,7 @@ func (pr *proposalRepository) GetByCommodityIDAndName(commodityID primitive.Obje
 Update
 */
 
-func (pr *proposalRepository) Update(domain *proposals.Domain) (proposals.Domain, error) {
+func (pr *ProposalRepository) Update(domain *proposals.Domain) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -143,7 +143,7 @@ func (pr *proposalRepository) Update(domain *proposals.Domain) (proposals.Domain
 	return *domain, nil
 }
 
-func (pr *proposalRepository) UnsetRejectReason(id primitive.ObjectID) (proposals.Domain, error) {
+func (pr *ProposalRepository) UnsetRejectReason(id primitive.ObjectID) (proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -169,7 +169,7 @@ func (pr *proposalRepository) UnsetRejectReason(id primitive.ObjectID) (proposal
 Delete
 */
 
-func (pr *proposalRepository) Delete(id primitive.ObjectID) error {
+func (pr *ProposalRepository) Delete(id primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -188,7 +188,7 @@ func (pr *proposalRepository) Delete(id primitive.ObjectID) error {
 	return nil
 }
 
-func (pr *proposalRepository) DeleteByCommodityID(commodityID primitive.ObjectID) error {
+func (pr *ProposalRepository) DeleteByCommodityID(commodityID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
