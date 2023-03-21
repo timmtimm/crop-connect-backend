@@ -5,15 +5,15 @@ import (
 )
 
 type Domain struct {
-	ID          primitive.ObjectID `json:"_id"`
-	Name        string             `json:"name"`
-	Email       string             `json:"email"`
-	Description string             `json:"description"`
-	PhoneNumber string             `json:"phoneNumber"`
-	Password    string             `json:"-"`
-	Role        string             `json:"role"`
-	CreatedAt   primitive.DateTime `json:"createdAt"`
-	UpdatedAt   primitive.DateTime `json:"updatedAt"`
+	ID          primitive.ObjectID
+	Name        string
+	Email       string
+	Description string
+	PhoneNumber string
+	Password    string
+	Role        string
+	CreatedAt   primitive.DateTime
+	UpdatedAt   primitive.DateTime
 }
 
 type Repository interface {

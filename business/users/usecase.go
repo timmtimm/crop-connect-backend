@@ -2,7 +2,9 @@ package users
 
 import (
 	"errors"
+	"marketplace-backend/constant"
 	"marketplace-backend/helper"
+	"marketplace-backend/util"
 	"net/http"
 	"time"
 
@@ -26,49 +28,49 @@ Create
 */
 
 func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
-	isRoleAvailable := helper.CheckStringOnArray([]string{"buyer", "farmer"}, domain.Role)
+	isRoleAvailable := util.CheckStringOnArray([]string{constant.RoleBuyer, constant.RoleFarmer}, domain.Role)
 	if !isRoleAvailable {
 		return "", http.StatusBadRequest, errors.New("role tersedia hanya buyer dan farmer")
 	}
 
 	_, err := uu.userRepository.GetByEmail(domain.Email)
-	if err == nil {
+	if err == mongo.ErrNoDocuments {
+		encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
+		domain.ID = primitive.NewObjectID()
+		domain.Password = string(encryptedPassword)
+		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		user, err := uu.userRepository.Create(domain)
+		if err != nil {
+			return "", http.StatusInternalServerError, errors.New("gagal melakuakn registrasi user")
+		}
+
+		token := helper.GenerateToken(user.ID.Hex(), user.Role)
+		return token, http.StatusCreated, nil
+	} else {
 		return "", http.StatusConflict, errors.New("email telah terdaftar")
 	}
-
-	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
-	domain.ID = primitive.NewObjectID()
-	domain.Password = string(encryptedPassword)
-	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-
-	user, err := uu.userRepository.Create(domain)
-	if err != nil {
-		return "", http.StatusInternalServerError, err
-	}
-
-	token := helper.GenerateToken(user.ID.Hex(), user.Role)
-	return token, http.StatusCreated, nil
 }
 
 func (uu *UserUseCase) RegisterValidator(domain *Domain) (string, int, error) {
 	_, err := uu.userRepository.GetByEmail(domain.Email)
-	if err == nil {
+	if err == mongo.ErrNoDocuments {
+		encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
+		domain.ID = primitive.NewObjectID()
+		domain.Password = string(encryptedPassword)
+		domain.Role = constant.RoleValidator
+		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		user, err := uu.userRepository.Create(domain)
+		if err != nil {
+			return "", http.StatusInternalServerError, err
+		}
+
+		token := helper.GenerateToken(user.ID.Hex(), user.Role)
+		return token, http.StatusCreated, nil
+	} else {
 		return "", http.StatusConflict, errors.New("email telah terdaftar")
 	}
-
-	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
-	domain.ID = primitive.NewObjectID()
-	domain.Password = string(encryptedPassword)
-	domain.Role = "validator"
-	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-
-	user, err := uu.userRepository.Create(domain)
-	if err != nil {
-		return "", http.StatusInternalServerError, err
-	}
-
-	token := helper.GenerateToken(user.ID.Hex(), user.Role)
-	return token, http.StatusCreated, nil
 }
 
 /*
@@ -102,7 +104,7 @@ func (uu *UserUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
 }
 
 func (uu *UserUseCase) GetFarmerByName(name string) ([]Domain, int, error) {
-	users, err := uu.userRepository.GetByNameAndRole(name, "farmer")
+	users, err := uu.userRepository.GetByNameAndRole(name, constant.RoleFarmer)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan user")
 	}

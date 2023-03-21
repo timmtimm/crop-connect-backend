@@ -2,19 +2,19 @@ package commodities
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type CommoditiesUseCase struct {
+type CommodityUseCase struct {
 	commoditiesRepository Repository
 }
 
 func NewCommodityUseCase(cr Repository) UseCase {
-	return &CommoditiesUseCase{
+	return &CommodityUseCase{
 		commoditiesRepository: cr,
 	}
 }
@@ -23,30 +23,32 @@ func NewCommodityUseCase(cr Repository) UseCase {
 Create
 */
 
-func (cu *CommoditiesUseCase) Create(domain *Domain) (int, error) {
+func (cu *CommodityUseCase) Create(domain *Domain) (int, error) {
 	_, err := cu.commoditiesRepository.GetByNameAndFarmerID(domain.Name, domain.FarmerID)
-	if err == nil {
-		return http.StatusConflict, errors.New("nama komoditas telah terdaftar")
+	if err == mongo.ErrNoDocuments {
+		domain.ID = primitive.NewObjectID()
+		domain.ImageURLs = []string{}
+		domain.IsAvailable = true
+		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		_, err = cu.commoditiesRepository.Create(domain)
+		if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal membuat komoditas")
+		}
+
+		return http.StatusCreated, nil
+	} else if err.Error() == "context deadline exceeded" {
+		return http.StatusConflict, errors.New("request telah melewati batas waktu")
 	}
 
-	domain.ID = primitive.NewObjectID()
-	domain.ImageURLs = []string{}
-	domain.IsAvailable = true
-	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-
-	_, err = cu.commoditiesRepository.Create(domain)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal membuat komoditas")
-	}
-
-	return http.StatusCreated, nil
+	return http.StatusConflict, errors.New("nama komoditas sudah digunakan")
 }
 
 /*
 Read
 */
 
-func (cu *CommoditiesUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
+func (cu *CommodityUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := cu.commoditiesRepository.GetByQuery(query)
 	if err != nil {
 		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
@@ -55,7 +57,7 @@ func (cu *CommoditiesUseCase) GetByPaginationAndQuery(query Query) ([]Domain, in
 	return commodities, totalData, http.StatusOK, nil
 }
 
-func (cu *CommoditiesUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
+func (cu *CommodityUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
 	commodity, err := cu.commoditiesRepository.GetByID(id)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
@@ -64,11 +66,29 @@ func (cu *CommoditiesUseCase) GetByID(id primitive.ObjectID) (Domain, int, error
 	return commodity, http.StatusOK, nil
 }
 
+func (cu *CommodityUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error) {
+	commodity, err := cu.commoditiesRepository.GetByID(id)
+	if err != nil {
+		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	}
+
+	return commodity, http.StatusOK, nil
+}
+
+func (cu *CommodityUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error) {
+	commodities, err := cu.commoditiesRepository.GetByFarmerID(farmerID)
+	if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	return commodities, http.StatusOK, nil
+}
+
 /*
 Update
 */
 
-func (cu *CommoditiesUseCase) Update(domain *Domain) (Domain, int, error) {
+func (cu *CommodityUseCase) Update(domain *Domain) (Domain, int, error) {
 	commodity, err := cu.commoditiesRepository.GetByIDAndFarmerID(domain.ID, domain.FarmerID)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
@@ -84,7 +104,7 @@ func (cu *CommoditiesUseCase) Update(domain *Domain) (Domain, int, error) {
 
 	if commodity.Name != domain.Name {
 		_, err = cu.commoditiesRepository.GetByNameAndFarmerID(domain.Name, domain.FarmerID)
-		if err == nil {
+		if err != mongo.ErrNoDocuments {
 			return Domain{}, http.StatusConflict, errors.New("nama komoditas telah terdaftar")
 		}
 	}
@@ -99,7 +119,6 @@ func (cu *CommoditiesUseCase) Update(domain *Domain) (Domain, int, error) {
 	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	commodity, err = cu.commoditiesRepository.Create(domain)
-	fmt.Println(commodity)
 	if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate komoditas")
 	}
@@ -111,7 +130,7 @@ func (cu *CommoditiesUseCase) Update(domain *Domain) (Domain, int, error) {
 Delete
 */
 
-func (cu *CommoditiesUseCase) Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
+func (cu *CommodityUseCase) Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
 	_, err := cu.commoditiesRepository.GetByIDAndFarmerID(id, farmerID)
 	if err != nil {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")

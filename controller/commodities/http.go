@@ -82,7 +82,7 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		})
 	}
 
-	QueryParam, err := request.QueryParamValidation(c)
+	queryParam, err := request.QueryParamValidation(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -95,9 +95,10 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		Limit:    queryPagination.Limit,
 		Sort:     queryPagination.Sort,
 		Order:    queryPagination.Order,
-		Name:     QueryParam.Name,
-		MinPrice: QueryParam.MinPrice,
-		MaxPrice: QueryParam.MaxPrice,
+		Name:     queryParam.Name,
+		Farmer:   queryParam.Farmer,
+		MinPrice: queryParam.MinPrice,
+		MaxPrice: queryParam.MaxPrice,
 	})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
@@ -140,6 +141,38 @@ func (cc *Controller) GetByID(c echo.Context) error {
 	}
 
 	commodityResponse, statusCode, err := response.FromDomain(commodity, cc.userUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan komoditas",
+		Data:    commodityResponse,
+	})
+}
+
+func (cc *Controller) GetForFarmer(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	commodities, statusCode, err := cc.commodityUC.GetByFarmerID(userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	commodityResponse, statusCode, err := response.FromDomainArray(commodities, cc.userUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

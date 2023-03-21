@@ -10,12 +10,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type userRepository struct {
+type UserRepository struct {
 	collection *mongo.Collection
 }
 
 func NewMongoRepository(db *mongo.Database) users.Repository {
-	return &userRepository{
+	return &UserRepository{
 		collection: db.Collection("users"),
 	}
 }
@@ -24,7 +24,7 @@ func NewMongoRepository(db *mongo.Database) users.Repository {
 Create
 */
 
-func (ur *userRepository) Create(domain *users.Domain) (users.Domain, error) {
+func (ur *UserRepository) Create(domain *users.Domain) (users.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -40,7 +40,7 @@ func (ur *userRepository) Create(domain *users.Domain) (users.Domain, error) {
 Read
 */
 
-func (ur *userRepository) GetByID(id primitive.ObjectID) (users.Domain, error) {
+func (ur *UserRepository) GetByID(id primitive.ObjectID) (users.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -55,7 +55,7 @@ func (ur *userRepository) GetByID(id primitive.ObjectID) (users.Domain, error) {
 	return result.ToDomain(), nil
 }
 
-func (ur *userRepository) GetByEmail(email string) (users.Domain, error) {
+func (ur *UserRepository) GetByEmail(email string) (users.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -67,7 +67,7 @@ func (ur *userRepository) GetByEmail(email string) (users.Domain, error) {
 	return result.ToDomain(), err
 }
 
-func (ur *userRepository) GetByNameAndRole(name string, role string) ([]users.Domain, error) {
+func (ur *UserRepository) GetByNameAndRole(name string, role string) ([]users.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -93,7 +93,7 @@ func (ur *userRepository) GetByNameAndRole(name string, role string) ([]users.Do
 Update
 */
 
-func (ur *userRepository) Update(domain *users.Domain) (users.Domain, error) {
+func (ur *UserRepository) Update(domain *users.Domain) (users.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 

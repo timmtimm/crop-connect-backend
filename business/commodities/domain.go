@@ -5,18 +5,18 @@ import (
 )
 
 type Domain struct {
-	ID             primitive.ObjectID `json:"_id"`
-	FarmerID       primitive.ObjectID `json:"farmerID"`
-	Name           string             `json:"name"`
-	Description    string             `json:"description"`
-	Seed           string             `json:"seed"`
-	PlantingPeriod int                `json:"plantingPeriod"`
-	ImageURLs      []string           `json:"imageURLs"`
-	PricePerKg     int                `json:"pricePerKg"`
-	IsAvailable    bool               `json:"isAvailable"`
-	CreatedAt      primitive.DateTime `json:"createdAt"`
-	UpdatedAt      primitive.DateTime `json:"updatedAt"`
-	DeletedAt      primitive.DateTime `json:"deletedAt"`
+	ID             primitive.ObjectID
+	FarmerID       primitive.ObjectID
+	Name           string
+	Description    string
+	Seed           string
+	PlantingPeriod int
+	ImageURLs      []string
+	PricePerKg     int
+	IsAvailable    bool
+	CreatedAt      primitive.DateTime
+	UpdatedAt      primitive.DateTime
+	DeletedAt      primitive.DateTime
 }
 
 type Query struct {
@@ -25,7 +25,8 @@ type Query struct {
 	Sort     string
 	Order    int
 	Name     string
-	FarmerID []primitive.ObjectID
+	Farmer   string
+	FarmerID primitive.ObjectID
 	MinPrice int
 	MaxPrice int
 }
@@ -35,9 +36,11 @@ type Repository interface {
 	Create(domain *Domain) (Domain, error)
 	// Read
 	GetByID(id primitive.ObjectID) (Domain, error)
+	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, error)
 	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	GetByName(name string) (Domain, error)
 	GetByNameAndFarmerID(name string, farmerID primitive.ObjectID) (Domain, error)
+	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
@@ -51,6 +54,8 @@ type UseCase interface {
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
+	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
+	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain) (Domain, int, error)
 	// Delete

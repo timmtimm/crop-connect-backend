@@ -8,7 +8,7 @@ type Domain struct {
 	CommodityID           primitive.ObjectID
 	Name                  string
 	Description           string
-	IsAccepted            bool
+	Status                string
 	RejectReason          string
 	EstimatedTotalHarvest float64
 	PlantingArea          float64
@@ -24,12 +24,12 @@ type Repository interface {
 	Create(domain *Domain) (Domain, error)
 	// Read
 	GetByID(id primitive.ObjectID) (Domain, error)
+	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, error)
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
-	GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, isAvailable bool) ([]Domain, error)
+	GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, status string) ([]Domain, error)
 	GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
-	UpdateIsAccepted(id primitive.ObjectID, isAccepted bool) (Domain, error)
 	UnsetRejectReason(id primitive.ObjectID) (Domain, error)
 	// Delete
 	Delete(id primitive.ObjectID) error
@@ -40,6 +40,7 @@ type UseCase interface {
 	Create(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Read
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
+	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)

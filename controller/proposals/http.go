@@ -63,7 +63,6 @@ func (pc *Controller) Create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
 			Message: err.Error(),
-			Error:   validationErr,
 		})
 	}
 
@@ -72,7 +71,6 @@ func (pc *Controller) Create(c echo.Context) error {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
 			Message: "komoditas tidak ditemukan",
-			Error:   validationErr,
 		})
 	}
 

@@ -2,6 +2,7 @@ package helper
 
 import (
 	"errors"
+	"marketplace-backend/util"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -55,12 +56,12 @@ func PaginationToQuery(c echo.Context, availableSort []string) (QueryPagination,
 		return QueryPagination{}, errors.New("limit tidak boleh kurang dari 1")
 	}
 
-	if !CheckStringOnArray(availableSort, pagination.Sort) {
+	if !util.CheckStringOnArray(availableSort, pagination.Sort) {
 		return QueryPagination{}, errors.New("penyortiran tidak tersedia")
 	}
 
 	var convertOrder int
-	if !CheckStringOnArray([]string{"asc", "desc"}, pagination.Order) {
+	if !util.CheckStringOnArray([]string{"asc", "desc"}, pagination.Order) {
 		return QueryPagination{}, errors.New("urutan hanya bisa asc dan desc")
 	} else if pagination.Order == "asc" {
 		convertOrder = 1
