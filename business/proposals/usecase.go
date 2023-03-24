@@ -170,11 +170,13 @@ func (pu *ProposalUseCase) ValidateProposal(domain *Domain, validatorID primitiv
 		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 	}
 
-	if proposal.Status != domain.Status {
-		isStatusAvailable := util.CheckStringOnArray([]string{constant.ProposalStatusRejected, constant.ProposalStatusApproved}, domain.Status)
-		if !isStatusAvailable {
-			return http.StatusBadRequest, errors.New("status proposal hanya tersedia approved dan rejected")
-		}
+	if proposal.Status != constant.ProposalStatusPending {
+		return http.StatusBadRequest, errors.New("proposal sudah divalidasi")
+	}
+
+	isStatusAvailable := util.CheckStringOnArray([]string{constant.ProposalStatusRejected, constant.ProposalStatusApproved}, domain.Status)
+	if !isStatusAvailable {
+		return http.StatusBadRequest, errors.New("status proposal hanya tersedia approved dan rejected")
 	}
 
 	proposal.ValidatorID = validatorID

@@ -45,6 +45,7 @@ type UseCase interface {
 	// Create
 	Create(domain *Domain) (int, error)
 	// Read
+	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
 	MakeDecision(domain *Domain) (int, error)
