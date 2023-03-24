@@ -44,7 +44,7 @@ func main() {
 	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUseCase, proposalUseCase)
 	proposalController := _proposalController.NewProposalController(proposalUseCase, commodityUsecase)
 	transactionController := _transactionController.NewTransactionController(transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, batchUseCase)
-	batchController := _batchController.NewBatchController(batchUseCase)
+	batchController := _batchController.NewBatchController(batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
 
 	routeController := _route.ControllerList{
 		UserController:        userController,

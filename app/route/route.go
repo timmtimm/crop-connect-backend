@@ -1,6 +1,7 @@
 package route
 
 import (
+	"marketplace-backend/app/middleware"
 	_middleware "marketplace-backend/app/middleware"
 	"marketplace-backend/constant"
 	"marketplace-backend/controller/batchs"
@@ -62,5 +63,8 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 
-	// batch := apiV1.Group("/batch")
+	batch := apiV1.Group("/batch")
+	batch.GET("/farmer/page/:page", cl.BatchController.GetFarmerBatch, middleware.CheckOneRole(constant.RoleFarmer))
+	batch.GET("/commodity/:commodity-id", cl.BatchController.GetByCommodityID)
+	batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 }

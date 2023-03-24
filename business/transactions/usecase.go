@@ -72,6 +72,17 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 Read
 */
 
+func (tu *TransactionUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
+	transaction, err := tu.transactionRepository.GetByID(id)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+	}
+
+	return transaction, http.StatusOK, nil
+}
+
 func (tu *TransactionUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := tu.transactionRepository.GetByQuery(query)
 	if err != nil {

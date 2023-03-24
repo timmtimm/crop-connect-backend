@@ -30,8 +30,8 @@ func FromDomain(domain *batchs.Domain) *Model {
 	}
 }
 
-func (model *Model) ToDomain() *batchs.Domain {
-	return &batchs.Domain{
+func (model *Model) ToDomain() batchs.Domain {
+	return batchs.Domain{
 		ID:                   model.ID,
 		TransactionID:        model.TransactionID,
 		Name:                 model.Name,
@@ -46,7 +46,7 @@ func (model *Model) ToDomain() *batchs.Domain {
 func ToDomainArray(model []Model) []batchs.Domain {
 	var domain []batchs.Domain
 	for _, v := range model {
-		domain = append(domain, *v.ToDomain())
+		domain = append(domain, v.ToDomain())
 	}
 	return domain
 }

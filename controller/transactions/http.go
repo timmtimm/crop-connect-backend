@@ -156,7 +156,7 @@ func (tc *Controller) GetUserTransaction(c echo.Context) error {
 		})
 	}
 
-	commodityResponse, statusCode, err := response.FromDomainArrayToBuyer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC)
+	transactionResponse, statusCode, err := response.FromDomainArrayToBuyer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -167,7 +167,7 @@ func (tc *Controller) GetUserTransaction(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:     statusCode,
 		Message:    "berhasil mendapatkan transaksi",
-		Data:       commodityResponse,
+		Data:       transactionResponse,
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
 	})
 }
