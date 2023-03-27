@@ -1,6 +1,9 @@
 package commodities
 
 import (
+	"marketplace-backend/helper"
+	"mime/multipart"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -50,14 +53,15 @@ type Repository interface {
 
 type UseCase interface {
 	// Create
-	Create(domain *Domain) (int, error)
+	Create(domain *Domain, images []*multipart.FileHeader) (int, error)
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
 	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error)
+	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error)
 	// Update
-	Update(domain *Domain) (Domain, int, error)
+	Update(domain *Domain, updateImage []*helper.UpdateImage) (Domain, int, error)
 	// Delete
 	Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error)
 }
