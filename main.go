@@ -6,6 +6,7 @@ import (
 	_route "marketplace-backend/app/route"
 	_driver "marketplace-backend/driver"
 	_mongo "marketplace-backend/driver/mongo"
+	"marketplace-backend/helper/cloudinary"
 	_util "marketplace-backend/util"
 
 	_batchUseCase "marketplace-backend/business/batchs"
@@ -27,6 +28,7 @@ func main() {
 	e := echo.New()
 
 	database := _mongo.Init(_util.GetConfig("DB_NAME"))
+	cloudinary := cloudinary.Init(_util.GetConfig("CLOUDINARY_UPLOAD_FOLDER"))
 
 	userRepository := _driver.NewUserRepository(database)
 	commodityRepository := _driver.NewCommodityRepository(database)
@@ -35,7 +37,7 @@ func main() {
 	batchRepository := _driver.NewBatchRepository(database)
 
 	userUseCase := _userUseCase.NewUserUseCase(userRepository)
-	commodityUsecase := _commodityUseCase.NewCommodityUseCase(commodityRepository)
+	commodityUsecase := _commodityUseCase.NewCommodityUseCase(commodityRepository, cloudinary)
 	proposalUseCase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository)
 	transactionUseCase := _transactionUseCase.NewTransactionUseCase(transactionRepository, commodityRepository, proposalRepository)
 	batchUseCase := _batchUseCase.NewBatchUseCase(batchRepository, transactionRepository, proposalRepository, commodityRepository)

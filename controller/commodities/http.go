@@ -1,6 +1,8 @@
 package commodities
 
 import (
+	"encoding/json"
+	"fmt"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
 	"marketplace-backend/business/users"
@@ -32,7 +34,7 @@ Create
 */
 
 func (cc *Controller) Create(c echo.Context) error {
-	userInput := request.Commodity{}
+	userInput := request.Create{}
 	c.Bind(&userInput)
 
 	validationErr := userInput.Validate()
@@ -41,6 +43,14 @@ func (cc *Controller) Create(c echo.Context) error {
 			Status:  http.StatusBadRequest,
 			Message: "validasi gagal",
 			Error:   validationErr,
+		})
+	}
+
+	images, statusCode, err := helper.GetCreateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"})
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
 		})
 	}
 
@@ -55,7 +65,7 @@ func (cc *Controller) Create(c echo.Context) error {
 	userDomain := userInput.ToDomain()
 	userDomain.FarmerID = userID
 
-	statusCode, err := cc.commodityUC.Create(userDomain)
+	statusCode, err = cc.commodityUC.Create(userDomain, images)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -200,8 +210,11 @@ func (cc *Controller) Update(c echo.Context) error {
 		})
 	}
 
-	userInput := request.Commodity{}
+	userInput := request.Update{}
 	c.Bind(&userInput)
+
+	jsonInput, _ := json.Marshal(userInput)
+	fmt.Println(string(jsonInput))
 
 	validationErr := userInput.Validate()
 	if validationErr != nil {
@@ -220,11 +233,27 @@ func (cc *Controller) Update(c echo.Context) error {
 		})
 	}
 
+	commodity, statusCode, err := cc.commodityUC.GetByIDAndFarmerID(commodityID, userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	updateImage, statusCode, err := helper.GetUpdateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"}, commodity.ImageURLs, userInput.IsChange, userInput.IsDelete)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
 	userDomain := userInput.ToDomain()
 	userDomain.ID = commodityID
 	userDomain.FarmerID = userID
 
-	commodity, statusCode, err := cc.commodityUC.Update(userDomain)
+	_, statusCode, err = cc.commodityUC.Update(userDomain, updateImage)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

@@ -2,6 +2,10 @@ package commodities
 
 import (
 	"errors"
+	"marketplace-backend/constant"
+	"marketplace-backend/helper"
+	"marketplace-backend/helper/cloudinary"
+	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -11,11 +15,13 @@ import (
 
 type CommodityUseCase struct {
 	commoditiesRepository Repository
+	cloudinary            cloudinary.Function
 }
 
-func NewCommodityUseCase(cr Repository) UseCase {
+func NewCommodityUseCase(cr Repository, cldry cloudinary.Function) UseCase {
 	return &CommodityUseCase{
 		commoditiesRepository: cr,
+		cloudinary:            cldry,
 	}
 }
 
@@ -23,25 +29,38 @@ func NewCommodityUseCase(cr Repository) UseCase {
 Create
 */
 
-func (cu *CommodityUseCase) Create(domain *Domain) (int, error) {
+func (cu *CommodityUseCase) Create(domain *Domain, images []*multipart.FileHeader) (int, error) {
 	_, err := cu.commoditiesRepository.GetByNameAndFarmerID(domain.Name, domain.FarmerID)
 	if err == mongo.ErrNoDocuments {
+		if len(images) != 0 {
+			for _, image := range images {
+				cloudinaryURL, err := cu.cloudinary.UploadOneWithGeneratedFilename(constant.CloudinaryFolderCommodities, image)
+				if err != nil {
+					return http.StatusInternalServerError, errors.New("gagal mengunggah gambar")
+				}
+
+				domain.ImageURLs = append(domain.ImageURLs, cloudinaryURL)
+			}
+		}
+
 		domain.ID = primitive.NewObjectID()
-		domain.ImageURLs = []string{}
 		domain.IsAvailable = true
 		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 		_, err = cu.commoditiesRepository.Create(domain)
 		if err != nil {
+			err = cu.cloudinary.DeleteManyByURL(constant.CloudinaryFolderCommodities, domain.ImageURLs)
+			if err != nil {
+				return http.StatusInternalServerError, err
+			}
+
 			return http.StatusInternalServerError, errors.New("gagal membuat komoditas")
 		}
 
 		return http.StatusCreated, nil
-	} else if err.Error() == "context deadline exceeded" {
-		return http.StatusConflict, errors.New("request telah melewati batas waktu")
 	}
 
-	return http.StatusConflict, errors.New("nama komoditas sudah digunakan")
+	return http.StatusConflict, errors.New("komoditas sudah ada")
 }
 
 /*
@@ -88,18 +107,10 @@ func (cu *CommodityUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Domain
 Update
 */
 
-func (cu *CommodityUseCase) Update(domain *Domain) (Domain, int, error) {
+func (cu *CommodityUseCase) Update(domain *Domain, updateImage []*helper.UpdateImage) (Domain, int, error) {
 	commodity, err := cu.commoditiesRepository.GetByIDAndFarmerID(domain.ID, domain.FarmerID)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
-	}
-
-	if domain.Name == commodity.Name &&
-		domain.Description == commodity.Description &&
-		domain.Seed == commodity.Seed &&
-		domain.PlantingPeriod == commodity.PlantingPeriod &&
-		domain.PricePerKg == commodity.PricePerKg {
-		return Domain{}, http.StatusConflict, errors.New("tidak ada perubahan data")
 	}
 
 	if commodity.Name != domain.Name {
@@ -108,6 +119,13 @@ func (cu *CommodityUseCase) Update(domain *Domain) (Domain, int, error) {
 			return Domain{}, http.StatusConflict, errors.New("nama komoditas telah terdaftar")
 		}
 	}
+
+	imageURLs, err := cu.cloudinary.UpdateArrayImage(constant.CloudinaryFolderCommodities, commodity.ImageURLs, updateImage)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate gambar")
+	}
+
+	domain.ImageURLs = imageURLs
 
 	err = cu.commoditiesRepository.Delete(domain.ID)
 	if err != nil {
@@ -126,17 +144,31 @@ func (cu *CommodityUseCase) Update(domain *Domain) (Domain, int, error) {
 	return commodity, http.StatusOK, nil
 }
 
+func (cu *CommodityUseCase) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
+	commodity, err := cu.commoditiesRepository.GetByIDAndFarmerID(id, farmerID)
+	if err != nil {
+		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	}
+
+	return commodity, http.StatusOK, nil
+}
+
 /*
 Delete
 */
 
 func (cu *CommodityUseCase) Delete(id primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
-	_, err := cu.commoditiesRepository.GetByIDAndFarmerID(id, farmerID)
+	commodity, err := cu.commoditiesRepository.GetByIDAndFarmerID(id, farmerID)
 	if err != nil {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	}
 
-	err = cu.commoditiesRepository.Delete(id)
+	err = cu.cloudinary.DeleteManyByURL(constant.CloudinaryFolderCommodities, commodity.ImageURLs)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal menghapus gambar")
+	}
+
+	err = cu.commoditiesRepository.Delete(commodity.ID)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("gagal menghapus komoditas")
 	}
