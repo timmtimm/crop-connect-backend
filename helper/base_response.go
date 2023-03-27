@@ -4,7 +4,7 @@ type BaseResponse struct {
 	Status     int         `json:"status"`
 	Message    string      `json:"message"`
 	Error      interface{} `json:"error,omitempty"`
-	Data       interface{} `json:"data"`
+	Data       interface{} `json:"data,omitempty"`
 	Pagination interface{} `json:"pagination,omitempty"`
 }
 

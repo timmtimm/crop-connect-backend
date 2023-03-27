@@ -42,7 +42,7 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 	if startDate != "" {
 		date, err := time.Parse("2006-01-02", startDate)
 		if err != nil {
-			return FilterQuery{}, err
+			return FilterQuery{}, errors.New("startDate harus berupa tanggal")
 		}
 
 		filter.StartDate = primitive.NewDateTimeFromTime(date)

@@ -8,6 +8,7 @@ import (
 	"marketplace-backend/controller/commodities"
 	"marketplace-backend/controller/proposals"
 	"marketplace-backend/controller/transactions"
+	treatmentRecord "marketplace-backend/controller/treatment_records"
 	"marketplace-backend/controller/users"
 	"net/http"
 
@@ -15,12 +16,13 @@ import (
 )
 
 type ControllerList struct {
-	LoggerMiddleware      echo.MiddlewareFunc
-	UserController        *users.Controller
-	CommodityController   *commodities.Controller
-	ProposalController    *proposals.Controller
-	TransactionController *transactions.Controller
-	BatchController       *batchs.Controller
+	LoggerMiddleware          echo.MiddlewareFunc
+	UserController            *users.Controller
+	CommodityController       *commodities.Controller
+	ProposalController        *proposals.Controller
+	TransactionController     *transactions.Controller
+	BatchController           *batchs.Controller
+	TreatmentRecordController *treatmentRecord.Controller
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
@@ -67,4 +69,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	batch.GET("/farmer/page/:page", cl.BatchController.GetFarmerBatch, middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/commodity/:commodity-id", cl.BatchController.GetByCommodityID)
 	batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
+
+	treatmentRecord := apiV1.Group("/treatment-record")
+	treatmentRecord.POST("/:batch-id", cl.TreatmentRecordController.RequestToFarmer, _middleware.CheckOneRole(constant.RoleValidator))
 }
