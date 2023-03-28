@@ -1,8 +1,8 @@
 package constant
 
 const (
-	StatusTreatmentRecordWaitingResponse = "waitingResponse"
-	StatusTreatmentRecordPending         = "pending"
-	StatusTreatmentRecordAccepted        = "accepted"
-	StatusTreatmentRecordRevision        = "revision"
+	TreatmentRecordStatusWaitingResponse = "waitingResponse"
+	TreatmentRecordStatusPending         = "pending"
+	TreatmentRecordStatusAccepted        = "accepted"
+	TreatmentRecordStatusRevision        = "revision"
 )

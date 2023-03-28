@@ -22,12 +22,25 @@ type Domain struct {
 	UpdatedAt    primitive.DateTime
 }
 
+type Query struct {
+	Skip      int64
+	Limit     int64
+	Sort      string
+	Order     int
+	FarmerID  primitive.ObjectID
+	Commodity string
+	Batch     string
+	Number    int
+	Status    string
+}
+
 type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
 	GetNewestByBatchID(batchID primitive.ObjectID) (Domain, error)
 	CountByBatchID(batchID primitive.ObjectID) (int, error)
+	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
 	// Delete
 }
@@ -36,6 +49,7 @@ type UseCase interface {
 	// Create
 	RequestToFarmer(domain *Domain) (Domain, int, error)
 	// Read
+	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
 	// Delete
 }

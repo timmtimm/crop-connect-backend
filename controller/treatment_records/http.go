@@ -1,8 +1,12 @@
 package treatment_records
 
 import (
+	"marketplace-backend/business/batchs"
 	treatmentRecord "marketplace-backend/business/treatment_records"
+	"marketplace-backend/business/users"
+	"marketplace-backend/constant"
 	"marketplace-backend/controller/treatment_records/request"
+	"marketplace-backend/controller/treatment_records/response"
 	"marketplace-backend/helper"
 	"net/http"
 
@@ -12,11 +16,15 @@ import (
 
 type Controller struct {
 	treatmentRecordUC treatmentRecord.UseCase
+	batchUC           batchs.UseCase
+	userUC            users.UseCase
 }
 
-func NewTreatmentRecordController(treatmentRecordUC treatmentRecord.UseCase) *Controller {
+func NewTreatmentRecordController(treatmentRecordUC treatmentRecord.UseCase, batchUC batchs.UseCase, userUC users.UseCase) *Controller {
 	return &Controller{
 		treatmentRecordUC: treatmentRecordUC,
+		batchUC:           batchUC,
+		userUC:            userUC,
 	}
 }
 
@@ -81,6 +89,78 @@ func (trc *Controller) RequestToFarmer(c echo.Context) error {
 /*
 Read
 */
+
+func (trc *Controller) GetByPaginationAndQuery(c echo.Context) error {
+	queryPagination, err := helper.PaginationToQuery(c, []string{"number", "date", "status", "createdAt"})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	token, err := helper.GetPayloadFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	queryParam, err := request.QueryParamValidationForBuyer(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	treatmentRecordQuery := treatmentRecord.Query{
+		Skip:      queryPagination.Skip,
+		Limit:     queryPagination.Limit,
+		Sort:      queryPagination.Sort,
+		Order:     queryPagination.Order,
+		Commodity: queryParam.Commodity,
+		Batch:     queryParam.Batch,
+		Number:    queryParam.Number,
+		Status:    queryParam.Status,
+	}
+
+	if token.Role == constant.RoleFarmer {
+		farmerID, err := primitive.ObjectIDFromHex(token.UID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+				Status:  http.StatusBadRequest,
+				Message: "token tidak valid",
+			})
+		}
+
+		treatmentRecordQuery.FarmerID = farmerID
+	}
+
+	treatmentRecords, totalData, statusCode, err := trc.treatmentRecordUC.GetByPaginationAndQuery(treatmentRecordQuery)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	transactionResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.userUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:     statusCode,
+		Message:    "berhasil mendapatkan riwayat perawatan",
+		Data:       transactionResponse,
+		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
 
 /*
 Update

@@ -90,7 +90,7 @@ func (tc *Controller) Create(c echo.Context) error {
 Read
 */
 
-func (tc *Controller) GetUserTransaction(c echo.Context) error {
+func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 	queryPagination, err := helper.PaginationToQuery(c, []string{"status", "totalPrice", "createdAt"})
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{

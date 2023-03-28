@@ -3,6 +3,7 @@ package treatment_records
 import (
 	"context"
 	treatmentRecord "marketplace-backend/business/treatment_records"
+	"marketplace-backend/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -72,6 +73,183 @@ func (trr *TreatmentRecordRepository) CountByBatchID(batchID primitive.ObjectID)
 	}
 
 	return int(count), nil
+}
+
+func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([]treatmentRecord.Domain, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{}
+
+	if query.Status != "" {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"status": query.Status,
+			},
+		})
+	}
+
+	if query.Number != 0 {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"number": query.Number,
+			},
+		})
+	}
+
+	if query.Batch != "" {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": query.Batch,
+				},
+			},
+		})
+	}
+
+	if query.Commodity != "" {
+		lookup1 := bson.M{
+			"$lookup": bson.M{
+				"from":         "batchs",
+				"localField":   "batchID",
+				"foreignField": "_id",
+				"as":           "batch_info",
+			},
+		}
+
+		lookup2 := bson.M{
+			"$lookup": bson.M{
+				"from":         "transactions",
+				"localField":   "batch_info.transactionID",
+				"foreignField": "_id",
+				"as":           "transaction_info",
+			},
+		}
+
+		lookup3 := bson.M{
+			"$lookup": bson.M{
+				"from":         "proposals",
+				"localField":   "transaction_info.proposalID",
+				"foreignField": "_id",
+				"as":           "proposal_info",
+			},
+		}
+
+		lookup4 := bson.M{
+			"$lookup": bson.M{
+				"from":         "commodities",
+				"localField":   "proposal_info.commodityID",
+				"foreignField": "_id",
+				"as":           "commodity_info",
+			},
+		}
+
+		match := bson.M{
+			"$match": bson.M{
+				"commodity_info.name": bson.M{
+					"$regex":   query.Commodity,
+					"$options": "i",
+				},
+			},
+		}
+
+		pipeline = append(pipeline, lookup1, lookup2, lookup3, lookup4, match)
+	}
+
+	if query.FarmerID != primitive.NilObjectID && query.Commodity == "" {
+		lookup1 := bson.M{
+			"$lookup": bson.M{
+				"from":         "batchs",
+				"localField":   "batchID",
+				"foreignField": "_id",
+				"as":           "batch_info",
+			},
+		}
+
+		lookup2 := bson.M{
+			"$lookup": bson.M{
+				"from":         "transactions",
+				"localField":   "batch_info.transactionID",
+				"foreignField": "_id",
+				"as":           "transaction_info",
+			},
+		}
+
+		lookup3 := bson.M{
+			"$lookup": bson.M{
+				"from":         "proposals",
+				"localField":   "transaction_info.proposalID",
+				"foreignField": "_id",
+				"as":           "proposal_info",
+			},
+		}
+
+		lookup4 := bson.M{
+			"$lookup": bson.M{
+				"from":         "commodities",
+				"localField":   "proposal_info.commodityID",
+				"foreignField": "_id",
+				"as":           "commodity_info",
+			},
+		}
+
+		match := bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": query.FarmerID,
+			},
+		}
+
+		pipeline = append(pipeline, lookup1, lookup2, lookup3, lookup4, match)
+	} else if query.FarmerID != primitive.NilObjectID && query.Commodity != "" {
+		match := bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": query.FarmerID,
+			},
+		}
+
+		pipeline = append(pipeline, match)
+	}
+
+	paginationSkip := bson.M{
+		"$skip": query.Skip,
+	}
+
+	paginationLimit := bson.M{
+		"$limit": query.Limit,
+	}
+
+	paginationSort := bson.M{
+		"$sort": bson.M{query.Sort: query.Order},
+	}
+
+	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
+	pipeline = append(pipeline, paginationSkip, paginationLimit, paginationSort)
+
+	cursor, err := trr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	cursorCount, err := trr.collection.Aggregate(ctx, pipelineForCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var result []Model
+	countResult := dto.TotalDocument{}
+
+	if err := cursor.All(ctx, &result); err != nil {
+		return nil, 0, err
+	}
+
+	for cursorCount.Next(ctx) {
+		err := cursorCount.Decode(&countResult)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	return ToDomainArray(result), countResult.TotalDocument, nil
 }
 
 /*

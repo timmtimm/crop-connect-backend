@@ -7,7 +7,6 @@ import (
 )
 
 type User struct {
-	ID          primitive.ObjectID `json:"_id"`
 	Name        string             `json:"name"`
 	Email       string             `json:"email"`
 	Description string             `json:"description"`
@@ -19,7 +18,6 @@ type User struct {
 
 func FromDomain(domain users.Domain) User {
 	return User{
-		ID:          domain.ID,
 		Name:        domain.Name,
 		Email:       domain.Email,
 		Description: domain.Description,

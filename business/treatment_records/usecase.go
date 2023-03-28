@@ -53,7 +53,7 @@ func (tru *TreatmentRecordUseCase) RequestToFarmer(domain *Domain) (Domain, int,
 
 	newestTreatmentRecord, err := tru.treatmentRecordRepository.GetNewestByBatchID(domain.BatchID)
 	if err != mongo.ErrNoDocuments {
-		if newestTreatmentRecord.Status == constant.StatusTreatmentRecordWaitingResponse || newestTreatmentRecord.Status == constant.StatusTreatmentRecordPending {
+		if newestTreatmentRecord.Status != constant.TreatmentRecordStatusAccepted {
 			return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan terakhir belum selesai")
 		} else if primitive.NewDateTimeFromTime(time.Now()) >= domain.Date {
 			return Domain{}, http.StatusBadRequest, errors.New("tanggal perawatan harus lebih besar dari tanggal hari ini")
@@ -66,7 +66,7 @@ func (tru *TreatmentRecordUseCase) RequestToFarmer(domain *Domain) (Domain, int,
 
 	domain.ID = primitive.NewObjectID()
 	domain.Number = count + 1
-	domain.Status = constant.StatusTreatmentRecordWaitingResponse
+	domain.Status = constant.TreatmentRecordStatusWaitingResponse
 	domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	treatmentRecord, err := tru.treatmentRecordRepository.Create(domain)
@@ -80,6 +80,15 @@ func (tru *TreatmentRecordUseCase) RequestToFarmer(domain *Domain) (Domain, int,
 /*
 Read
 */
+
+func (tru *TreatmentRecordUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
+	treatmentRecords, totalData, err := tru.treatmentRecordRepository.GetByQuery(query)
+	if err != nil {
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
+	}
+
+	return treatmentRecords, totalData, http.StatusOK, nil
+}
 
 /*
 Update

@@ -141,7 +141,7 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		pipeline = append(pipeline, lookup1, lookup2, match)
 	}
 
-	if query.FarmerID != primitive.NilObjectID {
+	if query.FarmerID != primitive.NilObjectID && query.Commodity == "" {
 		lookup1 := bson.M{
 			"$lookup": bson.M{
 				"from":         "proposals",
@@ -167,6 +167,14 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		}
 
 		pipeline = append(pipeline, lookup1, lookup2, match)
+	} else if query.FarmerID != primitive.NilObjectID && query.Commodity != "" {
+		match := bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": query.FarmerID,
+			},
+		}
+
+		pipeline = append(pipeline, match)
 	}
 
 	paginationSkip := bson.M{

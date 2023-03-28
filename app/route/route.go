@@ -16,7 +16,6 @@ import (
 )
 
 type ControllerList struct {
-	LoggerMiddleware          echo.MiddlewareFunc
 	UserController            *users.Controller
 	CommodityController       *commodities.Controller
 	ProposalController        *proposals.Controller
@@ -61,7 +60,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	proposal.PUT("/validate/:proposal-id", cl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
 
 	transaction := apiV1.Group("/transaction")
-	transaction.GET("/page/:page", cl.TransactionController.GetUserTransaction, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	transaction.GET("/page/:page", cl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 
@@ -71,5 +70,6 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	treatmentRecord := apiV1.Group("/treatment-record")
+	treatmentRecord.GET("/page/:page", cl.TreatmentRecordController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
 	treatmentRecord.POST("/:batch-id", cl.TreatmentRecordController.RequestToFarmer, _middleware.CheckOneRole(constant.RoleValidator))
 }
