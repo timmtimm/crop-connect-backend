@@ -4,8 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"marketplace-backend/business/batchs"
+	"marketplace-backend/business/commodities"
+	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/transactions"
 	"marketplace-backend/constant"
 	"marketplace-backend/helper/cloudinary"
+	"marketplace-backend/util"
+	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -16,13 +21,19 @@ import (
 type TreatmentRecordUseCase struct {
 	treatmentRecordRepository Repository
 	batchRepository           batchs.Repository
+	transactionRepository     transactions.Repository
+	proposalRepository        proposals.Repository
+	commodityRepository       commodities.Repository
 	cloudinary                cloudinary.Function
 }
 
-func NewTreatmentRecordUseCase(trr Repository, br batchs.Repository, cldry cloudinary.Function) UseCase {
+func NewTreatmentRecordUseCase(trr Repository, br batchs.Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository, cldry cloudinary.Function) UseCase {
 	return &TreatmentRecordUseCase{
 		treatmentRecordRepository: trr,
 		batchRepository:           br,
+		transactionRepository:     tr,
+		proposalRepository:        pr,
+		commodityRepository:       cr,
 		cloudinary:                cldry,
 	}
 }
@@ -93,6 +104,79 @@ func (tru *TreatmentRecordUseCase) GetByPaginationAndQuery(query Query) ([]Domai
 /*
 Update
 */
+
+func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error) {
+	treatmentRecord, err := tru.treatmentRecordRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("riwayat perawatan tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
+	}
+
+	batch, err := tru.batchRepository.GetByID(treatmentRecord.BatchID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+	}
+
+	transaction, err := tru.transactionRepository.GetByID(batch.TransactionID)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+	}
+
+	proposal, err := tru.proposalRepository.GetByID(transaction.ProposalID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
+	}
+
+	commodity, err := tru.commodityRepository.GetByID(proposal.CommodityID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	if commodity.FarmerID != farmerID {
+		return Domain{}, http.StatusUnauthorized, errors.New("anda tidak memiliki akses")
+	}
+
+	if treatmentRecord.Status == constant.TreatmentRecordStatusAccepted {
+		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan sudah diterima")
+	}
+
+	var imageURLs []string
+	notes = util.RemoveNilStringInArray(notes)
+
+	if len(images) > 0 {
+		imageURLs, err = tru.cloudinary.UploadManyWithGeneratedFilename(constant.CloudinaryFolderTreatmentRecords, images)
+		if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal mengunggah gambar")
+		}
+
+		for i := 0; i < len(imageURLs); i++ {
+			treatmentRecord.Treatment[i].ImageURL = imageURLs[i]
+			treatmentRecord.Treatment[i].Note = notes[i]
+		}
+	} else {
+		return Domain{}, http.StatusBadRequest, errors.New("gambar dan catatan tidak boleh kosong")
+	}
+
+	treatmentRecord.Status = constant.TreatmentRecordStatusPending
+
+	treatmentRecord, err = tru.treatmentRecordRepository.Update(&treatmentRecord)
+	if err != nil {
+		err = tru.cloudinary.DeleteManyByURL(constant.CloudinaryFolderTreatmentRecords, imageURLs)
+		if err != nil {
+			return Domain{}, 0, err
+		}
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui riwayat perawatan")
+	}
+
+	return treatmentRecord, http.StatusOK, nil
+}
 
 /*
 Delete

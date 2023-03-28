@@ -1,6 +1,6 @@
 package dto
 
 type Treatment struct {
-	ImageURL string `json:"imageURL"`
-	Note     string `json:"note"`
+	ImageURL string `bson:"imageURL" json:"imageURL"`
+	Note     string `bson:"note" json:"note"`
 }

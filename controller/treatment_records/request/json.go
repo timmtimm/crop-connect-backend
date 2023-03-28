@@ -58,3 +58,7 @@ func (req *RequestToFarmer) Validate() []helper.ValidationError {
 
 	return nil
 }
+
+type FillTreatmentRecord struct {
+	Notes []string `form:"notes" json:"notes"`
+}

@@ -2,6 +2,7 @@ package treatment_records
 
 import (
 	"marketplace-backend/dto"
+	"mime/multipart"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -40,8 +41,10 @@ type Repository interface {
 	// Read
 	GetNewestByBatchID(batchID primitive.ObjectID) (Domain, error)
 	CountByBatchID(batchID primitive.ObjectID) (int, error)
+	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
+	Update(domain *Domain) (Domain, error)
 	// Delete
 }
 
@@ -51,5 +54,6 @@ type UseCase interface {
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
+	FillTreatmentRecord(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error)
 	// Delete
 }

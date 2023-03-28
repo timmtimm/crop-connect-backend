@@ -166,6 +166,59 @@ func (trc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 Update
 */
 
+func (trc *Controller) FillTreatmentRecord(c echo.Context) error {
+	treatmentRecordID, err := primitive.ObjectIDFromHex(c.Param("treatment-record-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "treatment record id tidak valid",
+		})
+	}
+
+	userInput := request.FillTreatmentRecord{}
+	c.Bind(&userInput)
+
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	inputDomain := treatmentRecord.Domain{
+		ID: treatmentRecordID,
+	}
+
+	images, statusCode, err := helper.GetCreateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"})
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	if len(images) == 0 {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "gambar tidak boleh kosong",
+		})
+	}
+
+	_, statusCode, err = trc.treatmentRecordUC.FillTreatmentRecord(&inputDomain, userID, images, userInput.Notes)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "catatan perawatan berhasil diisi",
+	})
+}
+
 /*
 Delete
 */

@@ -44,7 +44,7 @@ func main() {
 	proposalUseCase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository)
 	transactionUseCase := _transactionUseCase.NewTransactionUseCase(transactionRepository, commodityRepository, proposalRepository)
 	batchUseCase := _batchUseCase.NewBatchUseCase(batchRepository, transactionRepository, proposalRepository, commodityRepository)
-	treatmentRecordUseCase := _treatmentRecordUseCase.NewTreatmentRecordUseCase(treatmentRecordRepository, batchRepository, cloudinary)
+	treatmentRecordUseCase := _treatmentRecordUseCase.NewTreatmentRecordUseCase(treatmentRecordRepository, batchRepository, transactionRepository, proposalRepository, commodityRepository, cloudinary)
 
 	userController := _userController.NewUserController(userUseCase)
 	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUseCase, proposalUseCase)

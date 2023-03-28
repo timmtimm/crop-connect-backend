@@ -75,6 +75,18 @@ func (trr *TreatmentRecordRepository) CountByBatchID(batchID primitive.ObjectID)
 	return int(count), nil
 }
 
+func (trr *TreatmentRecordRepository) GetByID(id primitive.ObjectID) (treatmentRecord.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := trr.collection.FindOne(ctx, bson.M{
+		"_id": id,
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
 func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([]treatmentRecord.Domain, int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -255,6 +267,23 @@ func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([
 /*
 Update
 */
+
+func (trr *TreatmentRecordRepository) Update(domain *treatmentRecord.Domain) (treatmentRecord.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := trr.collection.UpdateOne(ctx, bson.M{
+		"_id": domain.ID,
+	}, bson.M{
+		"$set": FromDomain(domain),
+	})
+
+	if err != nil {
+		return treatmentRecord.Domain{}, err
+	}
+
+	return *domain, nil
+}
 
 /*
 Delete
