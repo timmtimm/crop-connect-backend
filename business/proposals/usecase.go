@@ -57,6 +57,17 @@ func (pu *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (
 Read
 */
 
+func (pu *ProposalUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
+	proposal, err := pu.proposalRepository.GetByID(id)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	return proposal, http.StatusOK, nil
+}
+
 func (pu *ProposalUseCase) GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error) {
 	proposals, err := pu.proposalRepository.GetByCommodityIDAndAvailability(commodityID, constant.ProposalStatusApproved)
 	if err == mongo.ErrNoDocuments {

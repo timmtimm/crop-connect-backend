@@ -2,12 +2,12 @@ package treatment_records
 
 import (
 	"errors"
-	"fmt"
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
 	"marketplace-backend/business/transactions"
 	"marketplace-backend/constant"
+	"marketplace-backend/dto"
 	"marketplace-backend/helper/cloudinary"
 	"marketplace-backend/util"
 	"mime/multipart"
@@ -57,7 +57,6 @@ func (tru *TreatmentRecordUseCase) RequestToFarmer(domain *Domain) (Domain, int,
 	}
 
 	count, err := tru.treatmentRecordRepository.CountByBatchID(domain.BatchID)
-	fmt.Println(count)
 	if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan jumlah riwayat perawatan")
 	}
@@ -159,6 +158,10 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 	var imageURLs []string
 	notes = util.RemoveNilStringInArray(notes)
 
+	if len(images) != len(notes) {
+		return Domain{}, http.StatusBadRequest, errors.New("jumlah gambar dan catatan tidak sama")
+	}
+
 	if len(images) > 0 {
 		imageURLs, err = tru.cloudinary.UploadManyWithGeneratedFilename(constant.CloudinaryFolderTreatmentRecords, images)
 		if err != nil {
@@ -166,14 +169,17 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 		}
 
 		for i := 0; i < len(imageURLs); i++ {
-			treatmentRecord.Treatment[i].ImageURL = imageURLs[i]
-			treatmentRecord.Treatment[i].Note = notes[i]
+			treatmentRecord.Treatment = append(treatmentRecord.Treatment, dto.ImageAndNote{
+				ImageURL: imageURLs[i],
+				Note:     notes[i],
+			})
 		}
 	} else {
 		return Domain{}, http.StatusBadRequest, errors.New("gambar dan catatan tidak boleh kosong")
 	}
 
 	treatmentRecord.Status = constant.TreatmentRecordStatusPending
+	treatmentRecord.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	treatmentRecord, err = tru.treatmentRecordRepository.Update(&treatmentRecord)
 	if err != nil {
@@ -210,6 +216,7 @@ func (tru *TreatmentRecordUseCase) Validate(domain *Domain, validatorID primitiv
 
 	treatmentRecord.Status = domain.Status
 	treatmentRecord.WarningNote = domain.WarningNote
+	treatmentRecord.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	if domain.Status == constant.TreatmentRecordStatusRevision {
 		treatmentRecord.RevisionNote = domain.RevisionNote
@@ -239,6 +246,7 @@ func (tru *TreatmentRecordUseCase) UpdateNotes(domain *Domain) (Domain, int, err
 
 	treatmentRecord.RevisionNote = domain.RevisionNote
 	treatmentRecord.WarningNote = domain.WarningNote
+	treatmentRecord.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	treatmentRecord, err = tru.treatmentRecordRepository.Update(&treatmentRecord)
 	if err != nil {

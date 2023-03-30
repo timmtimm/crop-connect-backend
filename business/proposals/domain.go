@@ -39,6 +39,7 @@ type UseCase interface {
 	// Create
 	Create(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Read
+	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
 	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
 	// Update

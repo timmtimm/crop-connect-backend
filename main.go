@@ -11,6 +11,7 @@ import (
 
 	_batchUseCase "marketplace-backend/business/batchs"
 	_commodityUseCase "marketplace-backend/business/commodities"
+	_harvestUseCase "marketplace-backend/business/harvests"
 	_proposalUseCase "marketplace-backend/business/proposals"
 	_transactionUseCase "marketplace-backend/business/transactions"
 	_treatmentRecordUseCase "marketplace-backend/business/treatment_records"
@@ -18,6 +19,7 @@ import (
 
 	_batchController "marketplace-backend/controller/batchs"
 	_commodityController "marketplace-backend/controller/commodities"
+	_harvestController "marketplace-backend/controller/harvests"
 	_proposalController "marketplace-backend/controller/proposals"
 	_transactionController "marketplace-backend/controller/transactions"
 	_treatmentRecordController "marketplace-backend/controller/treatment_records"
@@ -38,6 +40,7 @@ func main() {
 	transactionRepository := _driver.NewTransactionRepository(database)
 	batchRepository := _driver.NewBatchRepository(database)
 	treatmentRecordRepository := _driver.NewTreatmentRecordRepository(database)
+	harvestRepository := _driver.NewHarvestRepository(database)
 
 	userUseCase := _userUseCase.NewUserUseCase(userRepository)
 	commodityUsecase := _commodityUseCase.NewCommodityUseCase(commodityRepository, cloudinary)
@@ -45,13 +48,15 @@ func main() {
 	transactionUseCase := _transactionUseCase.NewTransactionUseCase(transactionRepository, commodityRepository, proposalRepository)
 	batchUseCase := _batchUseCase.NewBatchUseCase(batchRepository, transactionRepository, proposalRepository, commodityRepository)
 	treatmentRecordUseCase := _treatmentRecordUseCase.NewTreatmentRecordUseCase(treatmentRecordRepository, batchRepository, transactionRepository, proposalRepository, commodityRepository, cloudinary)
+	harvestUseCase := _harvestUseCase.NewHarvestUseCase(harvestRepository, batchRepository, treatmentRecordRepository, transactionRepository, proposalRepository, commodityRepository, cloudinary)
 
 	userController := _userController.NewUserController(userUseCase)
 	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUseCase, proposalUseCase)
 	proposalController := _proposalController.NewProposalController(proposalUseCase, commodityUsecase)
 	transactionController := _transactionController.NewTransactionController(transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, batchUseCase)
 	batchController := _batchController.NewBatchController(batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
-	treatmentRecordController := _treatmentRecordController.NewTreatmentRecordController(treatmentRecordUseCase, batchUseCase, userUseCase)
+	treatmentRecordController := _treatmentRecordController.NewTreatmentRecordController(treatmentRecordUseCase, batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
+	harvestController := _harvestController.NewHarvestController(harvestUseCase, batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
 
 	routeController := _route.ControllerList{
 		UserController:            userController,
@@ -60,6 +65,7 @@ func main() {
 		TransactionController:     transactionController,
 		BatchController:           batchController,
 		TreatmentRecordController: treatmentRecordController,
+		HarvestController:         harvestController,
 	}
 
 	routeController.Init(e)

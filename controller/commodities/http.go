@@ -1,8 +1,6 @@
 package commodities
 
 import (
-	"encoding/json"
-	"fmt"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
 	"marketplace-backend/business/users"
@@ -212,9 +210,6 @@ func (cc *Controller) Update(c echo.Context) error {
 
 	userInput := request.Update{}
 	c.Bind(&userInput)
-
-	jsonInput, _ := json.Marshal(userInput)
-	fmt.Println(string(jsonInput))
 
 	validationErr := userInput.Validate()
 	if validationErr != nil {

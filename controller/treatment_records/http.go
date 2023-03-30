@@ -2,6 +2,9 @@ package treatment_records
 
 import (
 	"marketplace-backend/business/batchs"
+	"marketplace-backend/business/commodities"
+	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/transactions"
 	treatmentRecord "marketplace-backend/business/treatment_records"
 	"marketplace-backend/business/users"
 	"marketplace-backend/constant"
@@ -17,13 +20,19 @@ import (
 type Controller struct {
 	treatmentRecordUC treatmentRecord.UseCase
 	batchUC           batchs.UseCase
+	transactionUC     transactions.UseCase
+	proposalUC        proposals.UseCase
+	commodityUC       commodities.UseCase
 	userUC            users.UseCase
 }
 
-func NewTreatmentRecordController(treatmentRecordUC treatmentRecord.UseCase, batchUC batchs.UseCase, userUC users.UseCase) *Controller {
+func NewTreatmentRecordController(treatmentRecordUC treatmentRecord.UseCase, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) *Controller {
 	return &Controller{
 		treatmentRecordUC: treatmentRecordUC,
 		batchUC:           batchUC,
+		transactionUC:     transactionUC,
+		proposalUC:        proposalUC,
+		commodityUC:       commodityUC,
 		userUC:            userUC,
 	}
 }
@@ -146,7 +155,7 @@ func (trc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		})
 	}
 
-	treatmentRecordsResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.userUC)
+	treatmentRecordsResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.transactionUC, trc.proposalUC, trc.commodityUC, trc.userUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -179,7 +188,7 @@ func (trc *Controller) GetByBatchID(c echo.Context) error {
 		})
 	}
 
-	treatmentRecordsResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.userUC)
+	treatmentRecordsResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.transactionUC, trc.proposalUC, trc.commodityUC, trc.userUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

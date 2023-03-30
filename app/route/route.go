@@ -6,9 +6,10 @@ import (
 	"marketplace-backend/constant"
 	"marketplace-backend/controller/batchs"
 	"marketplace-backend/controller/commodities"
+	"marketplace-backend/controller/harvests"
 	"marketplace-backend/controller/proposals"
 	"marketplace-backend/controller/transactions"
-	treatmentRecord "marketplace-backend/controller/treatment_records"
+	treatmentRecords "marketplace-backend/controller/treatment_records"
 	"marketplace-backend/controller/users"
 	"net/http"
 
@@ -21,7 +22,8 @@ type ControllerList struct {
 	ProposalController        *proposals.Controller
 	TransactionController     *transactions.Controller
 	BatchController           *batchs.Controller
-	TreatmentRecordController *treatmentRecord.Controller
+	TreatmentRecordController *treatmentRecords.Controller
+	HarvestController         *harvests.Controller
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
@@ -75,4 +77,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	treatmentRecord.PUT("/:treatment-record-id", cl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
 	treatmentRecord.PUT("/validate/:treatment-record-id", cl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.PUT("/note/:treatment-record-id", cl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
+
+	harvest := apiV1.Group("/harvest")
+	harvest.POST("/:batch-id", cl.HarvestController.SubmitHarvest, _middleware.CheckOneRole(constant.RoleFarmer))
 }

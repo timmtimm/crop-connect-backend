@@ -3,6 +3,7 @@ package driver
 import (
 	batchDomain "marketplace-backend/business/batchs"
 	commodityDomain "marketplace-backend/business/commodities"
+	harvestDomain "marketplace-backend/business/harvests"
 	proposalDomain "marketplace-backend/business/proposals"
 	transactionDomain "marketplace-backend/business/transactions"
 	treatmentRecordDomain "marketplace-backend/business/treatment_records"
@@ -10,6 +11,7 @@ import (
 
 	batchDB "marketplace-backend/driver/mongo/batchs"
 	commodityDB "marketplace-backend/driver/mongo/commodities"
+	harvestDB "marketplace-backend/driver/mongo/harvests"
 	proposalDB "marketplace-backend/driver/mongo/proposals"
 	transactionDB "marketplace-backend/driver/mongo/transactions"
 	treatmentRecordDB "marketplace-backend/driver/mongo/treatment_records"
@@ -40,4 +42,8 @@ func NewBatchRepository(db *mongo.Database) batchDomain.Repository {
 
 func NewTreatmentRecordRepository(db *mongo.Database) treatmentRecordDomain.Repository {
 	return treatmentRecordDB.NewMongoRepository(db)
+}
+
+func NewHarvestRepository(db *mongo.Database) harvestDomain.Repository {
+	return harvestDB.NewMongoRepository(db)
 }

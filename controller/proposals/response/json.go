@@ -90,3 +90,37 @@ func FromDomainArrayToBuyer(domain []proposals.Domain) []Buyer {
 
 	return response
 }
+
+type ProposalWithCommodity struct {
+	ID                    primitive.ObjectID          `json:"_id"`
+	Commodity             commodityResponse.Commodity `json:"commodity"`
+	Name                  string                      `json:"name"`
+	Description           string                      `json:"description"`
+	EstimatedTotalHarvest float64                     `json:"estimatedTotalHarvest"`
+	PlantingArea          float64                     `json:"plantingArea"`
+	Address               string                      `json:"address"`
+	IsAvailable           bool                        `json:"isAvailable"`
+}
+
+func FromDomainToProposalWithCommodity(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase) (ProposalWithCommodity, int, error) {
+	commodity, statusCode, err := commodityUC.GetByID(domain.CommodityID)
+	if err != nil {
+		return ProposalWithCommodity{}, statusCode, err
+	}
+
+	commodityResponse, statusCode, err := commodityResponse.FromDomain(commodity, userUC)
+	if err != nil {
+		return ProposalWithCommodity{}, statusCode, err
+	}
+
+	return ProposalWithCommodity{
+		ID:                    domain.ID,
+		Commodity:             commodityResponse,
+		Name:                  domain.Name,
+		Description:           domain.Description,
+		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,
+		PlantingArea:          domain.PlantingArea,
+		Address:               domain.Address,
+		IsAvailable:           domain.IsAvailable,
+	}, http.StatusOK, nil
+}
