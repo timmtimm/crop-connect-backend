@@ -24,7 +24,7 @@ type Batch struct {
 	UpdatedAt            primitive.DateTime `json:"updatedAt,omitempty"`
 }
 
-func FromDomain(domain *batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) (Batch, int, error) {
+func FromDomain(domain batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) (Batch, int, error) {
 	transaction, statusCode, err := transactionUC.GetByID(domain.TransactionID)
 	if err != nil {
 		return Batch{}, statusCode, errors.New("gagal mendapatkan transaksi")
@@ -50,7 +50,7 @@ func FromDomain(domain *batchs.Domain, transactionUC transactions.UseCase, propo
 func FromDomainArray(domain []batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) ([]Batch, int, error) {
 	var batches []Batch
 	for _, value := range domain {
-		batch, statusCode, err := FromDomain(&value, transactionUC, proposalUC, commodityUC, userUC)
+		batch, statusCode, err := FromDomain(value, transactionUC, proposalUC, commodityUC, userUC)
 		if err != nil {
 			return []Batch{}, statusCode, err
 		}
@@ -59,4 +59,26 @@ func FromDomainArray(domain []batchs.Domain, transactionUC transactions.UseCase,
 	}
 
 	return batches, http.StatusOK, nil
+}
+
+type BatchWithoutTransaction struct {
+	ID                   primitive.ObjectID `json:"_id"`
+	Name                 string             `json:"name"`
+	EstimatedHarvestDate primitive.DateTime `json:"estimatedHarvestDate"`
+	Status               string             `json:"status"`
+	CancelReason         string             `json:"cancelReason,omitempty"`
+	CreatedAt            primitive.DateTime `json:"createdAt"`
+	UpdatedAt            primitive.DateTime `json:"updatedAt,omitempty"`
+}
+
+func FromDomainWithoutTransaction(domain *batchs.Domain) BatchWithoutTransaction {
+	return BatchWithoutTransaction{
+		ID:                   domain.ID,
+		Name:                 domain.Name,
+		EstimatedHarvestDate: domain.EstimatedHarvestDate,
+		Status:               domain.Status,
+		CancelReason:         domain.CancelReason,
+		CreatedAt:            domain.CreatedAt,
+		UpdatedAt:            domain.UpdatedAt,
+	}
 }

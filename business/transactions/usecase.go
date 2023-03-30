@@ -86,7 +86,7 @@ func (tu *TransactionUseCase) GetByID(id primitive.ObjectID) (Domain, int, error
 func (tu *TransactionUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := tu.transactionRepository.GetByQuery(query)
 	if err != nil {
-		return []Domain{}, 0, http.StatusInternalServerError, err
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
 	}
 
 	return commodities, totalData, http.StatusOK, nil

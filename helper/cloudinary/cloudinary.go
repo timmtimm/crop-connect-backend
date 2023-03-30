@@ -47,7 +47,7 @@ func Init(folderName string) Function {
 }
 
 func (c *Cloudinary) UploadOneWithFilename(folder string, file *multipart.FileHeader, filename string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	pictureBuffer, err := file.Open()
@@ -59,7 +59,7 @@ func (c *Cloudinary) UploadOneWithFilename(folder string, file *multipart.FileHe
 		PublicID:       filename,
 		UniqueFilename: api.Bool(false),
 		Folder:         fmt.Sprintf("%s/%s", folderBase, folder),
-		Overwrite:      api.Bool(true),
+		Overwrite:      api.Bool(false),
 	})
 	if err != nil {
 		return "", err
@@ -135,7 +135,7 @@ func (c *Cloudinary) DeleteManyByURL(folder string, URLs []string) error {
 }
 
 func (c *Cloudinary) UpdateArrayImage(folder string, imageURLs []string, updateImage []*helper.UpdateImage) ([]string, error) {
-	for i := 0; i < len(imageURLs); i++ {
+	for i := 0; i < len(updateImage); i++ {
 		if updateImage[i].IsDelete {
 			imageURLs[i] = ""
 		} else if updateImage[i].IsChange {

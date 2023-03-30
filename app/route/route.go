@@ -8,6 +8,7 @@ import (
 	"marketplace-backend/controller/commodities"
 	"marketplace-backend/controller/proposals"
 	"marketplace-backend/controller/transactions"
+	treatmentRecord "marketplace-backend/controller/treatment_records"
 	"marketplace-backend/controller/users"
 	"net/http"
 
@@ -15,12 +16,12 @@ import (
 )
 
 type ControllerList struct {
-	LoggerMiddleware      echo.MiddlewareFunc
-	UserController        *users.Controller
-	CommodityController   *commodities.Controller
-	ProposalController    *proposals.Controller
-	TransactionController *transactions.Controller
-	BatchController       *batchs.Controller
+	UserController            *users.Controller
+	CommodityController       *commodities.Controller
+	ProposalController        *proposals.Controller
+	TransactionController     *transactions.Controller
+	BatchController           *batchs.Controller
+	TreatmentRecordController *treatmentRecord.Controller
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
@@ -59,7 +60,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	proposal.PUT("/validate/:proposal-id", cl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
 
 	transaction := apiV1.Group("/transaction")
-	transaction.GET("/page/:page", cl.TransactionController.GetUserTransaction, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	transaction.GET("/page/:page", cl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 
@@ -67,4 +68,11 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	batch.GET("/farmer/page/:page", cl.BatchController.GetFarmerBatch, middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/commodity/:commodity-id", cl.BatchController.GetByCommodityID)
 	batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
+
+	treatmentRecord := apiV1.Group("/treatment-record")
+	treatmentRecord.GET("/page/:page", cl.TreatmentRecordController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
+	treatmentRecord.POST("/:batch-id", cl.TreatmentRecordController.RequestToFarmer, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.PUT("/:treatment-record-id", cl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
+	treatmentRecord.PUT("/validate/:treatment-record-id", cl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.PUT("/note/:treatment-record-id", cl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
 }

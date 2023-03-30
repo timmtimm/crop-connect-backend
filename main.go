@@ -13,12 +13,14 @@ import (
 	_commodityUseCase "marketplace-backend/business/commodities"
 	_proposalUseCase "marketplace-backend/business/proposals"
 	_transactionUseCase "marketplace-backend/business/transactions"
+	_treatmentRecordUseCase "marketplace-backend/business/treatment_records"
 	_userUseCase "marketplace-backend/business/users"
 
 	_batchController "marketplace-backend/controller/batchs"
 	_commodityController "marketplace-backend/controller/commodities"
 	_proposalController "marketplace-backend/controller/proposals"
 	_transactionController "marketplace-backend/controller/transactions"
+	_treatmentRecordController "marketplace-backend/controller/treatment_records"
 	_userController "marketplace-backend/controller/users"
 
 	"github.com/labstack/echo/v4"
@@ -35,25 +37,29 @@ func main() {
 	proposalRepository := _driver.NewProposalRepository(database)
 	transactionRepository := _driver.NewTransactionRepository(database)
 	batchRepository := _driver.NewBatchRepository(database)
+	treatmentRecordRepository := _driver.NewTreatmentRecordRepository(database)
 
 	userUseCase := _userUseCase.NewUserUseCase(userRepository)
 	commodityUsecase := _commodityUseCase.NewCommodityUseCase(commodityRepository, cloudinary)
 	proposalUseCase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository)
 	transactionUseCase := _transactionUseCase.NewTransactionUseCase(transactionRepository, commodityRepository, proposalRepository)
 	batchUseCase := _batchUseCase.NewBatchUseCase(batchRepository, transactionRepository, proposalRepository, commodityRepository)
+	treatmentRecordUseCase := _treatmentRecordUseCase.NewTreatmentRecordUseCase(treatmentRecordRepository, batchRepository, transactionRepository, proposalRepository, commodityRepository, cloudinary)
 
 	userController := _userController.NewUserController(userUseCase)
 	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUseCase, proposalUseCase)
 	proposalController := _proposalController.NewProposalController(proposalUseCase, commodityUsecase)
 	transactionController := _transactionController.NewTransactionController(transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, batchUseCase)
 	batchController := _batchController.NewBatchController(batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
+	treatmentRecordController := _treatmentRecordController.NewTreatmentRecordController(treatmentRecordUseCase, batchUseCase, userUseCase)
 
 	routeController := _route.ControllerList{
-		UserController:        userController,
-		CommodityController:   commodityController,
-		ProposalController:    proposalController,
-		TransactionController: transactionController,
-		BatchController:       batchController,
+		UserController:            userController,
+		CommodityController:       commodityController,
+		ProposalController:        proposalController,
+		TransactionController:     transactionController,
+		BatchController:           batchController,
+		TreatmentRecordController: treatmentRecordController,
 	}
 
 	routeController.Init(e)
