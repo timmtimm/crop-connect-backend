@@ -64,7 +64,7 @@ func (tru *TreatmentRecordUseCase) RequestToFarmer(domain *Domain) (Domain, int,
 
 	newestTreatmentRecord, err := tru.treatmentRecordRepository.GetNewestByBatchID(domain.BatchID)
 	if err != mongo.ErrNoDocuments {
-		if newestTreatmentRecord.Status != constant.TreatmentRecordStatusAccepted {
+		if newestTreatmentRecord.Status != constant.TreatmentRecordStatusApproved {
 			return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan terakhir belum selesai")
 		} else if primitive.NewDateTimeFromTime(time.Now()) >= domain.Date {
 			return Domain{}, http.StatusBadRequest, errors.New("tanggal perawatan harus lebih besar dari tanggal hari ini")
@@ -99,6 +99,15 @@ func (tru *TreatmentRecordUseCase) GetByPaginationAndQuery(query Query) ([]Domai
 	}
 
 	return treatmentRecords, totalData, http.StatusOK, nil
+}
+
+func (tru *TreatmentRecordUseCase) GetByBatchID(batchID primitive.ObjectID) ([]Domain, int, error) {
+	treatmentRecords, err := tru.treatmentRecordRepository.GetByBatchID(batchID)
+	if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
+	}
+
+	return treatmentRecords, http.StatusOK, nil
 }
 
 /*
@@ -143,7 +152,7 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 		return Domain{}, http.StatusUnauthorized, errors.New("anda tidak memiliki akses")
 	}
 
-	if treatmentRecord.Status == constant.TreatmentRecordStatusAccepted {
+	if treatmentRecord.Status == constant.TreatmentRecordStatusApproved {
 		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan sudah diterima")
 	}
 
@@ -172,6 +181,67 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 		if err != nil {
 			return Domain{}, 0, err
 		}
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui riwayat perawatan")
+	}
+
+	return treatmentRecord, http.StatusOK, nil
+}
+
+func (tru *TreatmentRecordUseCase) Validate(domain *Domain, validatorID primitive.ObjectID) (Domain, int, error) {
+	isStatusAvailable := util.CheckStringOnArray([]string{constant.TreatmentRecordStatusRevision, constant.TreatmentRecordStatusApproved}, domain.Status)
+	if !isStatusAvailable {
+		return Domain{}, http.StatusBadRequest, errors.New("status proposal hanya tersedia approved dan revision")
+	}
+
+	treatmentRecord, err := tru.treatmentRecordRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("riwayat perawatan tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
+	}
+
+	if treatmentRecord.Status != constant.TreatmentRecordStatusPending {
+		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan tidak dalam status menunggu validasi")
+	}
+
+	if domain.Status == constant.TreatmentRecordStatusRevision && domain.RevisionNote == "" {
+		return Domain{}, http.StatusBadRequest, errors.New("catatan revisi tidak boleh kosong")
+	}
+
+	treatmentRecord.Status = domain.Status
+	treatmentRecord.WarningNote = domain.WarningNote
+
+	if domain.Status == constant.TreatmentRecordStatusRevision {
+		treatmentRecord.RevisionNote = domain.RevisionNote
+	} else {
+		treatmentRecord.AccepterID = validatorID
+	}
+
+	_, err = tru.treatmentRecordRepository.Update(&treatmentRecord)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui riwayat perawatan")
+	}
+
+	return treatmentRecord, http.StatusOK, nil
+}
+
+func (tru *TreatmentRecordUseCase) UpdateNotes(domain *Domain) (Domain, int, error) {
+	treatmentRecord, err := tru.treatmentRecordRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("riwayat perawatan tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
+	}
+
+	if treatmentRecord.Status != constant.TreatmentRecordStatusRevision && domain.RevisionNote != "" {
+		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan tidak dalam status revisi")
+	}
+
+	treatmentRecord.RevisionNote = domain.RevisionNote
+	treatmentRecord.WarningNote = domain.WarningNote
+
+	treatmentRecord, err = tru.treatmentRecordRepository.Update(&treatmentRecord)
+	if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui riwayat perawatan")
 	}
 

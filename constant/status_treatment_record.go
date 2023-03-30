@@ -3,6 +3,6 @@ package constant
 const (
 	TreatmentRecordStatusWaitingResponse = "waitingResponse"
 	TreatmentRecordStatusPending         = "pending"
-	TreatmentRecordStatusAccepted        = "accepted"
+	TreatmentRecordStatusApproved        = "approved"
 	TreatmentRecordStatusRevision        = "revision"
 )

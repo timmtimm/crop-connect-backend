@@ -62,3 +62,59 @@ func (req *RequestToFarmer) Validate() []helper.ValidationError {
 type FillTreatmentRecord struct {
 	Notes []string `form:"notes" json:"notes"`
 }
+
+type Validate struct {
+	Status       string `form:"status" json:"status" validate:"required"`
+	RevisionNote string `form:"revisionNote" json:"revisionNote"`
+	WarningNote  string `form:"warningNote" json:"warningNote"`
+}
+
+func (req *Validate) ToDomain() *treatmentRecords.Domain {
+	return &treatmentRecords.Domain{
+		Status:       req.Status,
+		RevisionNote: req.RevisionNote,
+		WarningNote:  req.WarningNote,
+	}
+}
+
+func (req *Validate) Validate() []helper.ValidationError {
+	var ve validator.ValidationErrors
+
+	if err := validator.New().Struct(req); err != nil {
+		if errors.As(err, &ve) {
+			fields := structs.Fields(req)
+			out := make([]helper.ValidationError, len(ve))
+
+			for i, e := range ve {
+				out[i] = helper.ValidationError{
+					Field:   e.Field(),
+					Message: helper.MessageForTag(e.Tag()),
+				}
+
+				out[i].Message = strings.Replace(out[i].Message, "[PARAM]", e.Param(), 1)
+
+				for _, f := range fields {
+					if f.Name() == e.Field() {
+						out[i].Field = f.Tag("json")
+						break
+					}
+				}
+			}
+			return out
+		}
+	}
+
+	return nil
+}
+
+type UpdateNotes struct {
+	RevisionNote string `form:"revisionNote" json:"revisionNote"`
+	WarningNote  string `form:"warningNote" json:"warningNote"`
+}
+
+func (req *UpdateNotes) ToDomain() *treatmentRecords.Domain {
+	return &treatmentRecords.Domain{
+		RevisionNote: req.RevisionNote,
+		WarningNote:  req.WarningNote,
+	}
+}

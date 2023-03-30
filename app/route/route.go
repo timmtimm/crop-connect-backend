@@ -73,4 +73,6 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	treatmentRecord.GET("/page/:page", cl.TreatmentRecordController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
 	treatmentRecord.POST("/:batch-id", cl.TreatmentRecordController.RequestToFarmer, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.PUT("/:treatment-record-id", cl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
+	treatmentRecord.PUT("/validate/:treatment-record-id", cl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.PUT("/note/:treatment-record-id", cl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
 }

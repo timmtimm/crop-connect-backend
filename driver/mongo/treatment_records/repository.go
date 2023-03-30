@@ -87,6 +87,26 @@ func (trr *TreatmentRecordRepository) GetByID(id primitive.ObjectID) (treatmentR
 	return result.ToDomain(), err
 }
 
+func (trr *TreatmentRecordRepository) GetByBatchID(batchID primitive.ObjectID) ([]treatmentRecord.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result []Model
+	cursor, err := trr.collection.Find(ctx, bson.M{
+		"batchID": batchID,
+	})
+	if err != nil {
+		return []treatmentRecord.Domain{}, err
+	}
+
+	err = cursor.All(ctx, &result)
+	if err != nil {
+		return []treatmentRecord.Domain{}, err
+	}
+
+	return ToDomainArray(result), nil
+}
+
 func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([]treatmentRecord.Domain, int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()

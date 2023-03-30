@@ -146,7 +146,7 @@ func (trc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		})
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.userUC)
+	treatmentRecordsResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.userUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -157,8 +157,40 @@ func (trc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:     statusCode,
 		Message:    "berhasil mendapatkan riwayat perawatan",
-		Data:       transactionResponse,
+		Data:       treatmentRecordsResponse,
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
+func (trc *Controller) GetByBatchID(c echo.Context) error {
+	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "batch id tidak valid",
+		})
+	}
+
+	treatmentRecords, statusCode, err := trc.treatmentRecordUC.GetByBatchID(batchID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	treatmentRecordsResponse, statusCode, err := response.FromDomainArray(treatmentRecords, trc.batchUC, trc.userUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan riwayat perawatan",
+		Data:    treatmentRecordsResponse,
 	})
 }
 
@@ -216,6 +248,81 @@ func (trc *Controller) FillTreatmentRecord(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "catatan perawatan berhasil diisi",
+	})
+}
+
+func (trc *Controller) Validate(c echo.Context) error {
+	treatmentRecordID, err := primitive.ObjectIDFromHex(c.Param("treatment-record-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "treatment record id tidak valid",
+		})
+	}
+
+	userInput := request.Validate{}
+	c.Bind(&userInput)
+
+	validationErr := userInput.Validate()
+	if validationErr != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "validasi gagal",
+			Error:   validationErr,
+		})
+	}
+
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	inputDomain := userInput.ToDomain()
+	inputDomain.ID = treatmentRecordID
+
+	_, statusCode, err := trc.treatmentRecordUC.Validate(inputDomain, userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "catatan perawatan berhasil divalidasi",
+	})
+}
+
+func (trc *Controller) UpdateNotes(c echo.Context) error {
+	treatmentRecordID, err := primitive.ObjectIDFromHex(c.Param("treatment-record-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "treatment record id tidak valid",
+		})
+	}
+
+	userInput := request.UpdateNotes{}
+	c.Bind(&userInput)
+
+	inputDomain := userInput.ToDomain()
+	inputDomain.ID = treatmentRecordID
+
+	_, statusCode, err := trc.treatmentRecordUC.UpdateNotes(inputDomain)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "catatan perawatan berhasil diupdate",
 	})
 }
 
