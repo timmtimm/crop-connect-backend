@@ -4,6 +4,7 @@ import (
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/transactions"
 	"marketplace-backend/business/users"
 	"marketplace-backend/controller/batchs/request"
@@ -21,15 +22,17 @@ type Controller struct {
 	proposalUC    proposals.UseCase
 	commodityUC   commodities.UseCase
 	userUC        users.UseCase
+	regionUC      regions.UseCase
 }
 
-func NewBatchController(batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) *Controller {
+func NewBatchController(batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		batchUC:       batchUC,
 		transactionUC: transactionUC,
 		proposalUC:    proposalUC,
 		commodityUC:   commodityUC,
 		userUC:        userUC,
+		regionUC:      regionUC,
 	}
 }
 
@@ -85,7 +88,7 @@ func (bc *Controller) GetFarmerBatch(c echo.Context) error {
 		})
 	}
 
-	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC)
+	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC, bc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -118,7 +121,7 @@ func (bc *Controller) GetByCommodityID(c echo.Context) error {
 		})
 	}
 
-	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC)
+	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC, bc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

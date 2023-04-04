@@ -21,12 +21,25 @@ type Domain struct {
 	UpdatedAt    primitive.DateTime
 }
 
+type Query struct {
+	Skip      int64
+	Limit     int64
+	Sort      string
+	Order     int
+	FarmerID  primitive.ObjectID
+	Commodity string
+	Batch     string
+	Status    string
+}
+
 type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
 	GetByBatchID(batchID primitive.ObjectID) (Domain, error)
+	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
+	// Update(domain *Domain) (Domain, error)
 	// Delete
 }
 
@@ -34,6 +47,8 @@ type UseCase interface {
 	// Create
 	SubmitHarvest(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error)
 	// Read
+	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
+	// Validate(domain *Domain) (Domain, int, error)
 	// Delete
 }

@@ -6,6 +6,7 @@ import (
 
 type Domain struct {
 	ID          primitive.ObjectID
+	RegionID    primitive.ObjectID
 	Name        string
 	Email       string
 	Description string

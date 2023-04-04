@@ -8,6 +8,7 @@ import (
 	"marketplace-backend/controller/commodities"
 	"marketplace-backend/controller/harvests"
 	"marketplace-backend/controller/proposals"
+	"marketplace-backend/controller/regions"
 	"marketplace-backend/controller/transactions"
 	treatmentRecords "marketplace-backend/controller/treatment_records"
 	"marketplace-backend/controller/users"
@@ -24,6 +25,7 @@ type ControllerList struct {
 	BatchController           *batchs.Controller
 	TreatmentRecordController *treatmentRecords.Controller
 	HarvestController         *harvests.Controller
+	RegionController          *regions.Controller
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
@@ -67,7 +69,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	batch := apiV1.Group("/batch")
-	batch.GET("/farmer/page/:page", cl.BatchController.GetFarmerBatch, middleware.CheckOneRole(constant.RoleFarmer))
+	batch.GET("/page/:page", cl.BatchController.GetFarmerBatch, middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/commodity/:commodity-id", cl.BatchController.GetByCommodityID)
 	batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
@@ -79,5 +81,8 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	treatmentRecord.PUT("/note/:treatment-record-id", cl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
 
 	harvest := apiV1.Group("/harvest")
+	harvest.GET("/page/:page", cl.HarvestController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
+	// harvest.GET("/:batch-id", cl.HarvestController.GetByBatchID)
 	harvest.POST("/:batch-id", cl.HarvestController.SubmitHarvest, _middleware.CheckOneRole(constant.RoleFarmer))
+	// treatmentRecord.PUT("/validate/:harvest-id", cl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 }

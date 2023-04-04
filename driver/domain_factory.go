@@ -5,6 +5,7 @@ import (
 	commodityDomain "marketplace-backend/business/commodities"
 	harvestDomain "marketplace-backend/business/harvests"
 	proposalDomain "marketplace-backend/business/proposals"
+	regionDomain "marketplace-backend/business/regions"
 	transactionDomain "marketplace-backend/business/transactions"
 	treatmentRecordDomain "marketplace-backend/business/treatment_records"
 	userDomain "marketplace-backend/business/users"
@@ -13,6 +14,7 @@ import (
 	commodityDB "marketplace-backend/driver/mongo/commodities"
 	harvestDB "marketplace-backend/driver/mongo/harvests"
 	proposalDB "marketplace-backend/driver/mongo/proposals"
+	regionDB "marketplace-backend/driver/mongo/regions"
 	transactionDB "marketplace-backend/driver/mongo/transactions"
 	treatmentRecordDB "marketplace-backend/driver/mongo/treatment_records"
 	userDB "marketplace-backend/driver/mongo/users"
@@ -46,4 +48,8 @@ func NewTreatmentRecordRepository(db *mongo.Database) treatmentRecordDomain.Repo
 
 func NewHarvestRepository(db *mongo.Database) harvestDomain.Repository {
 	return harvestDB.NewMongoRepository(db)
+}
+
+func NewRegionRepository(db *mongo.Database) regionDomain.Repository {
+	return regionDB.NewMongoRepository(db)
 }

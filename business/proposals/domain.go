@@ -6,6 +6,7 @@ type Domain struct {
 	ID                    primitive.ObjectID
 	ValidatorID           primitive.ObjectID
 	CommodityID           primitive.ObjectID
+	RegionID              primitive.ObjectID
 	Name                  string
 	Description           string
 	Status                string

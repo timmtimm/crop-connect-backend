@@ -4,6 +4,7 @@ import (
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/transactions"
 	treatmentRecord "marketplace-backend/business/treatment_records"
 	"marketplace-backend/business/users"
@@ -33,7 +34,7 @@ type TreatmentRecord struct {
 	UpdatedAt    primitive.DateTime                     `json:"updatedAt,omitempty"`
 }
 
-func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) (*TreatmentRecord, int, error) {
+func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (*TreatmentRecord, int, error) {
 	requester, statusCode, err := userUC.GetByID(domain.RequesterID)
 	if err != nil {
 		return nil, statusCode, err
@@ -54,39 +55,24 @@ func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transacti
 		return nil, statusCode, err
 	}
 
-	proposalResponse, statusCode, err := proposalResponse.FromDomainToProposalWithCommodity(&proposal, userUC, commodityUC)
+	proposalResponse, statusCode, err := proposalResponse.FromDomainToProposalWithCommodity(&proposal, userUC, commodityUC, regionUC)
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	var accepter users.Domain
-	if !domain.AccepterID.IsZero() {
-		accepter, statusCode, err = userUC.GetByID(domain.AccepterID)
-		if err != nil {
-			return nil, statusCode, err
-		}
-
-		return &TreatmentRecord{
-			ID:           domain.ID,
-			Requester:    userResponse.FromDomain(requester),
-			Accepter:     userResponse.FromDomain(accepter),
-			Proposal:     proposalResponse,
-			Batch:        batchResponse.FromDomainWithoutTransaction(&batch),
-			Number:       domain.Number,
-			Date:         domain.Date,
-			Status:       domain.Status,
-			Description:  domain.Description,
-			Treatment:    domain.Treatment,
-			RevisionNote: domain.RevisionNote,
-			WarningNote:  domain.WarningNote,
-			CreatedAt:    domain.CreatedAt,
-			UpdatedAt:    domain.UpdatedAt,
-		}, http.StatusOK, nil
+	requester, statusCode, err = userUC.GetByID(domain.RequesterID)
+	if err != nil {
+		return nil, statusCode, err
 	}
 
-	return &TreatmentRecord{
+	requesterResponse, statusCode, err := userResponse.FromDomain(requester, regionUC)
+	if err != nil {
+		return nil, statusCode, err
+	}
+
+	response := TreatmentRecord{
 		ID:           domain.ID,
-		Requester:    userResponse.FromDomain(requester),
+		Requester:    requesterResponse,
 		Proposal:     proposalResponse,
 		Batch:        batchResponse.FromDomainWithoutTransaction(&batch),
 		Number:       domain.Number,
@@ -98,13 +84,30 @@ func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transacti
 		WarningNote:  domain.WarningNote,
 		CreatedAt:    domain.CreatedAt,
 		UpdatedAt:    domain.UpdatedAt,
-	}, http.StatusOK, nil
+	}
+
+	var accepter users.Domain
+	if !domain.AccepterID.IsZero() {
+		accepter, statusCode, err = userUC.GetByID(domain.AccepterID)
+		if err != nil {
+			return nil, statusCode, err
+		}
+
+		accepterResponse, statusCode, err := userResponse.FromDomain(accepter, regionUC)
+		if err != nil {
+			return nil, statusCode, err
+		}
+
+		response.Accepter = accepterResponse
+	}
+
+	return &response, http.StatusOK, nil
 }
 
-func FromDomainArray(domain []treatmentRecord.Domain, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) ([]TreatmentRecord, int, error) {
+func FromDomainArray(domain []treatmentRecord.Domain, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]TreatmentRecord, int, error) {
 	var treatmentRecords []TreatmentRecord
 	for _, v := range domain {
-		treatmentRecord, statusCode, err := FromDomain(v, batchUC, transactionUC, proposalUC, commodityUC, userUC)
+		treatmentRecord, statusCode, err := FromDomain(v, batchUC, transactionUC, proposalUC, commodityUC, userUC, regionUC)
 		if err != nil {
 			return treatmentRecords, statusCode, err
 		}

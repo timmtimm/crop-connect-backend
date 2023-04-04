@@ -3,6 +3,7 @@ package response
 import (
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/transactions"
 	"marketplace-backend/business/users"
 	"net/http"
@@ -23,7 +24,7 @@ type Buyer struct {
 	CreatedAt  primitive.DateTime          `json:"createdAt"`
 }
 
-func FromDomainToBuyer(domain *transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) (Buyer, int, error) {
+func FromDomainToBuyer(domain *transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Buyer, int, error) {
 	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(domain.ProposalID)
 	if err != nil {
 		return Buyer{}, statusCode, err
@@ -34,7 +35,7 @@ func FromDomainToBuyer(domain *transactions.Domain, proposalUC proposals.UseCase
 		return Buyer{}, statusCode, err
 	}
 
-	commodity, statusCode, err := commodityResponse.FromDomain(commodityDomain, userUC)
+	commodity, statusCode, err := commodityResponse.FromDomain(commodityDomain, userUC, regionUC)
 	if err != nil {
 		return Buyer{}, statusCode, err
 	}
@@ -50,10 +51,10 @@ func FromDomainToBuyer(domain *transactions.Domain, proposalUC proposals.UseCase
 	}, http.StatusOK, nil
 }
 
-func FromDomainArrayToBuyer(domain []transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) ([]Buyer, int, error) {
+func FromDomainArrayToBuyer(domain []transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]Buyer, int, error) {
 	var buyers []Buyer
 	for _, value := range domain {
-		buyer, statusCode, err := FromDomainToBuyer(&value, proposalUC, commodityUC, userUC)
+		buyer, statusCode, err := FromDomainToBuyer(&value, proposalUC, commodityUC, userUC, regionUC)
 		if err != nil {
 			return []Buyer{}, statusCode, err
 		}

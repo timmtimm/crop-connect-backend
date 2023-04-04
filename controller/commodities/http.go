@@ -3,6 +3,7 @@ package commodities
 import (
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/users"
 	"marketplace-backend/controller/commodities/request"
 	"marketplace-backend/controller/commodities/response"
@@ -17,13 +18,15 @@ type Controller struct {
 	commodityUC commodities.UseCase
 	userUC      users.UseCase
 	proposalUC  proposals.UseCase
+	regionUC    regions.UseCase
 }
 
-func NewCommodityController(commodityUC commodities.UseCase, userUC users.UseCase, proposalUC proposals.UseCase) *Controller {
+func NewCommodityController(commodityUC commodities.UseCase, userUC users.UseCase, proposalUC proposals.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		commodityUC: commodityUC,
 		userUC:      userUC,
 		proposalUC:  proposalUC,
+		regionUC:    regionUC,
 	}
 }
 
@@ -115,7 +118,7 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		})
 	}
 
-	commodityResponse, statusCode, err := response.FromDomainArray(commodities, cc.userUC)
+	commodityResponse, statusCode, err := response.FromDomainArray(commodities, cc.userUC, cc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -148,7 +151,7 @@ func (cc *Controller) GetByID(c echo.Context) error {
 		})
 	}
 
-	commodityResponse, statusCode, err := response.FromDomain(commodity, cc.userUC)
+	commodityResponse, statusCode, err := response.FromDomain(commodity, cc.userUC, cc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -180,7 +183,7 @@ func (cc *Controller) GetForFarmer(c echo.Context) error {
 		})
 	}
 
-	commodityResponse, statusCode, err := response.FromDomainArray(commodities, cc.userUC)
+	commodityResponse, statusCode, err := response.FromDomainArray(commodities, cc.userUC, cc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

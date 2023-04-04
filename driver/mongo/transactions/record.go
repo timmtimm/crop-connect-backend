@@ -10,6 +10,7 @@ type Model struct {
 	ID         primitive.ObjectID `bson:"_id"`
 	BuyerID    primitive.ObjectID `bson:"buyerID"`
 	ProposalID primitive.ObjectID `bson:"proposalID"`
+	RegionID   primitive.ObjectID `bson:"regionID"`
 	Address    string             `bson:"address"`
 	Status     string             `bson:"status"`
 	TotalPrice float64            `bson:"totalPrice"`
@@ -22,6 +23,7 @@ func FromDomain(domain *transactions.Domain) *Model {
 		ID:         domain.ID,
 		BuyerID:    domain.BuyerID,
 		ProposalID: domain.ProposalID,
+		RegionID:   domain.RegionID,
 		Address:    domain.Address,
 		Status:     domain.Status,
 		TotalPrice: domain.TotalPrice,
@@ -35,6 +37,7 @@ func (model *Model) ToDomain() transactions.Domain {
 		ID:         model.ID,
 		BuyerID:    model.BuyerID,
 		ProposalID: model.ProposalID,
+		RegionID:   model.RegionID,
 		Address:    model.Address,
 		Status:     model.Status,
 		TotalPrice: model.TotalPrice,

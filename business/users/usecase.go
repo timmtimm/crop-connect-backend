@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/constant"
 	"marketplace-backend/helper"
 	"marketplace-backend/util"
@@ -14,12 +15,14 @@ import (
 )
 
 type UserUseCase struct {
-	userRepository Repository
+	userRepository   Repository
+	regionRepository regions.Repository
 }
 
-func NewUserUseCase(ur Repository) UseCase {
+func NewUserUseCase(ur Repository, rr regions.Repository) UseCase {
 	return &UserUseCase{
-		userRepository: ur,
+		userRepository:   ur,
+		regionRepository: rr,
 	}
 }
 
@@ -33,7 +36,14 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 		return "", http.StatusBadRequest, errors.New("role tersedia hanya buyer dan farmer")
 	}
 
-	_, err := uu.userRepository.GetByEmail(domain.Email)
+	_, err := uu.regionRepository.GetByID(domain.RegionID)
+	if err == mongo.ErrNoDocuments {
+		return "", http.StatusNotFound, errors.New("daerah tidak ditemukan")
+	} else if err != nil {
+		return "", http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	_, err = uu.userRepository.GetByEmail(domain.Email)
 	if err == mongo.ErrNoDocuments {
 		encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
 		domain.ID = primitive.NewObjectID()
@@ -53,7 +63,14 @@ func (uu *UserUseCase) Register(domain *Domain) (string, int, error) {
 }
 
 func (uu *UserUseCase) RegisterValidator(domain *Domain) (string, int, error) {
-	_, err := uu.userRepository.GetByEmail(domain.Email)
+	_, err := uu.regionRepository.GetByID(domain.RegionID)
+	if err == mongo.ErrNoDocuments {
+		return "", http.StatusNotFound, errors.New("daerah tidak ditemukan")
+	} else if err != nil {
+		return "", http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	_, err = uu.userRepository.GetByEmail(domain.Email)
 	if err == mongo.ErrNoDocuments {
 		encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(domain.Password), bcrypt.DefaultCost)
 		domain.ID = primitive.NewObjectID()
@@ -122,6 +139,15 @@ func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, int, error) {
 		return Domain{}, http.StatusNotFound, errors.New("user tidak ditemukan")
 	} else if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data pengguna")
+	}
+
+	if domain.RegionID != user.RegionID {
+		_, err = uu.regionRepository.GetByID(domain.RegionID)
+		if err == mongo.ErrNoDocuments {
+			return Domain{}, http.StatusNotFound, errors.New("daerah tidak ditemukan")
+		} else if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+		}
 	}
 
 	if domain.Email != user.Email {

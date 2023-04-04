@@ -1,6 +1,7 @@
 package users
 
 import (
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/users"
 	"marketplace-backend/controller/users/request"
 	"marketplace-backend/controller/users/response"
@@ -11,12 +12,14 @@ import (
 )
 
 type Controller struct {
-	userUC users.UseCase
+	userUC   users.UseCase
+	regionUC regions.UseCase
 }
 
-func NewUserController(userUC users.UseCase) *Controller {
+func NewUserController(userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
-		userUC: userUC,
+		userUC:   userUC,
+		regionUC: regionUC,
 	}
 }
 
@@ -37,7 +40,15 @@ func (uc *Controller) Register(c echo.Context) error {
 		})
 	}
 
-	token, statusCode, err := uc.userUC.Register(userInput.ToDomain())
+	inputDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	token, statusCode, err := uc.userUC.Register(inputDomain)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -65,7 +76,15 @@ func (uc *Controller) RegisterValidator(c echo.Context) error {
 		})
 	}
 
-	token, statusCode, err := uc.userUC.RegisterValidator(userInput.ToDomain())
+	inputDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	token, statusCode, err := uc.userUC.RegisterValidator(inputDomain)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -129,17 +148,7 @@ func (uc *Controller) GetProfile(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(statusCode, helper.BaseResponse{
-		Status:  statusCode,
-		Message: "berhasil mendapatkan data user",
-		Data:    response.FromDomain(user),
-	})
-}
-
-func (uc *Controller) GetFarmerByName(c echo.Context) error {
-	name := c.Param("farmer-name")
-
-	user, statusCode, err := uc.userUC.GetFarmerByName(name)
+	userResponse, statusCode, err := response.FromDomain(user, uc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -150,7 +159,33 @@ func (uc *Controller) GetFarmerByName(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "berhasil mendapatkan data user",
-		Data:    response.FromDomainArray(user),
+		Data:    userResponse,
+	})
+}
+
+func (uc *Controller) GetFarmerByName(c echo.Context) error {
+	name := c.Param("farmer-name")
+
+	users, statusCode, err := uc.userUC.GetFarmerByName(name)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	usersReponse, statusCode, err := response.FromDomainArray(users, uc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan data user",
+		Data:    usersReponse,
 	})
 }
 
@@ -179,10 +214,16 @@ func (uc *Controller) UpdateProfile(c echo.Context) error {
 		})
 	}
 
-	userDomain := userInput.ToDomain()
+	userDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
 	userDomain.ID = userID
 
-	user, statusCode, err := uc.userUC.UpdateProfile(userDomain)
+	_, statusCode, err := uc.userUC.UpdateProfile(userDomain)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -193,7 +234,6 @@ func (uc *Controller) UpdateProfile(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "berhasil update data user",
-		Data:    response.FromDomain(user),
 	})
 }
 

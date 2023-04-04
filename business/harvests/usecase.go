@@ -143,6 +143,26 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 Read
 */
 
+func (hu *HarvestUseCase) GetByBatchID(batchID primitive.ObjectID) (Domain, int, error) {
+	harvest, err := hu.harvestRepository.GetByBatchID(batchID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("hasil panen tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan hasil panen")
+	}
+
+	return harvest, http.StatusOK, nil
+}
+
+func (hu *HarvestUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
+	harvests, totalData, err := hu.harvestRepository.GetByQuery(query)
+	if err != nil {
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan hasil panen")
+	}
+
+	return harvests, totalData, http.StatusOK, nil
+}
+
 /*
 Update
 */

@@ -3,6 +3,7 @@ package proposals
 import (
 	"errors"
 	"marketplace-backend/business/commodities"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/constant"
 	"marketplace-backend/util"
 	"net/http"
@@ -15,12 +16,14 @@ import (
 type ProposalUseCase struct {
 	proposalRepository  Repository
 	commodityRepository commodities.Repository
+	regionRepository    regions.Repository
 }
 
-func NewProposalUseCase(pr Repository, cr commodities.Repository) UseCase {
+func NewProposalUseCase(pr Repository, cr commodities.Repository, rr regions.Repository) UseCase {
 	return &ProposalUseCase{
 		proposalRepository:  pr,
 		commodityRepository: cr,
+		regionRepository:    rr,
 	}
 }
 
@@ -29,7 +32,14 @@ Create
 */
 
 func (pu *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (int, error) {
-	_, err := pu.commodityRepository.GetByIDAndFarmerID(domain.CommodityID, farmerID)
+	_, err := pu.regionRepository.GetByID(domain.RegionID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusNotFound, errors.New("daerah tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	_, err = pu.commodityRepository.GetByIDAndFarmerID(domain.CommodityID, farmerID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	} else if err != nil {
@@ -105,6 +115,15 @@ func (pu *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 	_, err = pu.commodityRepository.GetByIDAndFarmerID(proposal.CommodityID, farmerID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	}
+
+	if proposal.RegionID != domain.RegionID {
+		_, err = pu.regionRepository.GetByID(domain.RegionID)
+		if err == mongo.ErrNoDocuments {
+			return http.StatusNotFound, errors.New("daerah tidak ditemukan")
+		} else if err != nil {
+			return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+		}
 	}
 
 	if proposal.Name != domain.Name {

@@ -2,6 +2,7 @@ package response
 
 import (
 	"marketplace-backend/business/commodities"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/users"
 	userReponse "marketplace-backend/controller/users/response"
 	"net/http"
@@ -24,15 +25,20 @@ type Commodity struct {
 	DeletedAt      primitive.DateTime `json:"deletedAt,omitempty"`
 }
 
-func FromDomain(domain commodities.Domain, userUC users.UseCase) (Commodity, int, error) {
+func FromDomain(domain commodities.Domain, userUC users.UseCase, regionUC regions.UseCase) (Commodity, int, error) {
 	farmer, statusCode, err := userUC.GetByID(domain.FarmerID)
+	if err != nil {
+		return Commodity{}, statusCode, err
+	}
+
+	farmerResponse, statusCode, err := userReponse.FromDomain(farmer, regionUC)
 	if err != nil {
 		return Commodity{}, statusCode, err
 	}
 
 	return Commodity{
 		ID:             domain.ID,
-		Farmer:         userReponse.FromDomain(farmer),
+		Farmer:         farmerResponse,
 		Name:           domain.Name,
 		Description:    domain.Description,
 		Seed:           domain.Seed,
@@ -46,10 +52,10 @@ func FromDomain(domain commodities.Domain, userUC users.UseCase) (Commodity, int
 	}, http.StatusOK, nil
 }
 
-func FromDomainArray(domain []commodities.Domain, userUC users.UseCase) ([]Commodity, int, error) {
+func FromDomainArray(domain []commodities.Domain, userUC users.UseCase, regionUC regions.UseCase) ([]Commodity, int, error) {
 	var response []Commodity
 	for _, value := range domain {
-		commodity, statusCode, err := FromDomain(value, userUC)
+		commodity, statusCode, err := FromDomain(value, userUC, regionUC)
 		if err != nil {
 			return []Commodity{}, statusCode, err
 		}

@@ -7,12 +7,14 @@ import (
 	_driver "marketplace-backend/driver"
 	_mongo "marketplace-backend/driver/mongo"
 	"marketplace-backend/helper/cloudinary"
+	"marketplace-backend/seeds"
 	_util "marketplace-backend/util"
 
 	_batchUseCase "marketplace-backend/business/batchs"
 	_commodityUseCase "marketplace-backend/business/commodities"
 	_harvestUseCase "marketplace-backend/business/harvests"
 	_proposalUseCase "marketplace-backend/business/proposals"
+	_regionUseCase "marketplace-backend/business/regions"
 	_transactionUseCase "marketplace-backend/business/transactions"
 	_treatmentRecordUseCase "marketplace-backend/business/treatment_records"
 	_userUseCase "marketplace-backend/business/users"
@@ -21,6 +23,7 @@ import (
 	_commodityController "marketplace-backend/controller/commodities"
 	_harvestController "marketplace-backend/controller/harvests"
 	_proposalController "marketplace-backend/controller/proposals"
+	_regionController "marketplace-backend/controller/regions"
 	_transactionController "marketplace-backend/controller/transactions"
 	_treatmentRecordController "marketplace-backend/controller/treatment_records"
 	_userController "marketplace-backend/controller/users"
@@ -29,11 +32,14 @@ import (
 )
 
 func main() {
+	fmt.Println("Starting server...")
 	e := echo.New()
 
+	fmt.Println("Initializing database...")
 	database := _mongo.Init(_util.GetConfig("DB_NAME"))
 	cloudinary := cloudinary.Init(_util.GetConfig("CLOUDINARY_UPLOAD_FOLDER"))
 
+	fmt.Println("Initializing repositories...")
 	userRepository := _driver.NewUserRepository(database)
 	commodityRepository := _driver.NewCommodityRepository(database)
 	proposalRepository := _driver.NewProposalRepository(database)
@@ -41,23 +47,31 @@ func main() {
 	batchRepository := _driver.NewBatchRepository(database)
 	treatmentRecordRepository := _driver.NewTreatmentRecordRepository(database)
 	harvestRepository := _driver.NewHarvestRepository(database)
+	regionRepository := _driver.NewRegionRepository(database)
 
-	userUseCase := _userUseCase.NewUserUseCase(userRepository)
+	fmt.Println("Initializing usecases...")
+	userUseCase := _userUseCase.NewUserUseCase(userRepository, regionRepository)
 	commodityUsecase := _commodityUseCase.NewCommodityUseCase(commodityRepository, cloudinary)
-	proposalUseCase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository)
+	proposalUseCase := _proposalUseCase.NewProposalUseCase(proposalRepository, commodityRepository, regionRepository)
 	transactionUseCase := _transactionUseCase.NewTransactionUseCase(transactionRepository, commodityRepository, proposalRepository)
 	batchUseCase := _batchUseCase.NewBatchUseCase(batchRepository, transactionRepository, proposalRepository, commodityRepository)
 	treatmentRecordUseCase := _treatmentRecordUseCase.NewTreatmentRecordUseCase(treatmentRecordRepository, batchRepository, transactionRepository, proposalRepository, commodityRepository, cloudinary)
 	harvestUseCase := _harvestUseCase.NewHarvestUseCase(harvestRepository, batchRepository, treatmentRecordRepository, transactionRepository, proposalRepository, commodityRepository, cloudinary)
+	regionUseCase := _regionUseCase.NewRegionUseCase(regionRepository)
 
-	userController := _userController.NewUserController(userUseCase)
-	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUseCase, proposalUseCase)
+	fmt.Println("Initializing controllers...")
+	userController := _userController.NewUserController(userUseCase, regionUseCase)
+	commodityController := _commodityController.NewCommodityController(commodityUsecase, userUseCase, proposalUseCase, regionUseCase)
 	proposalController := _proposalController.NewProposalController(proposalUseCase, commodityUsecase)
-	transactionController := _transactionController.NewTransactionController(transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, batchUseCase)
-	batchController := _batchController.NewBatchController(batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
-	treatmentRecordController := _treatmentRecordController.NewTreatmentRecordController(treatmentRecordUseCase, batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
-	harvestController := _harvestController.NewHarvestController(harvestUseCase, batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase)
+	transactionController := _transactionController.NewTransactionController(transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, batchUseCase, regionUseCase)
+	batchController := _batchController.NewBatchController(batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, regionUseCase)
+	treatmentRecordController := _treatmentRecordController.NewTreatmentRecordController(treatmentRecordUseCase, batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, regionUseCase)
+	harvestController := _harvestController.NewHarvestController(harvestUseCase, batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, regionUseCase)
+	regionController := _regionController.NewRegionController(regionUseCase)
 
+	seeds.SeedDatabase(database, regionUseCase)
+
+	fmt.Println("Initializing routes...")
 	routeController := _route.ControllerList{
 		UserController:            userController,
 		CommodityController:       commodityController,
@@ -66,6 +80,7 @@ func main() {
 		BatchController:           batchController,
 		TreatmentRecordController: treatmentRecordController,
 		HarvestController:         harvestController,
+		RegionController:          regionController,
 	}
 
 	routeController.Init(e)
