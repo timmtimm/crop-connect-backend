@@ -115,60 +115,60 @@ func (bu *BatchUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int
 Update
 */
 
-func (bu *BatchUseCase) Cancel(domain *Domain, farmerID primitive.ObjectID) (int, error) {
-	batch, err := bu.batchRepository.GetByID(domain.ID)
-	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("batch tidak ditemukan")
-	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
-	}
+// func (bu *BatchUseCase) Cancel(domain *Domain, farmerID primitive.ObjectID) (int, error) {
+// 	batch, err := bu.batchRepository.GetByID(domain.ID)
+// 	if err == mongo.ErrNoDocuments {
+// 		return http.StatusNotFound, errors.New("batch tidak ditemukan")
+// 	} else if err != nil {
+// 		return http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+// 	}
 
-	transaction, err := bu.transactionRepository.GetByID(batch.TransactionID)
-	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
-	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
-	}
+// 	transaction, err := bu.transactionRepository.GetByID(batch.TransactionID)
+// 	if err == mongo.ErrNoDocuments {
+// 		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+// 	} else if err != nil {
+// 		return http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+// 	}
 
-	transaction.Status = constant.TransactionStatusCancel
-	_, err = bu.transactionRepository.Update(&transaction)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal membatalkan transaksi")
-	}
+// 	transaction.Status = constant.TransactionStatusCancel
+// 	_, err = bu.transactionRepository.Update(&transaction)
+// 	if err != nil {
+// 		return http.StatusInternalServerError, errors.New("gagal membatalkan transaksi")
+// 	}
 
-	proposal, err := bu.proposalRepository.GetByID(transaction.ProposalID)
-	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
-	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
-	}
+// 	proposal, err := bu.proposalRepository.GetByID(transaction.ProposalID)
+// 	if err == mongo.ErrNoDocuments {
+// 		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+// 	} else if err != nil {
+// 		return http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
+// 	}
 
-	commodity, err := bu.commodityRepository.GetByID(proposal.CommodityID)
-	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
-	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mendapatkan periode tanam")
-	}
+// 	commodity, err := bu.commodityRepository.GetByID(proposal.CommodityID)
+// 	if err == mongo.ErrNoDocuments {
+// 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+// 	} else if err != nil {
+// 		return http.StatusInternalServerError, errors.New("gagal mendapatkan periode tanam")
+// 	}
 
-	if commodity.FarmerID != farmerID {
-		return http.StatusForbidden, errors.New("tidak memiliki akses")
-	}
+// 	if commodity.FarmerID != farmerID {
+// 		return http.StatusForbidden, errors.New("tidak memiliki akses")
+// 	}
 
-	if batch.Status == constant.BatchStatusCancel {
-		return http.StatusBadRequest, errors.New("batch sudah dibatalkan")
-	}
+// 	if batch.Status == constant.BatchStatusCancel {
+// 		return http.StatusBadRequest, errors.New("batch sudah dibatalkan")
+// 	}
 
-	batch.Status = constant.BatchStatusCancel
-	batch.CancelReason = domain.CancelReason
-	batch.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+// 	batch.Status = constant.BatchStatusCancel
+// 	batch.CancelReason = domain.CancelReason
+// 	batch.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-	_, err = bu.batchRepository.Update(&batch)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal membatalkan batch")
-	}
+// 	_, err = bu.batchRepository.Update(&batch)
+// 	if err != nil {
+// 		return http.StatusInternalServerError, errors.New("gagal membatalkan batch")
+// 	}
 
-	return http.StatusOK, nil
-}
+// 	return http.StatusOK, nil
+// }
 
 /*
 Delete

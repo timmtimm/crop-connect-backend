@@ -42,12 +42,26 @@ func (hr *HarvestRepository) Create(domain *harvests.Domain) (harvests.Domain, e
 Read
 */
 
+func (hr *HarvestRepository) GetByID(id primitive.ObjectID) (harvests.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := hr.collection.FindOne(ctx, bson.M{
+		"_id": id,
+	}).Decode(&result)
+	if err != nil {
+		return harvests.Domain{}, err
+	}
+
+	return result.ToDomain(), nil
+}
+
 func (hr *HarvestRepository) GetByBatchID(batchID primitive.ObjectID) (harvests.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	var result harvests.Domain
-
+	var result Model
 	err := hr.collection.FindOne(ctx, bson.M{
 		"batchID": batchID,
 	}).Decode(&result)
@@ -55,7 +69,7 @@ func (hr *HarvestRepository) GetByBatchID(batchID primitive.ObjectID) (harvests.
 		return harvests.Domain{}, err
 	}
 
-	return result, nil
+	return result.ToDomain(), nil
 }
 
 func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain, int, error) {
@@ -144,8 +158,6 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 		})
 	}
 
-	fmt.Println(pipeline)
-
 	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
 	pipeline = append(pipeline, bson.M{
 		"$skip": query.Skip,
@@ -185,6 +197,25 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 /*
 Update
 */
+
+func (hr *HarvestRepository) Update(domain *harvests.Domain) (harvests.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	fmt.Println(domain)
+
+	_, err := hr.collection.UpdateOne(ctx, bson.M{
+		"_id": domain.ID,
+	}, bson.M{
+		"$set": FromDomain(domain),
+	})
+
+	if err != nil {
+		return harvests.Domain{}, err
+	}
+
+	return *domain, nil
+}
 
 /*
 Delete

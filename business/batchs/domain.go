@@ -46,6 +46,6 @@ type UseCase interface {
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
-	Cancel(domain *Domain, farmerID primitive.ObjectID) (int, error)
+	// Cancel(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete
 }

@@ -173,9 +173,87 @@ func (hc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 	})
 }
 
+func (hc *Controller) GetByBatchID(c echo.Context) error {
+	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id batch tidak valid",
+		})
+	}
+
+	harvest, statusCode, err := hc.harvestUC.GetByBatchID(batchID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	harvestResponses, statusCode, err := response.FromDomain(&harvest, hc.batchUC, hc.transactionUC, hc.proposalUC, hc.commodityUC, hc.userUC, hc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan panen",
+		Data:    harvestResponses,
+	})
+}
+
 /*
 Update
 */
+
+func (hc *Controller) Validate(c echo.Context) error {
+	harvestID, err := primitive.ObjectIDFromHex(c.Param("harvest-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id panen tidak valid",
+		})
+	}
+
+	userInput := request.Validate{}
+	c.Bind(&userInput)
+
+	validationErr := userInput.Validate()
+	if validationErr != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "validasi gagal",
+			Error:   validationErr,
+		})
+	}
+
+	validatorID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	inputDomain := userInput.ToDomain()
+	inputDomain.ID = harvestID
+
+	_, statusCode, err := hc.harvestUC.Validate(inputDomain, validatorID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil memvalidasi panen",
+	})
+}
 
 /*
 Delete

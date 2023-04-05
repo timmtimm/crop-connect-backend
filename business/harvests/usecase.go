@@ -2,6 +2,7 @@ package harvests
 
 import (
 	"errors"
+	"fmt"
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
@@ -166,6 +167,47 @@ func (hu *HarvestUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, i
 /*
 Update
 */
+
+func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectID) (Domain, int, error) {
+	isStatusAvailable := util.CheckStringOnArray([]string{constant.HarvestStatusRevision, constant.HarvestStatusApproved}, domain.Status)
+	if !isStatusAvailable {
+		return Domain{}, http.StatusBadRequest, errors.New("status harvest hanya tersedia approved dan revision")
+	}
+
+	harvest, err := hu.harvestRepository.GetByID(domain.ID)
+	fmt.Println(harvest)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("hasil panen tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan hasil panen")
+	}
+
+	if harvest.Status != constant.HarvestStatusPending {
+		return Domain{}, http.StatusBadRequest, errors.New("hasil panen tidak sedang dalam proses verifikasi")
+	}
+
+	if domain.Status == constant.HarvestStatusApproved {
+		domain.AccepterID = validatorID
+	}
+
+	if domain.Status == constant.HarvestStatusRevision {
+		if domain.RevisionNote == "" {
+			return Domain{}, http.StatusBadRequest, errors.New("catatan revisi tidak boleh kosong")
+		}
+
+		harvest.RevisionNote = domain.RevisionNote
+	}
+
+	harvest.Status = domain.Status
+	harvest.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	_, err = hu.harvestRepository.Update(&harvest)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal memvalidasi hasil panen")
+	}
+
+	return *domain, http.StatusOK, nil
+}
 
 /*
 Delete

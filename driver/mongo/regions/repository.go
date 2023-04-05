@@ -44,8 +44,7 @@ func (rr *RegionRepository) GetByID(id primitive.ObjectID) (regions.Domain, erro
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	var result regions.Domain
-
+	var result Model
 	err := rr.collection.FindOne(ctx, bson.M{
 		"_id": id,
 	}).Decode(&result)
@@ -53,14 +52,14 @@ func (rr *RegionRepository) GetByID(id primitive.ObjectID) (regions.Domain, erro
 		return regions.Domain{}, err
 	}
 
-	return result, nil
+	return *result.ToDomain(), nil
 }
 
 func (rr *RegionRepository) GetByQuery(query regions.Query) ([]regions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	var result []regions.Domain
+	var result []Model
 	filter := bson.M{}
 
 	if query.Country != "" {
@@ -93,7 +92,7 @@ func (rr *RegionRepository) GetByQuery(query regions.Query) ([]regions.Domain, e
 		return []regions.Domain{}, err
 	}
 
-	return result, nil
+	return ToDomainArray(result), nil
 }
 
 func (rr *RegionRepository) GetProvince(country string) ([]string, error) {

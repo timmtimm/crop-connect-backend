@@ -36,10 +36,11 @@ type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
+	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByBatchID(batchID primitive.ObjectID) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
-	// Update(domain *Domain) (Domain, error)
+	Update(domain *Domain) (Domain, error)
 	// Delete
 }
 
@@ -48,7 +49,8 @@ type UseCase interface {
 	SubmitHarvest(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error)
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	GetByBatchID(batchID primitive.ObjectID) (Domain, int, error)
 	// Update
-	// Validate(domain *Domain) (Domain, int, error)
+	Validate(domain *Domain, validatorID primitive.ObjectID) (Domain, int, error)
 	// Delete
 }

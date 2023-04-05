@@ -1,7 +1,6 @@
 package route
 
 import (
-	"marketplace-backend/app/middleware"
 	_middleware "marketplace-backend/app/middleware"
 	"marketplace-backend/constant"
 	"marketplace-backend/controller/batchs"
@@ -69,9 +68,9 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	batch := apiV1.Group("/batch")
-	batch.GET("/page/:page", cl.BatchController.GetFarmerBatch, middleware.CheckOneRole(constant.RoleFarmer))
+	batch.GET("/page/:page", cl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/commodity/:commodity-id", cl.BatchController.GetByCommodityID)
-	batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
+	// batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	treatmentRecord := apiV1.Group("/treatment-record")
 	treatmentRecord.GET("/page/:page", cl.TreatmentRecordController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
@@ -82,7 +81,7 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 
 	harvest := apiV1.Group("/harvest")
 	harvest.GET("/page/:page", cl.HarvestController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
-	// harvest.GET("/:batch-id", cl.HarvestController.GetByBatchID)
+	harvest.GET("/:batch-id", cl.HarvestController.GetByBatchID)
 	harvest.POST("/:batch-id", cl.HarvestController.SubmitHarvest, _middleware.CheckOneRole(constant.RoleFarmer))
-	// treatmentRecord.PUT("/validate/:harvest-id", cl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
+	harvest.PUT("/validate/:harvest-id", cl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 }
