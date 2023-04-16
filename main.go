@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	_middleware "marketplace-backend/app/middleware"
 	_route "marketplace-backend/app/route"
@@ -93,11 +95,24 @@ func main() {
 	routeController.Init(e)
 
 	fmt.Println("Starting server...")
-	appPort := fmt.Sprintf(":%s", _util.GetConfig("APP_PORT"))
-	if _util.GetConfig("APP_ENV") == "development" {
-		e.Logger.Fatal(e.Start(appPort))
-	} else {
-		e.Logger.Fatal(e.StartAutoTLS(appPort))
-	}
 
+	go func() {
+		appPort := fmt.Sprintf(":%s", _util.GetConfig("APP_PORT"))
+		if _util.GetConfig("APP_ENV") == "development" {
+			e.Logger.Fatal(e.Start(appPort))
+		} else {
+			e.Logger.Fatal(e.StartAutoTLS(appPort))
+		}
+	}()
+
+	wait := _util.GracefulShutdown(context.Background(), 2*time.Second, map[string]_util.Operation{
+		"database": func(ctx context.Context) error {
+			return _mongo.Close(database)
+		},
+		"http-server": func(ctx context.Context) error {
+			return e.Shutdown(context.Background())
+		},
+	})
+
+	<-wait
 }
