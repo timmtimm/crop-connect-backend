@@ -2,7 +2,6 @@ package harvests
 
 import (
 	"errors"
-	"fmt"
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
@@ -175,7 +174,6 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 	}
 
 	harvest, err := hu.harvestRepository.GetByID(domain.ID)
-	fmt.Println(harvest)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, http.StatusNotFound, errors.New("hasil panen tidak ditemukan")
 	} else if err != nil {

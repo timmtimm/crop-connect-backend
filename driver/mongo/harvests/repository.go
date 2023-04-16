@@ -2,7 +2,6 @@ package harvests
 
 import (
 	"context"
-	"fmt"
 	"marketplace-backend/business/harvests"
 	"marketplace-backend/dto"
 	"time"
@@ -201,8 +200,6 @@ Update
 func (hr *HarvestRepository) Update(domain *harvests.Domain) (harvests.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-
-	fmt.Println(domain)
 
 	_, err := hr.collection.UpdateOne(ctx, bson.M{
 		"_id": domain.ID,

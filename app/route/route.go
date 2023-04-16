@@ -28,12 +28,17 @@ type ControllerList struct {
 }
 
 func (cl *ControllerList) Init(e *echo.Echo) {
-	_middleware.InitLogger(e)
-
 	e.GET("", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"message": "Hello World!",
 		})
+	})
+
+	e.GET("/", func(c echo.Context) error {
+		return c.HTML(http.StatusOK, `
+			<h1>Welcome to Echo!</h1>
+			<h3>TLS certificates automatically installed from Let's Encrypt :)</h3>
+		`)
 	})
 
 	// API V1

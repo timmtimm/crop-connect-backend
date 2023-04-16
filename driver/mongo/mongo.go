@@ -55,7 +55,5 @@ func CheckCollectionExist(db *mongo.Database, collectionName string) (bool, erro
 		return false, err
 	}
 
-	fmt.Println()
-
 	return len(cursor) > 0, nil
 }

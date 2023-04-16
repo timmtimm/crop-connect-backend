@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	_middleware "marketplace-backend/app/middleware"
 	_route "marketplace-backend/app/route"
 	_driver "marketplace-backend/driver"
 	_mongo "marketplace-backend/driver/mongo"
@@ -29,11 +30,14 @@ import (
 	_userController "marketplace-backend/controller/users"
 
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 func main() {
-	fmt.Println("Starting server...")
+	fmt.Println("Initializing echo...")
 	e := echo.New()
+
+	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 
 	fmt.Println("Initializing database...")
 	database := _mongo.Init(_util.GetConfig("DB_NAME"))
@@ -71,6 +75,10 @@ func main() {
 
 	seeds.SeedDatabase(database, regionUseCase)
 
+	fmt.Println("Initializing middlewares...")
+	_middleware.InitLogger(e)
+	_middleware.InitCORS(e)
+
 	fmt.Println("Initializing routes...")
 	routeController := _route.ControllerList{
 		UserController:            userController,
@@ -82,9 +90,14 @@ func main() {
 		HarvestController:         harvestController,
 		RegionController:          regionController,
 	}
-
 	routeController.Init(e)
 
+	fmt.Println("Starting server...")
 	appPort := fmt.Sprintf(":%s", _util.GetConfig("APP_PORT"))
-	e.Logger.Fatal(e.Start(appPort))
+	if _util.GetConfig("APP_ENV") == "development" {
+		e.Logger.Fatal(e.Start(appPort))
+	} else {
+		e.Logger.Fatal(e.StartAutoTLS(appPort))
+	}
+
 }
