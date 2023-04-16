@@ -8,16 +8,24 @@ import (
 
 	"github.com/fatih/structs"
 	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Create struct {
-	Address string `form:"address" json:"address" validate:"required"`
+	RegionID string `form:"regionID" json:"regionID" validate:"required"`
+	Address  string `form:"address" json:"address" validate:"required"`
 }
 
-func (req *Create) ToDomain() *transactions.Domain {
-	return &transactions.Domain{
-		Address: req.Address,
+func (req *Create) ToDomain() (*transactions.Domain, error) {
+	regionObjID, err := primitive.ObjectIDFromHex(req.RegionID)
+	if err != nil {
+		return nil, errors.New("id daerah tidak valid")
 	}
+
+	return &transactions.Domain{
+		RegionID: regionObjID,
+		Address:  req.Address,
+	}, nil
 }
 
 func (req *Create) Validate() []helper.ValidationError {

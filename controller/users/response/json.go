@@ -1,23 +1,33 @@
 package response
 
 import (
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/users"
+	regionResponse "marketplace-backend/controller/regions/response"
+	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type User struct {
-	Name        string             `json:"name"`
-	Email       string             `json:"email"`
-	Description string             `json:"description"`
-	PhoneNumber string             `json:"phoneNumber"`
-	Role        string             `json:"role"`
-	CreatedAt   primitive.DateTime `json:"createdAt"`
-	UpdatedAt   primitive.DateTime `json:"updatedAt,omitempty"`
+	Region      regionResponse.Response `json:"region"`
+	Name        string                  `json:"name"`
+	Email       string                  `json:"email"`
+	Description string                  `json:"description"`
+	PhoneNumber string                  `json:"phoneNumber"`
+	Role        string                  `json:"role"`
+	CreatedAt   primitive.DateTime      `json:"createdAt"`
+	UpdatedAt   primitive.DateTime      `json:"updatedAt,omitempty"`
 }
 
-func FromDomain(domain users.Domain) User {
+func FromDomain(domain users.Domain, regionUC regions.UseCase) (User, int, error) {
+	region, statusCode, err := regionUC.GetByID(domain.RegionID)
+	if err != nil {
+		return User{}, statusCode, err
+	}
+
 	return User{
+		Region:      regionResponse.FromDomain(&region),
 		Name:        domain.Name,
 		Email:       domain.Email,
 		Description: domain.Description,
@@ -25,13 +35,19 @@ func FromDomain(domain users.Domain) User {
 		Role:        domain.Role,
 		CreatedAt:   domain.CreatedAt,
 		UpdatedAt:   domain.UpdatedAt,
-	}
+	}, http.StatusOK, nil
 }
 
-func FromDomainArray(data []users.Domain) []User {
-	var array []User
-	for _, v := range data {
-		array = append(array, FromDomain(v))
+func FromDomainArray(data []users.Domain, regionUC regions.UseCase) ([]User, int, error) {
+	var response []User
+	for _, domain := range data {
+		user, statusCode, err := FromDomain(domain, regionUC)
+		if err != nil {
+			return []User{}, statusCode, err
+		}
+
+		response = append(response, user)
 	}
-	return array
+
+	return response, http.StatusOK, nil
 }

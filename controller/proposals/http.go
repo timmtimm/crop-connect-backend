@@ -57,7 +57,14 @@ func (pc *Controller) Create(c echo.Context) error {
 		})
 	}
 
-	inputDomain := userInput.ToDomain()
+	inputDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
 	inputDomain.CommodityID = commodityID
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
@@ -137,7 +144,7 @@ func (pc *Controller) Update(c echo.Context) error {
 		})
 	}
 
-	id, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
+	proposalID, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -157,8 +164,15 @@ func (pc *Controller) Update(c echo.Context) error {
 		})
 	}
 
-	inputDomain := userInput.ToDomain()
-	inputDomain.ID = id
+	inputDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	inputDomain.ID = proposalID
 
 	statusCode, err := pc.proposalUC.Update(inputDomain, userID)
 	if err != nil {
@@ -224,7 +238,7 @@ func (pc *Controller) Delete(c echo.Context) error {
 		})
 	}
 
-	id, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
+	proposalID, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -232,7 +246,7 @@ func (pc *Controller) Delete(c echo.Context) error {
 		})
 	}
 
-	statusCode, err := pc.proposalUC.Delete(id, userID)
+	statusCode, err := pc.proposalUC.Delete(proposalID, userID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

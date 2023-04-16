@@ -4,6 +4,7 @@ import (
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/transactions"
 	"marketplace-backend/business/users"
 	"marketplace-backend/constant"
@@ -23,15 +24,17 @@ type Controller struct {
 	commodityUC   commodities.UseCase
 	userUC        users.UseCase
 	batchUC       batchs.UseCase
+	regionUC      regions.UseCase
 }
 
-func NewTransactionController(transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, batchUC batchs.UseCase) *Controller {
+func NewTransactionController(transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, batchUC batchs.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		transactionUC: transactionUC,
 		proposalUC:    proposalUC,
 		commodityUC:   commodityUC,
 		userUC:        userUC,
 		batchUC:       batchUC,
+		regionUC:      regionUC,
 	}
 }
 
@@ -68,7 +71,14 @@ func (tc *Controller) Create(c echo.Context) error {
 		})
 	}
 
-	inputDomain := userInput.ToDomain()
+	inputDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
 	inputDomain.ProposalID = proposalID
 	inputDomain.BuyerID = userID
 
@@ -156,7 +166,7 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 		})
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainArrayToBuyer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC)
+	transactionResponse, statusCode, err := response.FromDomainArrayToBuyer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -206,9 +216,8 @@ func (tc *Controller) MakeDecision(c echo.Context) error {
 
 	inputDomain := userInput.ToDomain()
 	inputDomain.ID = transactionID
-	inputDomain.BuyerID = userID
 
-	statusCode, err := tc.transactionUC.MakeDecision(inputDomain)
+	statusCode, err := tc.transactionUC.MakeDecision(inputDomain, userID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

@@ -6,6 +6,7 @@ import (
 	"marketplace-backend/util"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -43,4 +44,16 @@ func Close(db *mongo.Database) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	return db.Client().Disconnect(ctx)
+}
+
+func CheckCollectionExist(db *mongo.Database, collectionName string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	cursor, err := db.ListCollectionNames(ctx, bson.M{"name": collectionName})
+	if err != nil {
+		return false, err
+	}
+
+	return len(cursor) > 0, nil
 }

@@ -3,8 +3,10 @@ package response
 import (
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/users"
 	commodityResponse "marketplace-backend/controller/commodities/response"
+	regionResponse "marketplace-backend/controller/regions/response"
 	userReponse "marketplace-backend/controller/users/response"
 	"net/http"
 
@@ -27,7 +29,7 @@ type Admin struct {
 	DeletedAt             primitive.DateTime          `json:"deletedAt,omitempty"`
 }
 
-func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase) (Admin, int, error) {
+func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase, regionUC regions.UseCase) (Admin, int, error) {
 	validator, statusCode, err := userUC.GetByID(domain.ValidatorID)
 	if err != nil {
 		return Admin{}, statusCode, err
@@ -38,14 +40,19 @@ func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodity
 		return Admin{}, statusCode, err
 	}
 
-	commodityResponse, statusCode, err := commodityResponse.FromDomain(commodity, userUC)
+	commodityResponse, statusCode, err := commodityResponse.FromDomain(commodity, userUC, regionUC)
+	if err != nil {
+		return Admin{}, statusCode, err
+	}
+
+	validatorResponse, statusCode, err := userReponse.FromDomain(validator, regionUC)
 	if err != nil {
 		return Admin{}, statusCode, err
 	}
 
 	return Admin{
 		ID:                    domain.ID,
-		Validator:             userReponse.FromDomain(validator),
+		Validator:             validatorResponse,
 		Commodity:             commodityResponse,
 		Name:                  domain.Name,
 		Description:           domain.Description,
@@ -89,4 +96,45 @@ func FromDomainArrayToBuyer(domain []proposals.Domain) []Buyer {
 	}
 
 	return response
+}
+
+type ProposalWithCommodity struct {
+	ID                    primitive.ObjectID          `json:"_id"`
+	Commodity             commodityResponse.Commodity `json:"commodity"`
+	Region                regionResponse.Response     `json:"region"`
+	Name                  string                      `json:"name"`
+	Description           string                      `json:"description"`
+	EstimatedTotalHarvest float64                     `json:"estimatedTotalHarvest"`
+	PlantingArea          float64                     `json:"plantingArea"`
+	Address               string                      `json:"address"`
+	IsAvailable           bool                        `json:"isAvailable"`
+}
+
+func FromDomainToProposalWithCommodity(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase, regionUC regions.UseCase) (ProposalWithCommodity, int, error) {
+	commodity, statusCode, err := commodityUC.GetByID(domain.CommodityID)
+	if err != nil {
+		return ProposalWithCommodity{}, statusCode, err
+	}
+
+	commodityResponse, statusCode, err := commodityResponse.FromDomain(commodity, userUC, regionUC)
+	if err != nil {
+		return ProposalWithCommodity{}, statusCode, err
+	}
+
+	region, statusCode, err := regionUC.GetByID(domain.RegionID)
+	if err != nil {
+		return ProposalWithCommodity{}, statusCode, err
+	}
+
+	return ProposalWithCommodity{
+		ID:                    domain.ID,
+		Commodity:             commodityResponse,
+		Region:                regionResponse.FromDomain(&region),
+		Name:                  domain.Name,
+		Description:           domain.Description,
+		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,
+		PlantingArea:          domain.PlantingArea,
+		Address:               domain.Address,
+		IsAvailable:           domain.IsAvailable,
+	}, http.StatusOK, nil
 }

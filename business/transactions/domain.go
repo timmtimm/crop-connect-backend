@@ -6,6 +6,7 @@ type Domain struct {
 	ID         primitive.ObjectID
 	BuyerID    primitive.ObjectID
 	ProposalID primitive.ObjectID
+	RegionID   primitive.ObjectID
 	Address    string
 	Status     string
 	TotalPrice float64
@@ -34,7 +35,6 @@ type Repository interface {
 	GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (Domain, error)
-	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	RejectPendingByProposalID(proposalID primitive.ObjectID) error
@@ -48,6 +48,6 @@ type UseCase interface {
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
-	MakeDecision(domain *Domain) (int, error)
+	MakeDecision(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete
 }

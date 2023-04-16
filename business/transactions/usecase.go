@@ -105,23 +105,37 @@ func (tu *TransactionUseCase) GetTransactionsByCommodityName(query Query) ([]Dom
 Update
 */
 
-func (tu *TransactionUseCase) MakeDecision(domain *Domain) (int, error) {
-	transactions, err := tu.transactionRepository.GetByIDAndFarmerID(domain.ID, domain.BuyerID)
+func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.ObjectID) (int, error) {
+	transaction, err := tu.transactionRepository.GetByID(domain.ID)
 	if err != nil {
 		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
 	}
 
-	if transactions.Status != constant.TransactionStatusPending {
+	proposal, err := tu.proposalRepository.GetByIDWithoutDeleted(transaction.ProposalID)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("proposal tidak ditemukan")
+	}
+
+	commodity, err := tu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("komoditas tidak ditemukan")
+	}
+
+	if commodity.FarmerID != farmerID {
+		return http.StatusForbidden, errors.New("anda tidak memiliki akses")
+	}
+
+	if transaction.Status != constant.TransactionStatusPending {
 		return http.StatusConflict, errors.New("transaksi sudah dibuat keputusan")
 	}
 
 	if domain.Status == constant.TransactionStatusAccepted {
-		proposal, err := tu.proposalRepository.GetByID(transactions.ProposalID)
+		proposal, err := tu.proposalRepository.GetByID(transaction.ProposalID)
 		if err != nil {
 			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 		}
 
-		err = tu.transactionRepository.RejectPendingByProposalID(transactions.ProposalID)
+		err = tu.transactionRepository.RejectPendingByProposalID(transaction.ProposalID)
 		if err != nil {
 			return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
 		}
@@ -135,10 +149,10 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain) (int, error) {
 		}
 	}
 
-	transactions.Status = domain.Status
-	transactions.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+	transaction.Status = domain.Status
+	transaction.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-	_, err = tu.transactionRepository.Update(&transactions)
+	_, err = tu.transactionRepository.Update(&transaction)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
 	}

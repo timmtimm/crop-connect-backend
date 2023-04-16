@@ -42,7 +42,7 @@ func GetCreateImageRequest(c echo.Context, keys []string) ([]*multipart.FileHead
 		}
 	}
 
-	return RemoveNilImageInArray(images), http.StatusOK, nil
+	return images, http.StatusOK, nil
 }
 
 func GetUpdateImageRequest(c echo.Context, keys []string, imageURLs []string, isChange []bool, isDelete []bool) ([]*UpdateImage, int, error) {
@@ -80,14 +80,4 @@ func GetUpdateImageRequest(c echo.Context, keys []string, imageURLs []string, is
 	}
 
 	return images, http.StatusOK, nil
-}
-
-func RemoveNilImageInArray(array []*multipart.FileHeader) []*multipart.FileHeader {
-	for index, value := range array {
-		if value == nil {
-			array = append(array[:index], array[index+1:]...)
-		}
-	}
-
-	return array
 }

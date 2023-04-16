@@ -4,6 +4,7 @@ import (
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/transactions"
 	"marketplace-backend/business/users"
 	"marketplace-backend/controller/batchs/request"
@@ -21,15 +22,17 @@ type Controller struct {
 	proposalUC    proposals.UseCase
 	commodityUC   commodities.UseCase
 	userUC        users.UseCase
+	regionUC      regions.UseCase
 }
 
-func NewBatchController(batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) *Controller {
+func NewBatchController(batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		batchUC:       batchUC,
 		transactionUC: transactionUC,
 		proposalUC:    proposalUC,
 		commodityUC:   commodityUC,
 		userUC:        userUC,
+		regionUC:      regionUC,
 	}
 }
 
@@ -85,7 +88,7 @@ func (bc *Controller) GetFarmerBatch(c echo.Context) error {
 		})
 	}
 
-	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC)
+	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC, bc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -118,7 +121,7 @@ func (bc *Controller) GetByCommodityID(c echo.Context) error {
 		})
 	}
 
-	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC)
+	batchResponse, statusCode, err := response.FromDomainArray(batchs, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC, bc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -137,51 +140,51 @@ func (bc *Controller) GetByCommodityID(c echo.Context) error {
 Update
 */
 
-func (bc *Controller) Cancel(c echo.Context) error {
-	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
-			Status:  http.StatusBadRequest,
-			Message: "id batch tidak valid",
-		})
-	}
+// func (bc *Controller) Cancel(c echo.Context) error {
+// 	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
+// 	if err != nil {
+// 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+// 			Status:  http.StatusBadRequest,
+// 			Message: "id batch tidak valid",
+// 		})
+// 	}
 
-	farmerID, err := helper.GetUIDFromToken(c)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
-			Status:  http.StatusUnauthorized,
-			Message: err.Error(),
-		})
-	}
+// 	farmerID, err := helper.GetUIDFromToken(c)
+// 	if err != nil {
+// 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+// 			Status:  http.StatusUnauthorized,
+// 			Message: err.Error(),
+// 		})
+// 	}
 
-	userInput := request.Cancel{}
-	c.Bind(&userInput)
+// 	userInput := request.Cancel{}
+// 	c.Bind(&userInput)
 
-	validationErr := userInput.Validate()
-	if validationErr != nil {
-		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
-			Status:  http.StatusBadRequest,
-			Message: "validasi gagal",
-			Error:   validationErr,
-		})
-	}
+// 	validationErr := userInput.Validate()
+// 	if validationErr != nil {
+// 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+// 			Status:  http.StatusBadRequest,
+// 			Message: "validasi gagal",
+// 			Error:   validationErr,
+// 		})
+// 	}
 
-	inputDomain := userInput.ToDomain()
-	inputDomain.ID = batchID
+// 	inputDomain := userInput.ToDomain()
+// 	inputDomain.ID = batchID
 
-	statusCode, err := bc.batchUC.Cancel(inputDomain, farmerID)
-	if err != nil {
-		return c.JSON(statusCode, helper.BaseResponse{
-			Status:  statusCode,
-			Message: err.Error(),
-		})
-	}
+// 	statusCode, err := bc.batchUC.Cancel(inputDomain, farmerID)
+// 	if err != nil {
+// 		return c.JSON(statusCode, helper.BaseResponse{
+// 			Status:  statusCode,
+// 			Message: err.Error(),
+// 		})
+// 	}
 
-	return c.JSON(statusCode, helper.BaseResponse{
-		Status:  statusCode,
-		Message: "berhasil membatalkan batch",
-	})
-}
+// 	return c.JSON(statusCode, helper.BaseResponse{
+// 		Status:  statusCode,
+// 		Message: "berhasil membatalkan batch",
+// 	})
+// }
 
 /*
 Delete

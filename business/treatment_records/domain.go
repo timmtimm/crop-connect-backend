@@ -16,7 +16,7 @@ type Domain struct {
 	Date         primitive.DateTime
 	Status       string
 	Description  string
-	Treatment    []dto.Treatment
+	Treatment    []dto.ImageAndNote
 	RevisionNote string
 	WarningNote  string
 	CreatedAt    primitive.DateTime
@@ -34,18 +34,6 @@ type Query struct {
 	Number    int
 	Status    string
 }
-
-// timestone
-// validate dari sisi validator => kalau ada revisi, itu perlu diselesain dulu sama si farmer
-// coba dicek lagi kalau revisi itu kondisinya dibuat waiting reponse aja atau engga (not solved) => solusi dibuat revisi aja biar
-// si validator tau kalo ini nunggu revisi dari si petani
-
-// kalau udah accept baru bisa nambah lagi (ini udah keimplement) dari validator (buat ngajuin lagi ya)
-// kalau udah accept si petani baru bisa ngajuin harvestnya
-
-// ini nanti nambah lagi semisal udah harvest, si validator gak bisa ngajuin catatan perawtannya lagi
-// ini coba dipikiran lagi kalau ternyata si validator itu ngajuin pengisian tetapi ternyata sudah panen => sistemnya gimana apakah si validator
-// bisa ngapus si permintaannya atau engga (not solved)
 
 type Repository interface {
 	// Create

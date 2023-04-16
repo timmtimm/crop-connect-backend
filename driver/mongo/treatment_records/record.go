@@ -16,7 +16,7 @@ type Model struct {
 	Date         primitive.DateTime `bson:"date"`
 	Status       string             `bson:"status"`
 	Description  string             `bson:"description"`
-	Treatment    []dto.Treatment    `bson:"treatment,omitempty"`
+	Treatment    []dto.ImageAndNote `bson:"treatment,omitempty"`
 	RevisionNote string             `bson:"revisionNote,omitempty"`
 	WarningNote  string             `bson:"warningNote,omitempty"`
 	CreatedAt    primitive.DateTime `bson:"createdAt"`

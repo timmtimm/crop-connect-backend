@@ -74,7 +74,7 @@ func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	lookup1 := bson.M{
+	lookupTransaction := bson.M{
 		"$lookup": bson.M{
 			"from":         "transactions",
 			"localField":   "transactionID",
@@ -83,7 +83,7 @@ func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.
 		},
 	}
 
-	lookup2 := bson.M{
+	lookupProposal := bson.M{
 		"$lookup": bson.M{
 			"from":         "proposals",
 			"localField":   "transaction_info.proposalID",
@@ -92,7 +92,7 @@ func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.
 		},
 	}
 
-	lookup3 := bson.M{
+	lookupCommodity := bson.M{
 		"$lookup": bson.M{
 			"from":         "commodities",
 			"localField":   "proposal_info.commodityID",
@@ -107,7 +107,7 @@ func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.
 		},
 	}
 
-	pipeline := bson.A{lookup1, lookup2, lookup3, match}
+	pipeline := bson.A{lookupTransaction, lookupProposal, lookupCommodity, match}
 	cursor, err := br.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (br *BatchRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]b
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	lookup1 := bson.M{
+	lookupTransaction := bson.M{
 		"$lookup": bson.M{
 			"from":         "transactions",
 			"localField":   "transactionID",
@@ -133,7 +133,7 @@ func (br *BatchRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]b
 		},
 	}
 
-	lookup2 := bson.M{
+	lookupProposal := bson.M{
 		"$lookup": bson.M{
 			"from":         "proposals",
 			"localField":   "transaction_info.proposalID",
@@ -148,7 +148,7 @@ func (br *BatchRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]b
 		},
 	}
 
-	pipeline := bson.A{lookup1, lookup2, match}
+	pipeline := bson.A{lookupTransaction, lookupProposal, match}
 	cursor, err := br.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
@@ -187,44 +187,42 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 		})
 	}
 
+	lookupTransaction := bson.M{
+		"$lookup": bson.M{
+			"from":         "transactions",
+			"localField":   "transactionID",
+			"foreignField": "_id",
+			"as":           "transaction_info",
+		},
+	}
+
+	lookupProposal := bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "transaction_info.proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+
+	lookupCommodity := bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+
 	if query.Commodity != "" {
-		lookup1 := bson.M{
-			"$lookup": bson.M{
-				"from":         "transactions",
-				"localField":   "transactionID",
-				"foreignField": "_id",
-				"as":           "transaction_info",
-			},
-		}
-
-		lookup2 := bson.M{
-			"$lookup": bson.M{
-				"from":         "proposals",
-				"localField":   "transaction_info.proposalID",
-				"foreignField": "_id",
-				"as":           "proposal_info",
-			},
-		}
-
-		lookup3 := bson.M{
-			"$lookup": bson.M{
-				"from":         "commodities",
-				"localField":   "proposal_info.commodityID",
-				"foreignField": "_id",
-				"as":           "commodity_info",
-			},
-		}
-
-		match := bson.M{
+		pipeline = append(pipeline, lookupTransaction, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.name": bson.M{
 					"$regex":   query.Commodity,
 					"$options": "i",
 				},
 			},
-		}
-
-		pipeline = append(pipeline, lookup1, lookup2, lookup3, match)
+		})
 	}
 
 	if query.Commodity != "" && query.FarmerID != primitive.NilObjectID {
@@ -234,40 +232,11 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 			},
 		})
 	} else if query.FarmerID != primitive.NilObjectID {
-		lookup1 := bson.M{
-			"$lookup": bson.M{
-				"from":         "transactions",
-				"localField":   "transactionID",
-				"foreignField": "_id",
-				"as":           "transaction_info",
-			},
-		}
-
-		lookup2 := bson.M{
-			"$lookup": bson.M{
-				"from":         "proposals",
-				"localField":   "transaction_info.proposalID",
-				"foreignField": "_id",
-				"as":           "proposal_info",
-			},
-		}
-
-		lookup3 := bson.M{
-			"$lookup": bson.M{
-				"from":         "commodities",
-				"localField":   "proposal_info.commodityID",
-				"foreignField": "_id",
-				"as":           "commodity_info",
-			},
-		}
-
-		match := bson.M{
+		pipeline = append(pipeline, lookupTransaction, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},
-		}
-
-		pipeline = append(pipeline, lookup1, lookup2, lookup3, match)
+		})
 	}
 
 	cursor, err := br.collection.Aggregate(ctx, pipeline)

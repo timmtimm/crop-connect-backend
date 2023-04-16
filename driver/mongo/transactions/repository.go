@@ -110,87 +110,57 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		})
 	}
 
+	lookupProposal := bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+
+	lookupCommodity := bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+
 	if query.Commodity != "" {
-		lookup1 := bson.M{
-			"$lookup": bson.M{
-				"from":         "proposals",
-				"localField":   "proposalID",
-				"foreignField": "_id",
-				"as":           "proposal_info",
-			},
-		}
-
-		lookup2 := bson.M{
-			"$lookup": bson.M{
-				"from":         "commodities",
-				"localField":   "proposal_info.commodityID",
-				"foreignField": "_id",
-				"as":           "commodity_info",
-			},
-		}
-
-		match := bson.M{
+		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.name": bson.M{
 					"$regex":   query.Commodity,
 					"$options": "i",
 				},
 			},
-		}
-
-		pipeline = append(pipeline, lookup1, lookup2, match)
+		})
 	}
 
 	if query.FarmerID != primitive.NilObjectID && query.Commodity == "" {
-		lookup1 := bson.M{
-			"$lookup": bson.M{
-				"from":         "proposals",
-				"localField":   "proposalID",
-				"foreignField": "_id",
-				"as":           "proposal_info",
-			},
-		}
-
-		lookup2 := bson.M{
-			"$lookup": bson.M{
-				"from":         "commodities",
-				"localField":   "proposal_info.commodityID",
-				"foreignField": "_id",
-				"as":           "commodity_info",
-			},
-		}
-
-		match := bson.M{
+		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},
-		}
-
-		pipeline = append(pipeline, lookup1, lookup2, match)
+		})
 	} else if query.FarmerID != primitive.NilObjectID && query.Commodity != "" {
-		match := bson.M{
+		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},
-		}
-
-		pipeline = append(pipeline, match)
-	}
-
-	paginationSkip := bson.M{
-		"$skip": query.Skip,
-	}
-
-	paginationLimit := bson.M{
-		"$limit": query.Limit,
-	}
-
-	paginationSort := bson.M{
-		"$sort": bson.M{query.Sort: query.Order},
+		})
 	}
 
 	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
-	pipeline = append(pipeline, paginationSkip, paginationLimit, paginationSort)
+	pipeline = append(pipeline, bson.M{
+		"$skip": query.Skip,
+	}, bson.M{
+		"$limit": query.Limit,
+	}, bson.M{
+		"$sort": bson.M{query.Sort: query.Order},
+	})
 
 	cursor, err := tr.collection.Aggregate(ctx, pipeline)
 	if err != nil {
@@ -230,51 +200,6 @@ func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerI
 	}).Decode(&result)
 
 	return result.ToDomain(), err
-}
-
-func (tr *TransactionRepository) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (transactions.Domain, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	lookup1 := bson.M{
-		"$lookup": bson.M{
-			"from":         "proposals",
-			"localField":   "proposalID",
-			"foreignField": "_id",
-			"as":           "proposal_info",
-		},
-	}
-
-	lookup2 := bson.M{
-		"$lookup": bson.M{
-			"from":         "commodities",
-			"localField":   "proposal_info.commodityID",
-			"foreignField": "_id",
-			"as":           "commodity_info",
-		},
-	}
-
-	match := bson.M{
-		"$match": bson.M{
-			"commodity_info.farmerID": farmerID,
-		},
-	}
-
-	pipeline := bson.A{lookup1, lookup2, match}
-	cursor, err := tr.collection.Aggregate(ctx, pipeline)
-	if err != nil {
-		return transactions.Domain{}, err
-	}
-
-	var result Model
-	for cursor.Next(ctx) {
-		err := cursor.Decode(&result)
-		if err != nil {
-			return transactions.Domain{}, err
-		}
-	}
-
-	return result.ToDomain(), nil
 }
 
 /*

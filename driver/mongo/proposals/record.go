@@ -10,6 +10,7 @@ type Model struct {
 	ID                    primitive.ObjectID `bson:"_id"`
 	ValidatorID           primitive.ObjectID `bson:"validatorID,omitempty"`
 	CommodityID           primitive.ObjectID `bson:"commodityID"`
+	RegionID              primitive.ObjectID `bson:"regionID"`
 	Name                  string             `bson:"name"`
 	Description           string             `bson:"description"`
 	Status                string             `bson:"status"`
@@ -28,6 +29,7 @@ func FromDomain(domain *proposals.Domain) *Model {
 		ID:                    domain.ID,
 		ValidatorID:           domain.ValidatorID,
 		CommodityID:           domain.CommodityID,
+		RegionID:              domain.RegionID,
 		Name:                  domain.Name,
 		Description:           domain.Description,
 		Status:                domain.Status,
@@ -47,6 +49,7 @@ func (model *Model) ToDomain() proposals.Domain {
 		ID:                    model.ID,
 		ValidatorID:           model.ValidatorID,
 		CommodityID:           model.CommodityID,
+		RegionID:              model.RegionID,
 		Name:                  model.Name,
 		Description:           model.Description,
 		Status:                model.Status,

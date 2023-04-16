@@ -5,6 +5,7 @@ import (
 	"marketplace-backend/business/batchs"
 	"marketplace-backend/business/commodities"
 	"marketplace-backend/business/proposals"
+	"marketplace-backend/business/regions"
 	"marketplace-backend/business/transactions"
 	"marketplace-backend/business/users"
 	"marketplace-backend/controller/transactions/response"
@@ -24,13 +25,13 @@ type Batch struct {
 	UpdatedAt            primitive.DateTime `json:"updatedAt,omitempty"`
 }
 
-func FromDomain(domain batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) (Batch, int, error) {
+func FromDomain(domain batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Batch, int, error) {
 	transaction, statusCode, err := transactionUC.GetByID(domain.TransactionID)
 	if err != nil {
 		return Batch{}, statusCode, errors.New("gagal mendapatkan transaksi")
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainToBuyer(&transaction, proposalUC, commodityUC, userUC)
+	transactionResponse, statusCode, err := response.FromDomainToBuyer(&transaction, proposalUC, commodityUC, userUC, regionUC)
 	if err != nil {
 		return Batch{}, statusCode, errors.New("gagal mendapatkan transaksi")
 	}
@@ -47,10 +48,10 @@ func FromDomain(domain batchs.Domain, transactionUC transactions.UseCase, propos
 	}, http.StatusOK, nil
 }
 
-func FromDomainArray(domain []batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase) ([]Batch, int, error) {
+func FromDomainArray(domain []batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]Batch, int, error) {
 	var batches []Batch
 	for _, value := range domain {
-		batch, statusCode, err := FromDomain(value, transactionUC, proposalUC, commodityUC, userUC)
+		batch, statusCode, err := FromDomain(value, transactionUC, proposalUC, commodityUC, userUC, regionUC)
 		if err != nil {
 			return []Batch{}, statusCode, err
 		}

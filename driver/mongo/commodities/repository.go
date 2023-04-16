@@ -140,8 +140,14 @@ func (cr *CommodityRepository) GetByQuery(query commodities.Query) ([]commoditie
 	})
 
 	if query.Name != "" {
-		filterName := bson.M{"$regex": query.Name, "$options": "i"}
-		pipeline = append(pipeline, filterName)
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"name": bson.M{
+					"$regex":   query.Name,
+					"$options": "i",
+				},
+			},
+		})
 	}
 
 	if query.FarmerID != primitive.NilObjectID {
