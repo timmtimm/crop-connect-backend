@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"time"
 
 	_middleware "marketplace-backend/app/middleware"
@@ -32,14 +34,13 @@ import (
 	_userController "marketplace-backend/controller/users"
 
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 func main() {
 	fmt.Println("Initializing echo...")
 	e := echo.New()
-
-	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 
 	fmt.Println("Initializing database...")
 	database := _mongo.Init(_util.GetConfig("DB_NAME"))
@@ -101,7 +102,22 @@ func main() {
 		if _util.GetConfig("APP_ENV") == "development" {
 			e.Logger.Fatal(e.Start(appPort))
 		} else {
-			e.Logger.Fatal(e.StartAutoTLS(appPort))
+			autoTLSManager := autocert.Manager{
+				Prompt:     autocert.AcceptTOS,
+				Cache:      autocert.DirCache("/var/www/.cache"),
+				HostPolicy: autocert.HostWhitelist(_util.ResontructeDomainName()...),
+			}
+
+			s := http.Server{
+				Addr:    appPort,
+				Handler: e,
+				TLSConfig: &tls.Config{
+					GetCertificate: autoTLSManager.GetCertificate,
+					NextProtos:     []string{acme.ALPNProto},
+				},
+			}
+
+			e.Logger.Fatal(s.ListenAndServeTLS("", ""))
 		}
 	}()
 

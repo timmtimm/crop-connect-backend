@@ -2,6 +2,7 @@ package util
 
 import (
 	"log"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -15,4 +16,8 @@ func GetConfig(key string) string {
 	}
 
 	return viper.GetString(key)
+}
+
+func ResontructeDomainName() []string {
+	return strings.Split(GetConfig("DOMAIN_NAME"), ",")
 }
