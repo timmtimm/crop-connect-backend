@@ -2,9 +2,7 @@ name: Deploy on push
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 jobs:
 
@@ -18,7 +16,7 @@ jobs:
       run: docker cp . cc:/app
     - name: Kill the process
       continue-on-error: true
-      run: docker exec fhg pkill dist
+      run: docker exec cc pkill dist
     - name: Download packages
       run: docker exec cc go mod download
     - name: Build the project
