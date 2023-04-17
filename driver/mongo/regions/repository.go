@@ -2,7 +2,7 @@ package regions
 
 import (
 	"context"
-	"marketplace-backend/business/regions"
+	"crop_connect/business/regions"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

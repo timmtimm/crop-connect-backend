@@ -1,11 +1,11 @@
 package proposals
 
 import (
+	"crop_connect/business/commodities"
+	"crop_connect/business/regions"
+	"crop_connect/constant"
+	"crop_connect/util"
 	"errors"
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/constant"
-	"marketplace-backend/util"
 	"net/http"
 	"time"
 

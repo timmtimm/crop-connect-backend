@@ -2,7 +2,7 @@ package proposals
 
 import (
 	"context"
-	"marketplace-backend/business/proposals"
+	"crop_connect/business/proposals"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

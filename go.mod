@@ -1,4 +1,4 @@
-module marketplace-backend
+module crop_connect
 
 go 1.19
 

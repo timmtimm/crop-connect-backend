@@ -1,16 +1,16 @@
 package route
 
 import (
-	_middleware "marketplace-backend/app/middleware"
-	"marketplace-backend/constant"
-	"marketplace-backend/controller/batchs"
-	"marketplace-backend/controller/commodities"
-	"marketplace-backend/controller/harvests"
-	"marketplace-backend/controller/proposals"
-	"marketplace-backend/controller/regions"
-	"marketplace-backend/controller/transactions"
-	treatmentRecords "marketplace-backend/controller/treatment_records"
-	"marketplace-backend/controller/users"
+	_middleware "crop_connect/app/middleware"
+	"crop_connect/constant"
+	"crop_connect/controller/batchs"
+	"crop_connect/controller/commodities"
+	"crop_connect/controller/harvests"
+	"crop_connect/controller/proposals"
+	"crop_connect/controller/regions"
+	"crop_connect/controller/transactions"
+	treatmentRecords "crop_connect/controller/treatment_records"
+	"crop_connect/controller/users"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

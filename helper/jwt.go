@@ -1,8 +1,8 @@
 package helper
 
 import (
+	"crop_connect/util"
 	"errors"
-	"marketplace-backend/util"
 	"strings"
 	"time"
 
@@ -24,7 +24,7 @@ func GenerateToken(uid string, role string) string {
 		uid,
 		role,
 		jwt.RegisteredClaims{
-			Issuer:    "marketplace-backend",
+			Issuer:    "crop_connect",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),

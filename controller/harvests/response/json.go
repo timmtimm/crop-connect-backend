@@ -1,17 +1,17 @@
 package response
 
 import (
-	"marketplace-backend/business/batchs"
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/harvests"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/transactions"
-	"marketplace-backend/business/users"
-	batchResponse "marketplace-backend/controller/batchs/response"
-	proposalResponse "marketplace-backend/controller/proposals/response"
-	userResponse "marketplace-backend/controller/users/response"
-	"marketplace-backend/dto"
+	"crop_connect/business/batchs"
+	"crop_connect/business/commodities"
+	"crop_connect/business/harvests"
+	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/transactions"
+	"crop_connect/business/users"
+	batchResponse "crop_connect/controller/batchs/response"
+	proposalResponse "crop_connect/controller/proposals/response"
+	userResponse "crop_connect/controller/users/response"
+	"crop_connect/dto"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"

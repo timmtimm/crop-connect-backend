@@ -2,9 +2,9 @@ package transactions
 
 import (
 	"context"
-	"marketplace-backend/business/transactions"
-	"marketplace-backend/constant"
-	"marketplace-backend/dto"
+	"crop_connect/business/transactions"
+	"crop_connect/constant"
+	"crop_connect/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

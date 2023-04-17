@@ -1,7 +1,7 @@
 package proposals
 
 import (
-	"marketplace-backend/business/proposals"
+	"crop_connect/business/proposals"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

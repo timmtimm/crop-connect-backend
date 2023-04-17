@@ -2,8 +2,8 @@ package harvests
 
 import (
 	"context"
-	"marketplace-backend/business/harvests"
-	"marketplace-backend/dto"
+	"crop_connect/business/harvests"
+	"crop_connect/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

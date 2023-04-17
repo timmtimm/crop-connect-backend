@@ -1,17 +1,17 @@
 package harvests
 
 import (
-	"marketplace-backend/business/batchs"
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/harvests"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/transactions"
-	"marketplace-backend/business/users"
-	"marketplace-backend/constant"
-	"marketplace-backend/controller/harvests/request"
-	"marketplace-backend/controller/harvests/response"
-	"marketplace-backend/helper"
+	"crop_connect/business/batchs"
+	"crop_connect/business/commodities"
+	"crop_connect/business/harvests"
+	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/transactions"
+	"crop_connect/business/users"
+	"crop_connect/constant"
+	"crop_connect/controller/harvests/request"
+	"crop_connect/controller/harvests/response"
+	"crop_connect/helper"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

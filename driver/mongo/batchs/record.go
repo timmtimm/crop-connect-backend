@@ -1,7 +1,7 @@
 package batchs
 
 import (
-	"marketplace-backend/business/batchs"
+	"crop_connect/business/batchs"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

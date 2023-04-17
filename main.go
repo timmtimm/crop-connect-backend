@@ -2,44 +2,45 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"time"
 
-	_middleware "marketplace-backend/app/middleware"
-	_route "marketplace-backend/app/route"
-	_driver "marketplace-backend/driver"
-	_mongo "marketplace-backend/driver/mongo"
-	"marketplace-backend/helper/cloudinary"
-	"marketplace-backend/seeds"
-	_util "marketplace-backend/util"
+	_middleware "crop_connect/app/middleware"
+	_route "crop_connect/app/route"
+	_driver "crop_connect/driver"
+	_mongo "crop_connect/driver/mongo"
+	"crop_connect/helper/cloudinary"
+	"crop_connect/seeds"
+	_util "crop_connect/util"
 
-	_batchUseCase "marketplace-backend/business/batchs"
-	_commodityUseCase "marketplace-backend/business/commodities"
-	_harvestUseCase "marketplace-backend/business/harvests"
-	_proposalUseCase "marketplace-backend/business/proposals"
-	_regionUseCase "marketplace-backend/business/regions"
-	_transactionUseCase "marketplace-backend/business/transactions"
-	_treatmentRecordUseCase "marketplace-backend/business/treatment_records"
-	_userUseCase "marketplace-backend/business/users"
+	_batchUseCase "crop_connect/business/batchs"
+	_commodityUseCase "crop_connect/business/commodities"
+	_harvestUseCase "crop_connect/business/harvests"
+	_proposalUseCase "crop_connect/business/proposals"
+	_regionUseCase "crop_connect/business/regions"
+	_transactionUseCase "crop_connect/business/transactions"
+	_treatmentRecordUseCase "crop_connect/business/treatment_records"
+	_userUseCase "crop_connect/business/users"
 
-	_batchController "marketplace-backend/controller/batchs"
-	_commodityController "marketplace-backend/controller/commodities"
-	_harvestController "marketplace-backend/controller/harvests"
-	_proposalController "marketplace-backend/controller/proposals"
-	_regionController "marketplace-backend/controller/regions"
-	_transactionController "marketplace-backend/controller/transactions"
-	_treatmentRecordController "marketplace-backend/controller/treatment_records"
-	_userController "marketplace-backend/controller/users"
+	_batchController "crop_connect/controller/batchs"
+	_commodityController "crop_connect/controller/commodities"
+	_harvestController "crop_connect/controller/harvests"
+	_proposalController "crop_connect/controller/proposals"
+	_regionController "crop_connect/controller/regions"
+	_transactionController "crop_connect/controller/transactions"
+	_treatmentRecordController "crop_connect/controller/treatment_records"
+	_userController "crop_connect/controller/users"
 
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 func main() {
 	fmt.Println("Initializing echo...")
 	e := echo.New()
-
-	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 
 	fmt.Println("Initializing database...")
 	database := _mongo.Init(_util.GetConfig("DB_NAME"))
@@ -101,7 +102,22 @@ func main() {
 		if _util.GetConfig("APP_ENV") == "development" {
 			e.Logger.Fatal(e.Start(appPort))
 		} else {
-			e.Logger.Fatal(e.StartAutoTLS(appPort))
+			autoTLSManager := autocert.Manager{
+				Prompt:     autocert.AcceptTOS,
+				Cache:      autocert.DirCache("/var/www/.cache"),
+				HostPolicy: autocert.HostWhitelist(_util.ResontructeDomainName()...),
+			}
+
+			s := http.Server{
+				Addr:    appPort,
+				Handler: e,
+				TLSConfig: &tls.Config{
+					GetCertificate: autoTLSManager.GetCertificate,
+					NextProtos:     []string{acme.ALPNProto},
+				},
+			}
+
+			e.Logger.Fatal(s.ListenAndServeTLS("", ""))
 		}
 	}()
 

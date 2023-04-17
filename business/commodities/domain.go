@@ -1,7 +1,7 @@
 package commodities
 
 import (
-	"marketplace-backend/helper"
+	"crop_connect/helper"
 	"mime/multipart"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"

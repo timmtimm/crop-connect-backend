@@ -1,7 +1,7 @@
 package treatment_records
 
 import (
-	"marketplace-backend/dto"
+	"crop_connect/dto"
 	"mime/multipart"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"

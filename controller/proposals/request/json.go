@@ -1,9 +1,9 @@
 package request
 
 import (
+	"crop_connect/business/proposals"
+	"crop_connect/helper"
 	"errors"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/helper"
 	"strings"
 
 	"github.com/fatih/structs"

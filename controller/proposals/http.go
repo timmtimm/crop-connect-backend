@@ -1,11 +1,11 @@
 package proposals
 
 import (
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/controller/proposals/request"
-	"marketplace-backend/controller/proposals/response"
-	"marketplace-backend/helper"
+	"crop_connect/business/commodities"
+	"crop_connect/business/proposals"
+	"crop_connect/controller/proposals/request"
+	"crop_connect/controller/proposals/response"
+	"crop_connect/helper"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

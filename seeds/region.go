@@ -1,12 +1,12 @@
 package seeds
 
 import (
+	"crop_connect/business/regions"
+	"crop_connect/util"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/util"
 	"os"
 	"path/filepath"
 	"strings"

@@ -2,7 +2,7 @@ package users
 
 import (
 	"context"
-	"marketplace-backend/business/users"
+	"crop_connect/business/users"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

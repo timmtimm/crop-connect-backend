@@ -1,7 +1,7 @@
 package response
 
 import (
-	"marketplace-backend/business/regions"
+	"crop_connect/business/regions"
 )
 
 type Response struct {

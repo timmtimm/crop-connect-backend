@@ -1,9 +1,9 @@
 package response
 
 import (
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/users"
-	regionResponse "marketplace-backend/controller/regions/response"
+	"crop_connect/business/regions"
+	"crop_connect/business/users"
+	regionResponse "crop_connect/controller/regions/response"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
