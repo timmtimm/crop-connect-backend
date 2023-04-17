@@ -20,6 +20,6 @@ jobs:
     - name: Download packages
       run: docker exec cc go mod download
     - name: Build the project
-      run: docker exec cc go build -o dist
+      run: docker exec cc go build -o dist -buildvcs=false
     - name: Run the project
       run: docker exec cc ./dist > /dev/null 2>&1 &
