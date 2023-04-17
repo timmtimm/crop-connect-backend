@@ -14,11 +14,11 @@ go mod download
 cp .env.example .env
 ```
 
-Note:
+Note: APP_DOMAIN delimiter is a comma
 
-- APP_DOMAIN delimiter is a comma
+3. Import seeder region by importing from `seeder/mongo/region.csv` to your mongo database with collection name `regions`. On column `_id` use `ObjectId` type.
 
-3. Run the server
+4. Run the server
 
 ```bash
 go run main.go
