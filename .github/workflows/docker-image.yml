@@ -1,0 +1,27 @@
+name: Deploy on push
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Copy files to docker container
+      run: docker cp . cc:/app
+    - name: Kill the process
+      continue-on-error: true
+      run: docker exec fhg pkill dist
+    - name: Download packages
+      run: docker exec cc go mod download
+    - name: Build the project
+      run: docker exec cc go build -o dist
+    - name: Run the project
+      run: docker exec cc ./dist > /dev/null 2>&1 &
