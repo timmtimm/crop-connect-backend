@@ -1,7 +1,7 @@
 package users
 
 import (
-	"marketplace-backend/business/users"
+	"crop_connect/business/users"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

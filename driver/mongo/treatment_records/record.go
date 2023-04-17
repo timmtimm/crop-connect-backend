@@ -1,8 +1,8 @@
 package treatment_records
 
 import (
-	treatmentRecord "marketplace-backend/business/treatment_records"
-	"marketplace-backend/dto"
+	treatmentRecord "crop_connect/business/treatment_records"
+	"crop_connect/dto"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

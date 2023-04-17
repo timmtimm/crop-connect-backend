@@ -1,15 +1,15 @@
 package batchs
 
 import (
-	"marketplace-backend/business/batchs"
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/transactions"
-	"marketplace-backend/business/users"
-	"marketplace-backend/controller/batchs/request"
-	"marketplace-backend/controller/batchs/response"
-	"marketplace-backend/helper"
+	"crop_connect/business/batchs"
+	"crop_connect/business/commodities"
+	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/transactions"
+	"crop_connect/business/users"
+	"crop_connect/controller/batchs/request"
+	"crop_connect/controller/batchs/response"
+	"crop_connect/helper"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

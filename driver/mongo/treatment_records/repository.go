@@ -2,8 +2,8 @@ package treatment_records
 
 import (
 	"context"
-	treatmentRecord "marketplace-backend/business/treatment_records"
-	"marketplace-backend/dto"
+	treatmentRecord "crop_connect/business/treatment_records"
+	"crop_connect/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

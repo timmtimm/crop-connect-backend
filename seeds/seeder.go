@@ -1,9 +1,9 @@
 package seeds
 
 import (
+	"crop_connect/business/regions"
+	_mongo "crop_connect/driver/mongo"
 	"fmt"
-	"marketplace-backend/business/regions"
-	_mongo "marketplace-backend/driver/mongo"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )

@@ -2,8 +2,8 @@ package batchs
 
 import (
 	"context"
-	"marketplace-backend/business/batchs"
-	"marketplace-backend/dto"
+	"crop_connect/business/batchs"
+	"crop_connect/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

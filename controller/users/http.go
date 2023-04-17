@@ -1,11 +1,11 @@
 package users
 
 import (
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/users"
-	"marketplace-backend/controller/users/request"
-	"marketplace-backend/controller/users/response"
-	"marketplace-backend/helper"
+	"crop_connect/business/regions"
+	"crop_connect/business/users"
+	"crop_connect/controller/users/request"
+	"crop_connect/controller/users/response"
+	"crop_connect/helper"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

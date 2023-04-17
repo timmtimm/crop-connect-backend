@@ -1,17 +1,17 @@
 package treatment_records
 
 import (
-	"marketplace-backend/business/batchs"
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/transactions"
-	treatmentRecord "marketplace-backend/business/treatment_records"
-	"marketplace-backend/business/users"
-	"marketplace-backend/constant"
-	"marketplace-backend/controller/treatment_records/request"
-	"marketplace-backend/controller/treatment_records/response"
-	"marketplace-backend/helper"
+	"crop_connect/business/batchs"
+	"crop_connect/business/commodities"
+	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/transactions"
+	treatmentRecord "crop_connect/business/treatment_records"
+	"crop_connect/business/users"
+	"crop_connect/constant"
+	"crop_connect/controller/treatment_records/request"
+	"crop_connect/controller/treatment_records/response"
+	"crop_connect/helper"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

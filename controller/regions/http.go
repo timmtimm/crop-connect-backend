@@ -1,7 +1,7 @@
 package regions
 
 import (
-	"marketplace-backend/business/regions"
+	"crop_connect/business/regions"
 )
 
 type Controller struct {

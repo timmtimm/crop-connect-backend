@@ -1,13 +1,13 @@
 package commodities
 
 import (
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/users"
-	"marketplace-backend/controller/commodities/request"
-	"marketplace-backend/controller/commodities/response"
-	"marketplace-backend/helper"
+	"crop_connect/business/commodities"
+	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/users"
+	"crop_connect/controller/commodities/request"
+	"crop_connect/controller/commodities/response"
+	"crop_connect/helper"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

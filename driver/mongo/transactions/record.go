@@ -1,7 +1,7 @@
 package transactions
 
 import (
-	"marketplace-backend/business/transactions"
+	"crop_connect/business/transactions"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

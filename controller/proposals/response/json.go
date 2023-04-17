@@ -1,13 +1,13 @@
 package response
 
 import (
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/business/proposals"
-	"marketplace-backend/business/regions"
-	"marketplace-backend/business/users"
-	commodityResponse "marketplace-backend/controller/commodities/response"
-	regionResponse "marketplace-backend/controller/regions/response"
-	userReponse "marketplace-backend/controller/users/response"
+	"crop_connect/business/commodities"
+	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/users"
+	commodityResponse "crop_connect/controller/commodities/response"
+	regionResponse "crop_connect/controller/regions/response"
+	userReponse "crop_connect/controller/users/response"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"

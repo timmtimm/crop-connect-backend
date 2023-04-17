@@ -2,9 +2,9 @@ package cloudinary
 
 import (
 	"context"
+	"crop_connect/helper"
+	"crop_connect/util"
 	"fmt"
-	"marketplace-backend/helper"
-	"marketplace-backend/util"
 	"mime/multipart"
 	"time"
 

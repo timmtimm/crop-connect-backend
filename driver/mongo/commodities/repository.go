@@ -2,8 +2,8 @@ package commodities
 
 import (
 	"context"
-	"marketplace-backend/business/commodities"
-	"marketplace-backend/dto"
+	"crop_connect/business/commodities"
+	"crop_connect/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

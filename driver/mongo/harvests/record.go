@@ -1,8 +1,8 @@
 package harvests
 
 import (
-	"marketplace-backend/business/harvests"
-	"marketplace-backend/dto"
+	"crop_connect/business/harvests"
+	"crop_connect/dto"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

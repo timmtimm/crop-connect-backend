@@ -1,7 +1,7 @@
 package commodities
 
 import (
-	"marketplace-backend/business/commodities"
+	"crop_connect/business/commodities"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
