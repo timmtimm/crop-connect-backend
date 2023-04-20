@@ -40,3 +40,7 @@ func ConvertArrayStringToBool(array []string) []bool {
 
 	return boolArray
 }
+
+func ReplaceUnderScoreWithSpace(text string) string {
+	return strings.ReplaceAll(text, "_", " ")
+}

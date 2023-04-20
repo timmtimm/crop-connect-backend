@@ -16,30 +16,17 @@ type FilterQuery struct {
 }
 
 func QueryParamValidation(c echo.Context) (FilterQuery, error) {
-	filter := FilterQuery{}
-
-	commodity := c.QueryParam("commodity")
-	proposal := c.QueryParam("proposal")
-	batch := c.QueryParam("batch")
-	status := c.QueryParam("status")
-
-	if commodity != "" {
-		filter.Commodity = commodity
+	filter := FilterQuery{
+		Commodity: c.QueryParam("commodity"),
+		Proposal:  c.QueryParam("proposal"),
+		Batch:     c.QueryParam("batch"),
+		Status:    c.QueryParam("status"),
 	}
 
-	if status != "" {
-		filter.Status = status
-		if !util.CheckStringOnArray([]string{constant.HarvestStatusApproved, constant.HarvestStatusPending, constant.HarvestStatusRevision}, status) {
+	if filter.Status != "" {
+		if !util.CheckStringOnArray([]string{constant.HarvestStatusApproved, constant.HarvestStatusPending, constant.HarvestStatusRevision}, filter.Status) {
 			return FilterQuery{}, fmt.Errorf("status tersedia hanya %s, %s, dan %s", constant.HarvestStatusApproved, constant.HarvestStatusPending, constant.HarvestStatusRevision)
 		}
-	}
-
-	if proposal != "" {
-		filter.Proposal = proposal
-	}
-
-	if batch != "" {
-		filter.Batch = batch
 	}
 
 	return filter, nil

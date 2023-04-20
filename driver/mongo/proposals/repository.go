@@ -14,7 +14,7 @@ type ProposalRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) proposals.Repository {
+func NewRepository(db *mongo.Database) proposals.Repository {
 	return &ProposalRepository{
 		collection: db.Collection("proposals"),
 	}

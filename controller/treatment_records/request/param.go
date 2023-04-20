@@ -18,29 +18,19 @@ type FilterQuery struct {
 }
 
 func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
-	filter := FilterQuery{}
-
-	commodity := c.QueryParam("commodity")
-	batch := c.QueryParam("batch")
-	number := c.QueryParam("number")
-	status := c.QueryParam("status")
-
-	if commodity != "" {
-		filter.Commodity = commodity
+	filter := FilterQuery{
+		Commodity: c.QueryParam("commodity"),
+		Batch:     c.QueryParam("batch"),
+		Status:    c.QueryParam("status"),
 	}
 
-	if status != "" {
-		filter.Status = status
-		if !util.CheckStringOnArray([]string{constant.TreatmentRecordStatusApproved, constant.TreatmentRecordStatusPending, constant.TreatmentRecordStatusRevision, constant.TreatmentRecordStatusWaitingResponse}, status) {
+	if filter.Status != "" {
+		if !util.CheckStringOnArray([]string{constant.TreatmentRecordStatusApproved, constant.TreatmentRecordStatusPending, constant.TreatmentRecordStatusRevision, constant.TreatmentRecordStatusWaitingResponse}, filter.Status) {
 			return FilterQuery{}, fmt.Errorf("status tersedia hanya %s, %s, %s, dan %s", constant.TreatmentRecordStatusApproved, constant.TreatmentRecordStatusPending, constant.TreatmentRecordStatusRevision, constant.TreatmentRecordStatusWaitingResponse)
 		}
 	}
 
-	if batch != "" {
-		filter.Batch = batch
-	}
-
-	if number != "" {
+	if number := c.QueryParam("number"); number != "" {
 		numberInt, err := strconv.Atoi(number)
 		if err != nil {
 			return FilterQuery{}, errors.New("number harus berupa angka")

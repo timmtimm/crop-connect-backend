@@ -18,7 +18,7 @@ type CommodityUseCase struct {
 	cloudinary            cloudinary.Function
 }
 
-func NewCommodityUseCase(cr Repository, cldry cloudinary.Function) UseCase {
+func NewUseCase(cr Repository, cldry cloudinary.Function) UseCase {
 	return &CommodityUseCase{
 		commoditiesRepository: cr,
 		cloudinary:            cldry,

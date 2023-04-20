@@ -15,7 +15,7 @@ type BatchRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) batchs.Repository {
+func NewRepository(db *mongo.Database) batchs.Repository {
 	return &BatchRepository{
 		collection: db.Collection("batchs"),
 	}

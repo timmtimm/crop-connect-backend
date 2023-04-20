@@ -27,7 +27,7 @@ type Controller struct {
 	regionUC      regions.UseCase
 }
 
-func NewTransactionController(transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, batchUC batchs.UseCase, regionUC regions.UseCase) *Controller {
+func NewController(transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, batchUC batchs.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		transactionUC: transactionUC,
 		proposalUC:    proposalUC,

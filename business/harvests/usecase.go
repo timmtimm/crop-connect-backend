@@ -29,7 +29,7 @@ type HarvestUseCase struct {
 	cloudinary                cloudinary.Function
 }
 
-func NewHarvestUseCase(hr Repository, br batchs.Repository, trr treatmentRecords.Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository, cldry cloudinary.Function) UseCase {
+func NewUseCase(hr Repository, br batchs.Repository, trr treatmentRecords.Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository, cldry cloudinary.Function) UseCase {
 	return &HarvestUseCase{
 		harvestRepository:         hr,
 		treatmentRecordRepository: trr,

@@ -18,7 +18,7 @@ type TransactionUseCase struct {
 	proposalRepository    proposals.Repository
 }
 
-func NewTransactionUseCase(tr Repository, cr commodities.Repository, pr proposals.Repository) UseCase {
+func NewUseCase(tr Repository, cr commodities.Repository, pr proposals.Repository) UseCase {
 	return &TransactionUseCase{
 		transactionRepository: tr,
 		commodityRepository:   cr,

@@ -217,3 +217,44 @@ func (req *RegisterValidator) Validate() []helper.ValidationError {
 
 	return nil
 }
+
+type ChangePassword struct {
+	OldPassword string `form:"oldPassword" json:"oldPassword" validate:"required,min=8,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=!@#$%^&*,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+	NewPassword string `form:"newPassword" json:"newPassword" validate:"required,min=8,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=!@#$%^&*,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+}
+
+func (req *ChangePassword) Validate() []helper.ValidationError {
+	var ve validator.ValidationErrors
+
+	if err := validator.New().Struct(req); err != nil {
+		if errors.As(err, &ve) {
+			fields := structs.Fields(req)
+			out := make([]helper.ValidationError, len(ve))
+
+			for i, e := range ve {
+				out[i] = helper.ValidationError{
+					Field:   e.Field(),
+					Message: helper.MessageForTag(e.Tag()),
+				}
+
+				out[i].Message = strings.Replace(out[i].Message, "[PARAM]", e.Param(), 1)
+
+				for _, f := range fields {
+					if f.Name() == e.Field() {
+						out[i].Field = f.Tag("json")
+						break
+					}
+				}
+			}
+			return out
+		}
+	}
+
+	return nil
+}
+
+func (req *ChangePassword) ToDomain() *users.Domain {
+	return &users.Domain{
+		Password: req.OldPassword,
+	}
+}

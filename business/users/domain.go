@@ -17,6 +17,17 @@ type Domain struct {
 	UpdatedAt   primitive.DateTime
 }
 
+type Query struct {
+	Skip        int64
+	Limit       int64
+	Sort        string
+	Order       int
+	Name        string
+	Email       string
+	PhoneNumber string
+	Role        string
+}
+
 type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
@@ -24,6 +35,7 @@ type Repository interface {
 	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByEmail(email string) (Domain, error)
 	GetByNameAndRole(name string, role string) ([]Domain, error)
+	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -36,8 +48,9 @@ type UseCase interface {
 	// Read
 	Login(domain *Domain) (string, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
-	GetFarmerByName(name string) ([]Domain, int, error)
+	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
 	UpdateProfile(domain *Domain) (Domain, int, error)
+	UpdatePassword(domain *Domain, newPassword string) (Domain, int, error)
 	// Delete
 }
