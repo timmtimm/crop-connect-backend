@@ -2,6 +2,7 @@ package request
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -46,4 +47,30 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 	}
 
 	return filter, nil
+}
+
+type QueryStatistic struct {
+	FarmerID primitive.ObjectID
+	Year     int
+}
+
+func QueryParamStatistic(c echo.Context) (QueryStatistic, error) {
+	query := QueryStatistic{}
+
+	if year := c.QueryParam("year"); year != "" {
+		yearInt, err := strconv.Atoi(year)
+		if err != nil {
+			return QueryStatistic{}, errors.New("year harus berupa angka")
+		}
+
+		if year > time.Now().Format("2006") {
+			return QueryStatistic{}, errors.New("year tidak boleh lebih dari tahun sekarang")
+		}
+
+		query.Year = yearInt
+	} else {
+		query.Year = time.Now().Year()
+	}
+
+	return query, nil
 }

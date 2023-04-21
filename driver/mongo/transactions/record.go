@@ -53,3 +53,27 @@ func ToDomainArray(models []Model) []transactions.Domain {
 	}
 	return domains
 }
+
+type StatisticModel struct {
+	Month            int `bson:"month"`
+	TotalAccepted    int `bson:"totalAccepted"`
+	TotalTransaction int `bson:"totalTransaction"`
+	TotalIncome      int `bson:"totalIncome"`
+}
+
+func (model *StatisticModel) ToStatistic() transactions.Statistic {
+	return transactions.Statistic{
+		Month:            model.Month,
+		TotalAccepted:    model.TotalAccepted,
+		TotalTransaction: model.TotalTransaction,
+		TotalIncome:      model.TotalIncome,
+	}
+}
+
+func ToStatisticArray(models []StatisticModel) []transactions.Statistic {
+	var domains []transactions.Statistic
+	for _, model := range models {
+		domains = append(domains, model.ToStatistic())
+	}
+	return domains
+}

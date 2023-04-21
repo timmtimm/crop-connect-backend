@@ -137,25 +137,21 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 	}
 
 	if token.Role == constant.RoleBuyer {
-		buyerID, err := primitive.ObjectIDFromHex(token.UID)
+		transactionQuery.BuyerID, err = primitive.ObjectIDFromHex(token.UID)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 				Status:  http.StatusBadRequest,
 				Message: "token tidak valid",
 			})
 		}
-
-		transactionQuery.BuyerID = buyerID
 	} else if token.Role == constant.RoleFarmer {
-		FarmerID, err := primitive.ObjectIDFromHex(token.UID)
+		transactionQuery.FarmerID, err = primitive.ObjectIDFromHex(token.UID)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 				Status:  http.StatusBadRequest,
 				Message: "token tidak valid",
 			})
 		}
-
-		transactionQuery.FarmerID = FarmerID
 	}
 
 	transactions, totalData, statusCode, err := tc.transactionUC.GetByPaginationAndQuery(transactionQuery)
@@ -179,6 +175,49 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 		Message:    "berhasil mendapatkan transaksi",
 		Data:       transactionResponse,
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
+func (tc *Controller) Statistic(c echo.Context) error {
+	token, err := helper.GetPayloadFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	queryParam, err := request.QueryParamStatistic(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	farmerID := primitive.NilObjectID
+	if token.Role == constant.RoleFarmer {
+		farmerID, err = primitive.ObjectIDFromHex(token.UID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+				Status:  http.StatusBadRequest,
+				Message: "token tidak valid",
+			})
+		}
+	}
+
+	transactionStatistic, statusCode, err := tc.transactionUC.Statistic(farmerID, queryParam.Year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan statistik",
+		Data:    transactionStatistic,
 	})
 }
 

@@ -14,6 +14,13 @@ type Domain struct {
 	UpdatedAt  primitive.DateTime
 }
 
+type Statistic struct {
+	Month            int
+	TotalAccepted    int
+	TotalTransaction int
+	TotalIncome      int
+}
+
 type Query struct {
 	Skip      int64
 	Limit     int64
@@ -35,6 +42,7 @@ type Repository interface {
 	GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (Domain, error)
+	Statistic(farmerID primitive.ObjectID, year int) ([]Statistic, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	RejectPendingByProposalID(proposalID primitive.ObjectID) error
@@ -47,6 +55,7 @@ type UseCase interface {
 	// Read
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	Statistic(farmerID primitive.ObjectID, year int) ([]Statistic, int, error)
 	// Update
 	MakeDecision(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete

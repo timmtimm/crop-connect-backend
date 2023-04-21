@@ -101,6 +101,15 @@ func (tu *TransactionUseCase) GetTransactionsByCommodityName(query Query) ([]Dom
 	return commodities, totalData, http.StatusOK, nil
 }
 
+func (tu *TransactionUseCase) Statistic(farmerID primitive.ObjectID, year int) ([]Statistic, int, error) {
+	statistics, err := tu.transactionRepository.Statistic(farmerID, year)
+	if err != nil {
+		return []Statistic{}, http.StatusInternalServerError, err
+	}
+
+	return statistics, http.StatusOK, nil
+}
+
 /*
 Update
 */

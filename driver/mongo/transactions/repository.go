@@ -22,6 +22,26 @@ func NewRepository(db *mongo.Database) transactions.Repository {
 	}
 }
 
+var (
+	lookupProposal = bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+
+	lookupCommodity = bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+)
+
 /*
 Create
 */
@@ -110,24 +130,6 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		})
 	}
 
-	lookupProposal := bson.M{
-		"$lookup": bson.M{
-			"from":         "proposals",
-			"localField":   "proposalID",
-			"foreignField": "_id",
-			"as":           "proposal_info",
-		},
-	}
-
-	lookupCommodity := bson.M{
-		"$lookup": bson.M{
-			"from":         "commodities",
-			"localField":   "proposal_info.commodityID",
-			"foreignField": "_id",
-			"as":           "commodity_info",
-		},
-	}
-
 	if query.Commodity != "" {
 		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
@@ -200,6 +202,100 @@ func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerI
 	}).Decode(&result)
 
 	return result.ToDomain(), err
+}
+
+func (tr *TransactionRepository) Statistic(farmerID primitive.ObjectID, year int) ([]transactions.Statistic, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var results []transactions.Statistic
+
+	for month := 1; month <= 12; month++ {
+		pipeline := []interface{}{}
+
+		if time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).Unix() > time.Now().Unix() {
+			results = append(results, transactions.Statistic{
+				Month:            int(time.Month(month)),
+				TotalAccepted:    0,
+				TotalTransaction: 0,
+				TotalIncome:      0,
+			})
+
+			continue
+		}
+
+		if month < 12 {
+			pipeline = []interface{}{
+				bson.M{
+					"$match": bson.M{
+						"createdAt": bson.M{
+							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
+							"$lte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month+1), 1, 0, 0, 0, 0, time.UTC)),
+						},
+					},
+				},
+			}
+		} else {
+			pipeline = []interface{}{
+				bson.M{
+					"$match": bson.M{
+						"createdAt": bson.M{
+							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
+							"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
+						},
+					},
+				},
+			}
+		}
+
+		if farmerID != primitive.NilObjectID {
+			pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
+				"$match": bson.M{
+					"commodity_info.farmerID": farmerID,
+				},
+			})
+		}
+
+		pipeline = append(pipeline, bson.M{
+			"$group": bson.M{
+				"_id": "transaction_statistic",
+				"totalAccepted": bson.M{
+					"$sum": bson.M{
+						"$cond": bson.A{
+							bson.M{
+								"$eq": bson.A{
+									"$status", "accepted",
+								},
+							}, 1, 0,
+						},
+					},
+				},
+				"totalTransaction": bson.M{
+					"$sum": 1,
+				},
+				"totalIncome": bson.M{
+					"$sum": "$totalPrice",
+				},
+			}})
+
+		cursor, err := tr.collection.Aggregate(ctx, pipeline)
+		if err != nil {
+			return nil, err
+		}
+
+		var result StatisticModel
+		for cursor.Next(ctx) {
+			err := cursor.Decode(&result)
+			if err != nil {
+				return nil, err
+			}
+		}
+		result.Month = month
+
+		results = append(results, result.ToStatistic())
+	}
+
+	return results, nil
 }
 
 /*
