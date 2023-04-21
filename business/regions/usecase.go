@@ -11,7 +11,7 @@ type RegionUseCase struct {
 	regionRepository Repository
 }
 
-func NewRegionUseCase(rr Repository) UseCase {
+func NewUseCase(rr Repository) UseCase {
 	return &RegionUseCase{
 		regionRepository: rr,
 	}

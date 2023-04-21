@@ -8,7 +8,7 @@ type Controller struct {
 	regionUC regions.UseCase
 }
 
-func NewRegionController(regionUC regions.UseCase) *Controller {
+func NewController(regionUC regions.UseCase) *Controller {
 	return &Controller{
 		regionUC: regionUC,
 	}

@@ -15,7 +15,7 @@ type CommodityRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) commodities.Repository {
+func NewRepository(db *mongo.Database) commodities.Repository {
 	return &CommodityRepository{
 		collection: db.Collection("commodities"),
 	}

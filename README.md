@@ -16,7 +16,7 @@ cp .env.example .env
 
 Note: APP_DOMAIN delimiter is a comma
 
-3. Import seeder region by importing from `seeder/mongo/region.csv` to your mongo database with collection name `regions`. On column `_id` use `ObjectId` type.
+3. Import seeder region by importing from `seeder/regions/mongo/region.csv` to your mongo database with collection name `regions`. On column `_id` use `ObjectId` type.
 
 4. Run the server
 

@@ -21,7 +21,7 @@ type BatchUseCase struct {
 	commodityRepository   commodities.Repository
 }
 
-func NewBatchUseCase(br Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository) UseCase {
+func NewUseCase(br Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository) UseCase {
 	return &BatchUseCase{
 		batchRepository:       br,
 		transactionRepository: tr,

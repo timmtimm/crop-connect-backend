@@ -14,31 +14,22 @@ type FilterQuery struct {
 	MaxPrice int
 }
 
+var err error
+
 func QueryParamValidation(c echo.Context) (FilterQuery, error) {
-	filter := FilterQuery{}
-	var err error
-
-	name := c.QueryParam("name")
-	farmer := c.QueryParam("farmer")
-	minPrice := c.QueryParam("minPrice")
-	maxPrice := c.QueryParam("maxPrice")
-
-	if name != "" {
-		filter.Name = name
+	filter := FilterQuery{
+		Name:   c.QueryParam("name"),
+		Farmer: c.QueryParam("farmer"),
 	}
 
-	if farmer != "" {
-		filter.Farmer = farmer
-	}
-
-	if minPrice != "" {
+	if minPrice := c.QueryParam("minPrice"); minPrice != "" {
 		filter.MinPrice, err = strconv.Atoi(minPrice)
 		if err != nil {
 			return FilterQuery{}, errors.New("harga minimal harus berupa angka")
 		}
 	}
 
-	if maxPrice != "" {
+	if maxPrice := c.QueryParam("maxPrice"); maxPrice != "" {
 		filter.MaxPrice, err = strconv.Atoi(maxPrice)
 		if err != nil {
 			return FilterQuery{}, errors.New("harga maksimal harus berupa angka")

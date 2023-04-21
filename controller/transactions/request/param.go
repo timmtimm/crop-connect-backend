@@ -1,10 +1,7 @@
 package request
 
 import (
-	"crop_connect/constant"
-	"crop_connect/util"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -21,25 +18,12 @@ type FilterQuery struct {
 }
 
 func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
-	filter := FilterQuery{}
-
-	commodity := c.QueryParam("commodity")
-	status := c.QueryParam("status")
-	startDate := c.QueryParam("startDate")
-	endDate := c.QueryParam("endDate")
-
-	if commodity != "" {
-		filter.Commodity = commodity
+	filter := FilterQuery{
+		Commodity: c.QueryParam("commodity"),
+		Status:    c.QueryParam("status"),
 	}
 
-	if status != "" {
-		filter.Status = status
-		if !util.CheckStringOnArray([]string{constant.TransactionStatusPending, constant.TransactionStatusAccepted, constant.ProposalStatusRejected}, status) {
-			return FilterQuery{}, fmt.Errorf("status tersedia hanya %s, %s, dan %s", constant.TransactionStatusPending, constant.TransactionStatusAccepted, constant.ProposalStatusRejected)
-		}
-	}
-
-	if startDate != "" {
+	if startDate := c.QueryParam("startDate"); startDate != "" {
 		date, err := time.Parse("2006-01-02", startDate)
 		if err != nil {
 			return FilterQuery{}, errors.New("startDate harus berupa tanggal")
@@ -48,7 +32,7 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 		filter.StartDate = primitive.NewDateTimeFromTime(date)
 	}
 
-	if endDate != "" {
+	if endDate := c.QueryParam("endDate"); endDate != "" {
 		date, err := time.Parse("2006-01-02", c.QueryParam("endDate"))
 		if err != nil {
 			return FilterQuery{}, errors.New("endDate harus berupa tanggal")
@@ -57,10 +41,8 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 		filter.EndDate = primitive.NewDateTimeFromTime(date)
 	}
 
-	if startDate != "" && endDate != "" {
-		if filter.StartDate > filter.EndDate {
-			return FilterQuery{}, errors.New("startDate tidak boleh dari endDate")
-		}
+	if filter.StartDate > filter.EndDate {
+		return FilterQuery{}, errors.New("startDate tidak boleh dari endDate")
 	}
 
 	return filter, nil

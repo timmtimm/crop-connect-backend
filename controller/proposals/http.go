@@ -17,7 +17,7 @@ type Controller struct {
 	commodityUC commodities.UseCase
 }
 
-func NewProposalController(proposalUC proposals.UseCase, commodityUC commodities.UseCase) *Controller {
+func NewController(proposalUC proposals.UseCase, commodityUC commodities.UseCase) *Controller {
 	return &Controller{
 		proposalUC:  proposalUC,
 		commodityUC: commodityUC,

@@ -24,7 +24,7 @@ type QueryPagination struct {
 
 func PaginationToQuery(c echo.Context, availableSort []string) (QueryPagination, error) {
 	pagination := PaginationParam{
-		Page:  c.Param("page"),
+		Page:  c.QueryParam("page"),
 		Limit: c.QueryParam("limit"),
 		Sort:  c.QueryParam("sort"),
 		Order: c.QueryParam("order"),

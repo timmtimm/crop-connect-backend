@@ -21,7 +21,7 @@ type Controller struct {
 	regionUC    regions.UseCase
 }
 
-func NewCommodityController(commodityUC commodities.UseCase, userUC users.UseCase, proposalUC proposals.UseCase, regionUC regions.UseCase) *Controller {
+func NewController(commodityUC commodities.UseCase, userUC users.UseCase, proposalUC proposals.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		commodityUC: commodityUC,
 		userUC:      userUC,

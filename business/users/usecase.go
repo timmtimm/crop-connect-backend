@@ -19,7 +19,7 @@ type UserUseCase struct {
 	regionRepository regions.Repository
 }
 
-func NewUserUseCase(ur Repository, rr regions.Repository) UseCase {
+func NewUseCase(ur Repository, rr regions.Repository) UseCase {
 	return &UserUseCase{
 		userRepository:   ur,
 		regionRepository: rr,
@@ -120,13 +120,13 @@ func (uu *UserUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
 	return user, http.StatusOK, nil
 }
 
-func (uu *UserUseCase) GetFarmerByName(name string) ([]Domain, int, error) {
-	users, err := uu.userRepository.GetByNameAndRole(name, constant.RoleFarmer)
+func (uu *UserUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
+	users, totalData, err := uu.userRepository.GetByQuery(query)
 	if err != nil {
-		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan user")
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan user")
 	}
 
-	return users, http.StatusOK, nil
+	return users, totalData, http.StatusOK, nil
 }
 
 /*
@@ -161,6 +161,31 @@ func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, int, error) {
 	user.Description = domain.Description
 	user.Email = domain.Email
 	user.PhoneNumber = domain.PhoneNumber
+	user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	user, err = uu.userRepository.Update(&user)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate user")
+	}
+
+	return user, http.StatusOK, nil
+}
+
+func (uu *UserUseCase) UpdatePassword(domain *Domain, newPassword string) (Domain, int, error) {
+	user, err := uu.userRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("user tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data pengguna")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(domain.Password))
+	if err != nil {
+		return Domain{}, http.StatusUnauthorized, errors.New("password salah")
+	}
+
+	encryptedPassword, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	user.Password = string(encryptedPassword)
 	user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	user, err = uu.userRepository.Update(&user)

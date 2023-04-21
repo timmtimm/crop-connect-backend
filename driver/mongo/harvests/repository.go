@@ -15,7 +15,7 @@ type HarvestRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) harvests.Repository {
+func NewRepository(db *mongo.Database) harvests.Repository {
 	return &HarvestRepository{
 		collection: db.Collection("harvests"),
 	}

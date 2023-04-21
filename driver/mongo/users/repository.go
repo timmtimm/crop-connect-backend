@@ -14,7 +14,7 @@ type UserRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) users.Repository {
+func NewRepository(db *mongo.Database) users.Repository {
 	return &UserRepository{
 		collection: db.Collection("users"),
 	}
@@ -87,6 +87,49 @@ func (ur *UserRepository) GetByNameAndRole(name string, role string) ([]users.Do
 	}
 
 	return ToDomainArray(result), nil
+}
+
+func (ur *UserRepository) GetByQuery(query users.Query) ([]users.Domain, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	filter := bson.M{}
+
+	if query.Name != "" {
+		filter["name"] = bson.M{
+			"$regex":   query.Name,
+			"$options": "i",
+		}
+	}
+
+	if query.Email != "" {
+		filter["email"] = bson.M{
+			"$regex":   query.Email,
+			"$options": "i",
+		}
+	}
+
+	if query.PhoneNumber != "" {
+		filter["phone_number"] = bson.M{
+			"$regex": query.PhoneNumber,
+		}
+	}
+
+	if query.Role != "" {
+		filter["role"] = query.Role
+	}
+
+	var result []Model
+	cursor, err := ur.collection.Find(ctx, filter)
+	if err != nil {
+		return []users.Domain{}, 0, err
+	}
+
+	if err = cursor.All(ctx, &result); err != nil {
+		return []users.Domain{}, 0, err
+	}
+
+	return ToDomainArray(result), len(result), nil
 }
 
 /*

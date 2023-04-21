@@ -14,7 +14,7 @@ type RegionRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) regions.Repository {
+func NewRepository(db *mongo.Database) regions.Repository {
 	return &RegionRepository{
 		collection: db.Collection("regions"),
 	}

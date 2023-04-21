@@ -19,7 +19,7 @@ type ProposalUseCase struct {
 	regionRepository    regions.Repository
 }
 
-func NewProposalUseCase(pr Repository, cr commodities.Repository, rr regions.Repository) UseCase {
+func NewUseCase(pr Repository, cr commodities.Repository, rr regions.Repository) UseCase {
 	return &ProposalUseCase{
 		proposalRepository:  pr,
 		commodityRepository: cr,

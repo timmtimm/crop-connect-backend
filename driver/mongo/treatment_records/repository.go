@@ -16,7 +16,7 @@ type TreatmentRecordRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) treatmentRecord.Repository {
+func NewRepository(db *mongo.Database) treatmentRecord.Repository {
 	return &TreatmentRecordRepository{
 		collection: db.Collection("treatmentRecords"),
 	}

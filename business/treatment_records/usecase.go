@@ -27,7 +27,7 @@ type TreatmentRecordUseCase struct {
 	cloudinary                cloudinary.Function
 }
 
-func NewTreatmentRecordUseCase(trr Repository, br batchs.Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository, cldry cloudinary.Function) UseCase {
+func NewUseCase(trr Repository, br batchs.Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository, cldry cloudinary.Function) UseCase {
 	return &TreatmentRecordUseCase{
 		treatmentRecordRepository: trr,
 		batchRepository:           br,

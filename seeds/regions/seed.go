@@ -1,4 +1,4 @@
-package seeds
+package regions
 
 import (
 	"crop_connect/business/regions"
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func SeedRegion(regionUC regions.UseCase) {
+func Seed(regionUC regions.UseCase) {
 	path, _ := os.Getwd()
 
 	files, err := ioutil.ReadDir(filepath.Join(path, "seeds/country"))
@@ -33,9 +33,10 @@ func SeedRegion(regionUC regions.UseCase) {
 
 		fmt.Println("Seeding " + util.GetFilenameWithoutExtension(file.Name()) + "...")
 
-		if util.GetFilenameWithoutExtension(file.Name()) == "indonesia" {
+		country := util.GetFilenameWithoutExtension(file.Name())
+		if country == "Indonesia" {
 			domain := regions.Domain{
-				Country: "Indonesia",
+				Country: country,
 			}
 
 			csvReader := csv.NewReader(data)
