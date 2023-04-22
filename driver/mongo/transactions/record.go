@@ -55,10 +55,12 @@ func ToDomainArray(models []Model) []transactions.Domain {
 }
 
 type StatisticModel struct {
-	Month            int `bson:"month"`
-	TotalAccepted    int `bson:"totalAccepted"`
-	TotalTransaction int `bson:"totalTransaction"`
-	TotalIncome      int `bson:"totalIncome"`
+	Month            int     `bson:"month"`
+	TotalAccepted    int     `bson:"totalAccepted"`
+	TotalTransaction int     `bson:"totalTransaction"`
+	TotalIncome      float64 `bson:"totalIncome"`
+	TotalWeight      float64 `bson:"totalWeight"`
+	TotalUniqueBuyer int     `bson:"totalUniqueBuyer"`
 }
 
 func (model *StatisticModel) ToStatistic() transactions.Statistic {
@@ -67,6 +69,8 @@ func (model *StatisticModel) ToStatistic() transactions.Statistic {
 		TotalAccepted:    model.TotalAccepted,
 		TotalTransaction: model.TotalTransaction,
 		TotalIncome:      model.TotalIncome,
+		TotalWeight:      model.TotalWeight,
+		TotalUniqueBuyer: model.TotalUniqueBuyer,
 	}
 }
 

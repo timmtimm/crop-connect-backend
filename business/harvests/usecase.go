@@ -11,6 +11,7 @@ import (
 	"crop_connect/helper/cloudinary"
 	"crop_connect/util"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"time"
@@ -48,9 +49,9 @@ Create
 func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error) {
 	newestTreatmentRecord, err := hu.treatmentRecordRepository.GetNewestByBatchID(domain.BatchID)
 	if err == mongo.ErrNoDocuments {
-		return Domain{}, http.StatusNotFound, errors.New("riwayat perawatan tidak ditemukan")
+		return Domain{}, http.StatusNotFound, errors.New("batch belum memiliki riwayat perawatan")
 	} else if err != nil {
-		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan terbaru")
 	}
 
 	if newestTreatmentRecord.Date > domain.Date {
@@ -95,6 +96,8 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 
 		var imageURLs []string
 		notes = util.RemoveNilStringInArray(notes)
+
+		fmt.Println(len(images), len(notes))
 
 		if len(images) != len(notes) {
 			return Domain{}, http.StatusBadRequest, errors.New("jumlah gambar dan catatan tidak sama")
@@ -200,6 +203,20 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 	harvest.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	_, err = hu.harvestRepository.Update(&harvest)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal memvalidasi hasil panen")
+	}
+
+	batch, err := hu.batchRepository.GetByID(harvest.BatchID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+	}
+
+	batch.Status = constant.BatchStatusHarvest
+
+	_, err = hu.batchRepository.Update(&batch)
 	if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal memvalidasi hasil panen")
 	}

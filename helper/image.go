@@ -22,7 +22,7 @@ func ValidateImage(image *multipart.FileHeader) (int, error) {
 
 	checkImageContentType := util.CheckStringOnArray([]string{"image/jpg", "image/jpeg", "image/png"}, image.Header.Get("Content-Type"))
 	if !checkImageContentType {
-		return http.StatusUnsupportedMediaType, errors.New("image type not supported")
+		return http.StatusUnsupportedMediaType, errors.New("tipe gambar tidak disupport")
 	}
 
 	return http.StatusOK, nil

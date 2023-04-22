@@ -217,7 +217,7 @@ func (tc *Controller) Statistic(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "berhasil mendapatkan statistik",
-		Data:    transactionStatistic,
+		Data:    response.FromDomainArrayToStatistic(transactionStatistic),
 	})
 }
 

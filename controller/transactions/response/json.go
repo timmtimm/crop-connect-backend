@@ -64,3 +64,28 @@ func FromDomainArrayToBuyer(domain []transactions.Domain, proposalUC proposals.U
 
 	return buyers, http.StatusOK, nil
 }
+
+type Statistic struct {
+	Month            int     `json:"month"`
+	TotalAccepted    int     `json:"totalAccepted"`
+	TotalTransaction int     `json:"totalTransaction"`
+	TotalIncome      float64 `json:"totalIncome"`
+	TotalWeight      float64 `json:"totalWeight"`
+	TotalUniqueBuyer int     `json:"totalUniqueBuyer"`
+}
+
+func FromDomainArrayToStatistic(domain []transactions.Statistic) []Statistic {
+	var statistics []Statistic
+	for _, value := range domain {
+		statistics = append(statistics, Statistic{
+			Month:            value.Month,
+			TotalAccepted:    value.TotalAccepted,
+			TotalTransaction: value.TotalTransaction,
+			TotalIncome:      value.TotalIncome,
+			TotalWeight:      value.TotalWeight,
+			TotalUniqueBuyer: value.TotalUniqueBuyer,
+		})
+	}
+
+	return statistics
+}

@@ -209,16 +209,17 @@ func (tr *TransactionRepository) Statistic(farmerID primitive.ObjectID, year int
 	defer cancel()
 
 	var results []transactions.Statistic
+	var pipeline []interface{}
 
 	for month := 1; month <= 12; month++ {
-		pipeline := []interface{}{}
-
 		if time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).Unix() > time.Now().Unix() {
 			results = append(results, transactions.Statistic{
 				Month:            int(time.Month(month)),
 				TotalAccepted:    0,
 				TotalTransaction: 0,
 				TotalIncome:      0,
+				TotalWeight:      0,
+				TotalUniqueBuyer: 0,
 			})
 
 			continue
@@ -256,27 +257,73 @@ func (tr *TransactionRepository) Statistic(farmerID primitive.ObjectID, year int
 			})
 		}
 
-		pipeline = append(pipeline, bson.M{
-			"$group": bson.M{
-				"_id": "transaction_statistic",
-				"totalAccepted": bson.M{
-					"$sum": bson.M{
-						"$cond": bson.A{
-							bson.M{
-								"$eq": bson.A{
-									"$status", "accepted",
-								},
-							}, 1, 0,
-						},
+		pipeline = append(pipeline,
+			bson.M{
+				"$lookup": bson.M{
+					"from":         "batchs",
+					"localField":   "_id",
+					"foreignField": "transactionID",
+					"as":           "batch_info",
+				},
+			}, bson.M{
+				"$lookup": bson.M{
+					"from":         "harvests",
+					"localField":   "batch_info._id",
+					"foreignField": "batchID",
+					"as":           "harvest_info",
+				},
+			}, bson.M{
+				"$project": bson.M{
+					"buyerID":    "$buyerID",
+					"status":     "$status",
+					"totalPrice": "$totalPrice",
+					"harvest_info": bson.M{
+						"$arrayElemAt": bson.A{"$harvest_info", 0},
 					},
 				},
-				"totalTransaction": bson.M{
-					"$sum": 1,
+			}, bson.M{
+				"$group": bson.M{
+					"_id": "transaction_statistic",
+					"totalAccepted": bson.M{
+						"$sum": bson.M{
+							"$cond": bson.A{
+								bson.M{
+									"$eq": bson.A{
+										"$status", constant.TransactionStatusAccepted,
+									},
+								}, 1, 0,
+							},
+						},
+					},
+					"totalTransaction": bson.M{
+						"$sum": 1,
+					},
+					"totalIncome": bson.M{
+						"$sum": "$totalPrice",
+					},
+					"totalWeight": bson.M{
+						"$sum": bson.M{
+							"$cond": bson.A{
+								bson.M{"$eq": bson.A{"$harvest_info.status", constant.HarvestStatusApproved}},
+								"$harvest_info.totalHarvest", 0},
+						},
+					},
+					"uniqueBuyer": bson.M{
+						"$addToSet": "$buyerID",
+					},
 				},
-				"totalIncome": bson.M{
-					"$sum": "$totalPrice",
+			}, bson.M{
+				"$project": bson.M{
+					"totalAccepted":    "$totalAccepted",
+					"totalTransaction": "$totalTransaction",
+					"totalIncome":      "$totalIncome",
+					"totalWeight":      "$totalWeight",
+					"totalUniqueBuyer": bson.M{
+						"$size": "$uniqueBuyer",
+					},
 				},
-			}})
+			},
+		)
 
 		cursor, err := tr.collection.Aggregate(ctx, pipeline)
 		if err != nil {

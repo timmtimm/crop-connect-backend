@@ -18,7 +18,9 @@ type Statistic struct {
 	Month            int
 	TotalAccepted    int
 	TotalTransaction int
-	TotalIncome      int
+	TotalIncome      float64
+	TotalWeight      float64
+	TotalUniqueBuyer int
 }
 
 type Query struct {
