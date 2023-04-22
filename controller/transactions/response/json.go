@@ -89,3 +89,20 @@ func FromDomainArrayToStatistic(domain []transactions.Statistic) []Statistic {
 
 	return statistics
 }
+
+type TotalTransactionByProvince struct {
+	Province string `json:"province"`
+	Total    int    `json:"total"`
+}
+
+func FromDomainArrayToStatisticProvince(domain []transactions.TotalTransactionByProvince) []TotalTransactionByProvince {
+	var totalTransactionByProvinces []TotalTransactionByProvince
+	for _, value := range domain {
+		totalTransactionByProvinces = append(totalTransactionByProvinces, TotalTransactionByProvince{
+			Province: value.Province,
+			Total:    value.Total,
+		})
+	}
+
+	return totalTransactionByProvinces
+}

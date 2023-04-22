@@ -204,7 +204,7 @@ func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerI
 	return result.ToDomain(), err
 }
 
-func (tr *TransactionRepository) Statistic(farmerID primitive.ObjectID, year int) ([]transactions.Statistic, error) {
+func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, year int) ([]transactions.Statistic, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -343,6 +343,64 @@ func (tr *TransactionRepository) Statistic(farmerID primitive.ObjectID, year int
 	}
 
 	return results, nil
+}
+
+func (tr *TransactionRepository) StatisticTopProvince(year int, limit int) ([]transactions.TotalTransactionByProvince, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": primitive.NewDateTimeFromTime(time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)),
+					"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
+				},
+			},
+		}, bson.M{
+			"$lookup": bson.M{
+				"from":         "regions",
+				"localField":   "regionID",
+				"foreignField": "_id",
+				"as":           "region_info",
+			},
+		}, bson.M{
+			"$project": bson.M{
+				"region_info": bson.M{
+					"$arrayElemAt": bson.A{"$region_info", 0},
+				},
+			},
+		}, bson.M{
+			"$project": bson.M{
+				"_id": "$region_info.province",
+				"total": bson.M{
+					"$sum": bson.M{
+						"$cond": bson.A{
+							bson.M{"$eq": bson.A{"$region_info.province", "$region_info.province"}},
+							1, 0},
+					},
+				},
+			},
+		}, bson.M{
+			"$sort": bson.M{
+				"total": -1,
+			},
+		}, bson.M{
+			"$limit": limit,
+		},
+	}
+
+	cursor, err := tr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []TotalTransactionByProvince
+	if err := cursor.All(ctx, &results); err != nil {
+		return []transactions.TotalTransactionByProvince{}, err
+	}
+
+	return ToTotalTransactionByProvinceArray(results), nil
 }
 
 /*

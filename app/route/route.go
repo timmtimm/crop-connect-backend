@@ -80,7 +80,8 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	transaction.POST("/:proposal-id", ctrl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.PUT("/:transaction-id", ctrl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
-	transaction.GET("/statistic", ctrl.TransactionController.Statistic, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
+	transaction.GET("/statistic", ctrl.TransactionController.StatisticByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
+	transaction.GET("/statistic-province", ctrl.TransactionController.StatisticTopProvince, _middleware.CheckManyRole([]string{constant.RoleAdmin}))
 
 	batch := apiV1.Group("/batch")
 	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))

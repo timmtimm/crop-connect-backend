@@ -74,3 +74,40 @@ func QueryParamStatistic(c echo.Context) (QueryStatistic, error) {
 
 	return query, nil
 }
+
+type QueryStatisticProvince struct {
+	Year  int
+	Limit int
+}
+
+func QueryParamStatisticProvince(c echo.Context) (QueryStatisticProvince, error) {
+	query := QueryStatisticProvince{}
+
+	if year := c.QueryParam("year"); year != "" {
+		yearInt, err := strconv.Atoi(year)
+		if err != nil {
+			return QueryStatisticProvince{}, errors.New("year harus berupa angka")
+		}
+
+		if year > time.Now().Format("2006") {
+			return QueryStatisticProvince{}, errors.New("year tidak boleh lebih dari tahun sekarang")
+		}
+
+		query.Year = yearInt
+	} else {
+		query.Year = time.Now().Year()
+	}
+
+	if limit := c.QueryParam("limit"); limit != "" {
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil {
+			return QueryStatisticProvince{}, errors.New("limit harus berupa angka")
+		}
+
+		query.Limit = limitInt
+	} else {
+		query.Limit = 5
+	}
+
+	return query, nil
+}

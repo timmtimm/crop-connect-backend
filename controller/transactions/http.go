@@ -178,7 +178,7 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 	})
 }
 
-func (tc *Controller) Statistic(c echo.Context) error {
+func (tc *Controller) StatisticByYear(c echo.Context) error {
 	token, err := helper.GetPayloadFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
@@ -206,7 +206,7 @@ func (tc *Controller) Statistic(c echo.Context) error {
 		}
 	}
 
-	transactionStatistic, statusCode, err := tc.transactionUC.Statistic(farmerID, queryParam.Year)
+	transactionStatistic, statusCode, err := tc.transactionUC.StatisticByYear(farmerID, queryParam.Year)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -218,6 +218,30 @@ func (tc *Controller) Statistic(c echo.Context) error {
 		Status:  statusCode,
 		Message: "berhasil mendapatkan statistik",
 		Data:    response.FromDomainArrayToStatistic(transactionStatistic),
+	})
+}
+
+func (tc *Controller) StatisticTopProvince(c echo.Context) error {
+	queryParam, err := request.QueryParamStatisticProvince(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	transactionStatistic, statusCode, err := tc.transactionUC.StatisticTopProvince(queryParam.Year, queryParam.Limit)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan statistik",
+		Data:    response.FromDomainArrayToStatisticProvince(transactionStatistic),
 	})
 }
 

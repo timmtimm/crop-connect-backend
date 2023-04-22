@@ -81,3 +81,23 @@ func ToStatisticArray(models []StatisticModel) []transactions.Statistic {
 	}
 	return domains
 }
+
+type TotalTransactionByProvince struct {
+	Province string `bson:"_id" json:"_id"`
+	Total    int    `bson:"total" json:"total"`
+}
+
+func (model *TotalTransactionByProvince) ToTotalTransactionByProvince() transactions.TotalTransactionByProvince {
+	return transactions.TotalTransactionByProvince{
+		Province: model.Province,
+		Total:    model.Total,
+	}
+}
+
+func ToTotalTransactionByProvinceArray(models []TotalTransactionByProvince) []transactions.TotalTransactionByProvince {
+	var domains []transactions.TotalTransactionByProvince
+	for _, model := range models {
+		domains = append(domains, model.ToTotalTransactionByProvince())
+	}
+	return domains
+}

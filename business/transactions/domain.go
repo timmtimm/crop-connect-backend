@@ -1,6 +1,8 @@
 package transactions
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Domain struct {
 	ID         primitive.ObjectID
@@ -21,6 +23,11 @@ type Statistic struct {
 	TotalIncome      float64
 	TotalWeight      float64
 	TotalUniqueBuyer int
+}
+
+type TotalTransactionByProvince struct {
+	Province string
+	Total    int
 }
 
 type Query struct {
@@ -44,7 +51,8 @@ type Repository interface {
 	GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
 	GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (Domain, error)
-	Statistic(farmerID primitive.ObjectID, year int) ([]Statistic, error)
+	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, error)
+	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	RejectPendingByProposalID(proposalID primitive.ObjectID) error
@@ -57,7 +65,8 @@ type UseCase interface {
 	// Read
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
-	Statistic(farmerID primitive.ObjectID, year int) ([]Statistic, int, error)
+	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, int, error)
+	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, int, error)
 	// Update
 	MakeDecision(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete
