@@ -83,14 +83,16 @@ func ToStatisticArray(models []StatisticModel) []transactions.Statistic {
 }
 
 type TotalTransactionByProvince struct {
-	Province string `bson:"_id" json:"_id"`
-	Total    int    `bson:"total" json:"total"`
+	Province         string `bson:"_id"`
+	TotalAccepted    int    `bson:"totalAccepted"`
+	TotalTransaction int    `bson:"totalTransaction"`
 }
 
 func (model *TotalTransactionByProvince) ToTotalTransactionByProvince() transactions.TotalTransactionByProvince {
 	return transactions.TotalTransactionByProvince{
-		Province: model.Province,
-		Total:    model.Total,
+		Province:         model.Province,
+		TotalAccepted:    model.TotalAccepted,
+		TotalTransaction: model.TotalTransaction,
 	}
 }
 

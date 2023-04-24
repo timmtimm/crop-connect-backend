@@ -366,19 +366,23 @@ func (tr *TransactionRepository) StatisticTopProvince(year int, limit int) ([]tr
 			},
 		}, bson.M{
 			"$project": bson.M{
+				"status": "$status",
 				"region_info": bson.M{
 					"$arrayElemAt": bson.A{"$region_info", 0},
 				},
 			},
 		}, bson.M{
-			"$project": bson.M{
+			"$group": bson.M{
 				"_id": "$region_info.province",
-				"total": bson.M{
+				"totalAccepted": bson.M{
 					"$sum": bson.M{
 						"$cond": bson.A{
-							bson.M{"$eq": bson.A{"$region_info.province", "$region_info.province"}},
+							bson.M{"$eq": bson.A{"$status", constant.TransactionStatusAccepted}},
 							1, 0},
 					},
+				},
+				"totalTransaction": bson.M{
+					"$sum": 1,
 				},
 			},
 		}, bson.M{
@@ -401,6 +405,64 @@ func (tr *TransactionRepository) StatisticTopProvince(year int, limit int) ([]tr
 	}
 
 	return ToTotalTransactionByProvinceArray(results), nil
+}
+
+func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]transactions.ModelStatisticTopCommodity, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": primitive.NewDateTimeFromTime(time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)),
+					"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
+				},
+			},
+		}, lookupProposal, lookupCommodity,
+	}
+
+	if farmerID != primitive.NilObjectID {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": farmerID,
+			},
+		})
+	}
+
+	pipeline = append(pipeline, bson.M{
+		"$project": bson.M{
+			"_id": "$commodity_info._id",
+			"commodity_info": bson.M{
+				"$arrayElemAt": bson.A{"$commodity_info", 0},
+			},
+		},
+	}, bson.M{
+		"$group": bson.M{
+			"_id": "$commodity_info._id",
+			"total": bson.M{
+				"$sum": 1,
+			},
+		},
+	}, bson.M{
+		"$sort": bson.M{
+			"total": -1,
+		},
+	}, bson.M{
+		"$limit": limit,
+	})
+
+	cursor, err := tr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []transactions.ModelStatisticTopCommodity
+	if err := cursor.All(ctx, &results); err != nil {
+		return []transactions.ModelStatisticTopCommodity{}, err
+	}
+
+	return results, nil
 }
 
 /*

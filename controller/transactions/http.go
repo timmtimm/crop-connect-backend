@@ -222,7 +222,7 @@ func (tc *Controller) StatisticByYear(c echo.Context) error {
 }
 
 func (tc *Controller) StatisticTopProvince(c echo.Context) error {
-	queryParam, err := request.QueryParamStatisticProvince(c)
+	queryParam, err := request.QueryParamLimitAndYear(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -242,6 +242,57 @@ func (tc *Controller) StatisticTopProvince(c echo.Context) error {
 		Status:  statusCode,
 		Message: "berhasil mendapatkan statistik",
 		Data:    response.FromDomainArrayToStatisticProvince(transactionStatistic),
+	})
+}
+
+func (tc *Controller) StatisticTopCommodity(c echo.Context) error {
+	queryParam, err := request.QueryParamLimitAndYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	token, err := helper.GetPayloadFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	farmerID := primitive.NilObjectID
+	if token.Role == constant.RoleFarmer {
+		farmerID, err = primitive.ObjectIDFromHex(token.UID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+				Status:  http.StatusBadRequest,
+				Message: "token tidak valid",
+			})
+		}
+	}
+
+	transactionStatistic, statusCode, err := tc.transactionUC.StatisticTopCommodity(farmerID, queryParam.Year, queryParam.Limit)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	responseStatistic, statusCode, err := response.FromDomainArrayToStatisticTopCommodity(transactionStatistic, tc.userUC, tc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan statistik",
+		Data:    responseStatistic,
 	})
 }
 

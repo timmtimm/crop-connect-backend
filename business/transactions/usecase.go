@@ -119,6 +119,28 @@ func (tu *TransactionUseCase) StatisticTopProvince(year int, limit int) ([]Total
 	return statistics, http.StatusOK, nil
 }
 
+func (tu *TransactionUseCase) StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]StatisticTopCommodity, int, error) {
+	statistics, err := tu.transactionRepository.StatisticTopCommodity(farmerID, year, limit)
+	if err != nil {
+		return []StatisticTopCommodity{}, http.StatusInternalServerError, err
+	}
+
+	domainStatisticCommodity := []StatisticTopCommodity{}
+	for _, statistic := range statistics {
+		commodity, err := tu.commodityRepository.GetByID(statistic.CommodityID)
+		if err != nil {
+			return []StatisticTopCommodity{}, http.StatusInternalServerError, err
+		}
+
+		domainStatisticCommodity = append(domainStatisticCommodity, StatisticTopCommodity{
+			Commodity: commodity,
+			Total:     statistic.Total,
+		})
+	}
+
+	return domainStatisticCommodity, http.StatusOK, nil
+}
+
 /*
 Update
 */

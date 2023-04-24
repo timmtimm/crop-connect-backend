@@ -1,6 +1,8 @@
 package transactions
 
 import (
+	"crop_connect/business/commodities"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -26,8 +28,19 @@ type Statistic struct {
 }
 
 type TotalTransactionByProvince struct {
-	Province string
-	Total    int
+	Province         string
+	TotalAccepted    int
+	TotalTransaction int
+}
+
+type StatisticTopCommodity struct {
+	Commodity commodities.Domain
+	Total     int
+}
+
+type ModelStatisticTopCommodity struct {
+	CommodityID primitive.ObjectID `bson:"_id"`
+	Total       int                `bson:"total"`
 }
 
 type Query struct {
@@ -53,6 +66,7 @@ type Repository interface {
 	GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (Domain, error)
 	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, error)
 	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, error)
+	StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]ModelStatisticTopCommodity, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	RejectPendingByProposalID(proposalID primitive.ObjectID) error
@@ -67,6 +81,7 @@ type UseCase interface {
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, int, error)
 	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, int, error)
+	StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]StatisticTopCommodity, int, error)
 	// Update
 	MakeDecision(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete

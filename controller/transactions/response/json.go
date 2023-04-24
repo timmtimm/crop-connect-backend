@@ -91,18 +91,42 @@ func FromDomainArrayToStatistic(domain []transactions.Statistic) []Statistic {
 }
 
 type TotalTransactionByProvince struct {
-	Province string `json:"province"`
-	Total    int    `json:"total"`
+	Province         string `json:"province"`
+	TotalAccepted    int    `json:"totalAccepted"`
+	TotalTransaction int    `json:"totalTransaction"`
 }
 
 func FromDomainArrayToStatisticProvince(domain []transactions.TotalTransactionByProvince) []TotalTransactionByProvince {
 	var totalTransactionByProvinces []TotalTransactionByProvince
 	for _, value := range domain {
 		totalTransactionByProvinces = append(totalTransactionByProvinces, TotalTransactionByProvince{
-			Province: value.Province,
-			Total:    value.Total,
+			Province:         value.Province,
+			TotalAccepted:    value.TotalAccepted,
+			TotalTransaction: value.TotalTransaction,
 		})
 	}
 
 	return totalTransactionByProvinces
+}
+
+type StatisticTopCommodity struct {
+	Commodity commodityResponse.Commodity `json:"commodity"`
+	Total     int                         `json:"total"`
+}
+
+func FromDomainArrayToStatisticTopCommodity(domain []transactions.StatisticTopCommodity, userUC users.UseCase, regionUC regions.UseCase) ([]StatisticTopCommodity, int, error) {
+	var statistics []StatisticTopCommodity
+	for _, value := range domain {
+		commodity, statusCode, err := commodityResponse.FromDomain(value.Commodity, userUC, regionUC)
+		if err != nil {
+			return []StatisticTopCommodity{}, statusCode, err
+		}
+
+		statistics = append(statistics, StatisticTopCommodity{
+			Commodity: commodity,
+			Total:     value.Total,
+		})
+	}
+
+	return statistics, http.StatusOK, nil
 }
