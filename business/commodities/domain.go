@@ -45,6 +45,7 @@ type Repository interface {
 	GetByNameAndFarmerID(name string, farmerID primitive.ObjectID) (Domain, error)
 	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
+	CountTotalCommodity(year int) (int, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -60,6 +61,7 @@ type UseCase interface {
 	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
 	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error)
 	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error)
+	CountTotalCommodity(year int) (int, int, error)
 	// Update
 	Update(domain *Domain, updateImage []*helper.UpdateImage) (Domain, int, error)
 	// Delete

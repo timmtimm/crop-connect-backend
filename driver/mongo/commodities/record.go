@@ -62,3 +62,7 @@ func ToDomainArray(models []Model) []commodities.Domain {
 	}
 	return domains
 }
+
+type TotalCommodityByYear struct {
+	TotalCommodity int `bson:"totalCommodity"`
+}

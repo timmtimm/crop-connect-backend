@@ -103,6 +103,15 @@ func (cu *CommodityUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Domain
 	return commodities, http.StatusOK, nil
 }
 
+func (cu *CommodityUseCase) CountTotalCommodity(year int) (int, int, error) {
+	totalCommodity, err := cu.commoditiesRepository.CountTotalCommodity(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan total komoditas")
+	}
+
+	return totalCommodity, http.StatusOK, nil
+}
+
 /*
 Update
 */

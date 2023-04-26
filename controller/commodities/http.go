@@ -198,6 +198,30 @@ func (cc *Controller) GetForFarmer(c echo.Context) error {
 	})
 }
 
+func (cc *Controller) CountTotalCommodity(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	totalCommodity, statusCode, err := cc.commodityUC.CountTotalCommodity(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total komoditas",
+		Data:    totalCommodity,
+	})
+}
+
 /*
 Update
 */
