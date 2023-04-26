@@ -111,6 +111,15 @@ func (tru *TreatmentRecordUseCase) GetByBatchID(batchID primitive.ObjectID) ([]D
 	return treatmentRecords, http.StatusOK, nil
 }
 
+func (tru *TreatmentRecordUseCase) CountByYear(year int) (int, int, error) {
+	statistic, err := tru.treatmentRecordRepository.CountByYear(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan statistik riwayat perawatan")
+	}
+
+	return statistic, http.StatusOK, nil
+}
+
 /*
 Update
 */

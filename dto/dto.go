@@ -1,7 +1,7 @@
 package dto
 
 type TotalDocument struct {
-	TotalDocument int `bson:"totalDocument"`
+	Total int `bson:"total"`
 }
 
 type ImageAndNote struct {

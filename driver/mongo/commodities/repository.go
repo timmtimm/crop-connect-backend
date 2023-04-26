@@ -240,7 +240,7 @@ func (cr *CommodityRepository) GetByQuery(query commodities.Query) ([]commoditie
 
 	}
 
-	return ToDomainArray(result), countResult.TotalDocument, nil
+	return ToDomainArray(result), countResult.Total, nil
 }
 
 func (cr *CommodityRepository) CountTotalCommodity(year int) (int, error) {
@@ -271,7 +271,7 @@ func (cr *CommodityRepository) CountTotalCommodity(year int) (int, error) {
 		return 0, err
 	}
 
-	var result TotalByYear
+	var result dto.TotalDocument
 	for cursor.Next(ctx) {
 		err := cursor.Decode(&result)
 		if err != nil {

@@ -155,7 +155,7 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		})
 	}
 
-	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
+	pipelineForCount := append(pipeline, bson.M{"$count": "total"})
 	pipeline = append(pipeline, bson.M{
 		"$skip": query.Skip,
 	}, bson.M{
@@ -188,7 +188,7 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		}
 	}
 
-	return ToDomainArray(result), countResult.TotalDocument, nil
+	return ToDomainArray(result), countResult.Total, nil
 }
 
 func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (transactions.Domain, error) {

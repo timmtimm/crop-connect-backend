@@ -50,7 +50,3 @@ func ToDomainArray(model []Model) []batchs.Domain {
 	}
 	return domain
 }
-
-type TotalByYear struct {
-	Total int `bson:"total"`
-}

@@ -262,7 +262,7 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 		return nil, 0, err
 	}
 
-	return ToDomainArray(result), countResult.TotalDocument, nil
+	return ToDomainArray(result), countResult.Total, nil
 }
 
 func (br *BatchRepository) CountByYear(year int) (int, error) {
@@ -293,7 +293,7 @@ func (br *BatchRepository) CountByYear(year int) (int, error) {
 		return 0, err
 	}
 
-	var result TotalByYear
+	var result dto.TotalDocument
 	for cursor.Next(ctx) {
 		err := cursor.Decode(&result)
 		if err != nil {

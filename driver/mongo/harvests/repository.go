@@ -157,7 +157,7 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 		})
 	}
 
-	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
+	pipelineForCount := append(pipeline, bson.M{"$count": "total"})
 	pipeline = append(pipeline, bson.M{
 		"$skip": query.Skip,
 	}, bson.M{
@@ -190,7 +190,7 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 		}
 	}
 
-	return ToDomainArray(result), countResult.TotalDocument, nil
+	return ToDomainArray(result), countResult.Total, nil
 }
 
 /*

@@ -206,6 +206,30 @@ func (trc *Controller) GetByBatchID(c echo.Context) error {
 	})
 }
 
+func (trc *Controller) CountByYear(c echo.Context) error {
+	queryYear, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	count, statusCode, err := trc.treatmentRecordUC.CountByYear(queryYear)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan jumlah riwayat perawatan",
+		Data:    count,
+	})
+}
+
 /*
 Update
 */

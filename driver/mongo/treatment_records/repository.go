@@ -254,7 +254,7 @@ func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([
 		"$sort": bson.M{query.Sort: query.Order},
 	}
 
-	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
+	pipelineForCount := append(pipeline, bson.M{"$count": "total"})
 	pipeline = append(pipeline, paginationSkip, paginationLimit, paginationSort)
 
 	cursor, err := trr.collection.Aggregate(ctx, pipeline)
@@ -281,7 +281,45 @@ func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([
 		}
 	}
 
-	return ToDomainArray(result), countResult.TotalDocument, nil
+	return ToDomainArray(result), countResult.Total, nil
+}
+
+func (trr *TreatmentRecordRepository) CountByYear(year int) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": primitive.NewDateTimeFromTime(time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)),
+					"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": year,
+				"total": bson.M{
+					"$sum": 1,
+				},
+			},
+		},
+	}
+
+	cursor, err := trr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, err
+	}
+
+	var result dto.TotalDocument
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&result)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return result.Total, nil
 }
 
 /*

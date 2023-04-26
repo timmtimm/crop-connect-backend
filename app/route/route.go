@@ -97,6 +97,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	treatmentRecord.PUT("/:treatment-record-id", ctrl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
 	treatmentRecord.PUT("/validate/:treatment-record-id", ctrl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.PUT("/note/:treatment-record-id", ctrl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.GET("/statistic-total", ctrl.TreatmentRecordController.CountByYear, _middleware.CheckOneRole(constant.RoleValidator))
 
 	harvest := apiV1.Group("/harvest")
 	harvest.GET("", ctrl.HarvestController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
