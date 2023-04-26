@@ -265,6 +265,45 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 	return ToDomainArray(result), countResult.TotalDocument, nil
 }
 
+func (br *BatchRepository) CountByYear(year int) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": primitive.NewDateTimeFromTime(time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)),
+					"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 0, 0, 0, 0, 0, time.UTC)),
+				},
+				"deletedAt": bson.M{"$exists": false},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": year,
+				"total": bson.M{
+					"$sum": 1,
+				},
+			},
+		},
+	}
+
+	cursor, err := br.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, err
+	}
+
+	var result TotalByYear
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&result)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return result.Total, nil
+}
+
 /*
 Update
 */

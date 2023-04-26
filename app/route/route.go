@@ -88,6 +88,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	batch := apiV1.Group("/batch")
 	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/:commodity-id", ctrl.BatchController.GetByCommodityID)
+	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckOneRole(constant.RoleAdmin))
 	// batch.PUT("/cancel/:batch-id", ctrl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	treatmentRecord := apiV1.Group("/treatment-record")

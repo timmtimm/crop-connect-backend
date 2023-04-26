@@ -111,6 +111,15 @@ func (bu *BatchUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int
 	return batches, totalData, http.StatusOK, nil
 }
 
+func (bu *BatchUseCase) CountByYear(year int) (int, int, error) {
+	statistic, err := bu.batchRepository.CountByYear(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan statistik")
+	}
+
+	return statistic, http.StatusOK, nil
+}
+
 /*
 Update
 */

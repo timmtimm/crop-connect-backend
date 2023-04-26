@@ -33,6 +33,7 @@ type Repository interface {
 	GetByFarmerID(farmerID primitive.ObjectID) ([]Domain, error)
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
+	CountByYear(year int) (int, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -45,6 +46,7 @@ type UseCase interface {
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	CountByYear(year int) (int, int, error)
 	// Update
 	// Cancel(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete

@@ -259,7 +259,7 @@ func (cr *CommodityRepository) CountTotalCommodity(year int) (int, error) {
 		}, bson.M{
 			"$group": bson.M{
 				"_id": year,
-				"totalCommodity": bson.M{
+				"total": bson.M{
 					"$sum": 1,
 				},
 			},
@@ -271,7 +271,7 @@ func (cr *CommodityRepository) CountTotalCommodity(year int) (int, error) {
 		return 0, err
 	}
 
-	var result TotalCommodityByYear
+	var result TotalByYear
 	for cursor.Next(ctx) {
 		err := cursor.Decode(&result)
 		if err != nil {
@@ -279,7 +279,7 @@ func (cr *CommodityRepository) CountTotalCommodity(year int) (int, error) {
 		}
 	}
 
-	return result.TotalCommodity, nil
+	return result.Total, nil
 }
 
 /*
