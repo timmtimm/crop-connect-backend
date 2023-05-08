@@ -132,6 +132,19 @@ func (ur *UserRepository) GetByQuery(query users.Query) ([]users.Domain, int, er
 	return ToDomainArray(result), len(result), nil
 }
 
+func (ur *UserRepository) GetFarmerByID(id primitive.ObjectID) (users.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := ur.collection.FindOne(ctx, bson.M{
+		"_id":  id,
+		"role": "farmer",
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
 /*
 Update
 */

@@ -36,6 +36,7 @@ type Repository interface {
 	GetByEmail(email string) (Domain, error)
 	GetByNameAndRole(name string, role string) ([]Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
+	GetFarmerByID(id primitive.ObjectID) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -49,6 +50,7 @@ type UseCase interface {
 	Login(domain *Domain) (string, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	GetFarmerByID(id primitive.ObjectID) (Domain, int, error)
 	// Update
 	UpdateProfile(domain *Domain) (Domain, int, error)
 	UpdatePassword(domain *Domain, newPassword string) (Domain, int, error)

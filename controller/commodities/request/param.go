@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FilterQuery struct {
 	Name     string
 	Farmer   string
+	FarmerID primitive.ObjectID
 	MinPrice int
 	MaxPrice int
 }
@@ -37,7 +39,48 @@ func QueryParamValidation(c echo.Context) (FilterQuery, error) {
 		}
 	}
 
+	if farmerID := c.QueryParam("farmerID"); farmerID != "" {
+		filter.FarmerID, err = primitive.ObjectIDFromHex(farmerID)
+		if err != nil {
+			return FilterQuery{}, errors.New("farmerID harus berupa hex")
+		}
+	}
+
 	return filter, nil
+}
+
+type QueryRegion struct {
+	Province string
+	Regency  string
+	District string
+	RegionID primitive.ObjectID // for subdistrict cases, you can get it using regionID
+}
+
+func QueryValidationForRegion(c echo.Context) (QueryRegion, error) {
+	query := QueryRegion{
+		Province: c.QueryParam("province"),
+		Regency:  c.QueryParam("regency"),
+		District: c.QueryParam("district"),
+	}
+
+	if query.District != "" {
+		if query.Province == "" || query.Regency == "" {
+			return QueryRegion{}, errors.New("harus menyertakan parameter province dan regency")
+		}
+	} else if query.Regency != "" {
+		if query.Province == "" {
+			return QueryRegion{}, errors.New("harus menyertakan parameter province")
+		}
+	}
+
+	if regionID := c.QueryParam("regionID"); regionID != "" {
+		query.RegionID, err = primitive.ObjectIDFromHex(regionID)
+		if err != nil {
+			return QueryRegion{}, errors.New("regionID harus berupa hex")
+		}
+	}
+
+	return query, nil
 }
 
 func QueryParamValidationYear(c echo.Context) (int, error) {

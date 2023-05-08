@@ -161,26 +161,24 @@ func (rr *RegionRepository) GetDistrict(country string, province string, regency
 	return result, nil
 }
 
-func (rr *RegionRepository) GetSubdistrict(country string, province string, regency string, district string) ([]string, error) {
+func (rr *RegionRepository) GetSubdistrict(country string, province string, regency string, district string) ([]regions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	var result []string
-
-	subdistrict, err := rr.collection.Distinct(ctx, "subdistrict", bson.M{
+	cursor, err := rr.collection.Find(ctx, bson.M{
 		"country":  country,
 		"province": province,
 		"regency":  regency,
 		"district": district,
 	})
 	if err != nil {
-		return []string{}, err
+		return []regions.Domain{}, err
 	}
 
-	result = make([]string, len(subdistrict))
-	for i, v := range subdistrict {
-		result[i] = v.(string)
+	var result []Model
+	if err = cursor.All(ctx, &result); err != nil {
+		return []regions.Domain{}, err
 	}
 
-	return result, nil
+	return ToDomainArray(result), nil
 }

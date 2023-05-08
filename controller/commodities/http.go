@@ -101,6 +101,14 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		})
 	}
 
+	queryRegion, err := request.QueryValidationForRegion(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
 	commodities, totalData, statusCode, err := cc.commodityUC.GetByPaginationAndQuery(commodities.Query{
 		Skip:     queryPagination.Skip,
 		Limit:    queryPagination.Limit,
@@ -110,6 +118,11 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		Farmer:   queryParam.Farmer,
 		MinPrice: queryParam.MinPrice,
 		MaxPrice: queryParam.MaxPrice,
+		FarmerID: queryParam.FarmerID,
+		Province: queryRegion.Province,
+		Regency:  queryRegion.Regency,
+		District: queryRegion.District,
+		RegionID: queryRegion.RegionID,
 	})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{

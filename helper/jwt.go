@@ -27,7 +27,7 @@ func GenerateToken(uid string, role string) string {
 			Issuer:    "crop_connect",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
 

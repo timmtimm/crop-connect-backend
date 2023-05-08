@@ -48,12 +48,6 @@ func GetCreateImageRequest(c echo.Context, keys []string) ([]*multipart.FileHead
 func GetUpdateImageRequest(c echo.Context, keys []string, imageURLs []string, isChange []bool, isDelete []bool) ([]*UpdateImage, int, error) {
 	images := []*UpdateImage{}
 
-	if len(imageURLs) != len(isChange) {
-		return nil, http.StatusBadRequest, errors.New("array perubahan gambar tidak sesuai")
-	} else if len(imageURLs) != len(isDelete) {
-		return nil, http.StatusBadRequest, errors.New("array penghapusan gambar tidak sesuai")
-	}
-
 	for i := 0; i < len(imageURLs); i++ {
 		if isChange[i] {
 			image, _ := c.FormFile(keys[i])

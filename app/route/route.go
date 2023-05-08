@@ -54,6 +54,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	user.PUT("/profile", ctrl.UserController.UpdateProfile, _middleware.Authenticated())
 	user.GET("", ctrl.UserController.GetByPaginationAndQueryForAdmin, _middleware.CheckOneRole(constant.RoleAdmin))
 	user.GET("/farmer", ctrl.UserController.GetFarmerByPaginationAndQueryForBuyer)
+	user.GET("/farmer/:farmer-id", ctrl.UserController.GetFarmerByIDForBuyer)
 	user.PUT("/change-password", ctrl.UserController.UpdatePassword, _middleware.Authenticated())
 
 	forgotPassword := user.Group("/forgot-password")
@@ -104,4 +105,11 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	harvest.GET("/:batch-id", ctrl.HarvestController.GetByBatchID)
 	harvest.POST("/:batch-id", ctrl.HarvestController.SubmitHarvest, _middleware.CheckOneRole(constant.RoleFarmer))
 	harvest.PUT("/validate/:harvest-id", ctrl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
+
+	region := apiV1.Group("/region")
+	region.GET("/province", ctrl.RegionController.GetByCountry)
+	region.GET("/regency", ctrl.RegionController.GetByProvince)
+	region.GET("/district", ctrl.RegionController.GetByRegency)
+	region.GET("/sub-district", ctrl.RegionController.GetByDistrict)
+
 }

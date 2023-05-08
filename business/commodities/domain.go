@@ -32,6 +32,10 @@ type Query struct {
 	FarmerID primitive.ObjectID
 	MinPrice int
 	MaxPrice int
+	Province string
+	Regency  string
+	District string
+	RegionID primitive.ObjectID
 }
 
 type Repository interface {
