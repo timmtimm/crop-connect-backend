@@ -39,6 +39,7 @@ type Repository interface {
 	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByBatchID(batchID primitive.ObjectID) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
+	CountByYear(year int) (float64, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -50,6 +51,7 @@ type UseCase interface {
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByBatchID(batchID primitive.ObjectID) (Domain, int, error)
+	CountByYear(year int) (float64, int, error)
 	// Update
 	Validate(domain *Domain, validatorID primitive.ObjectID) (Domain, int, error)
 	// Delete

@@ -166,6 +166,15 @@ func (hu *HarvestUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, i
 	return harvests, totalData, http.StatusOK, nil
 }
 
+func (hu *HarvestUseCase) CountByYear(year int) (float64, int, error) {
+	count, err := hu.harvestRepository.CountByYear(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, err
+	}
+
+	return count, http.StatusOK, nil
+}
+
 /*
 Update
 */

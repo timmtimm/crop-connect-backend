@@ -205,6 +205,30 @@ func (hc *Controller) GetByBatchID(c echo.Context) error {
 	})
 }
 
+func (hc *Controller) CountByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	count, statusCode, err := hc.harvestUC.CountByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan jumlah panen",
+		Data:    count,
+	})
+}
+
 /*
 Update
 */
