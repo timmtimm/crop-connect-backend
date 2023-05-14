@@ -70,6 +70,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	commodity.PUT("/:commodity-id", ctrl.CommodityController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
 	commodity.DELETE("/:commodity-id", ctrl.CommodityController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
 	commodity.GET("/statistic-total", ctrl.CommodityController.CountTotalCommodity, _middleware.CheckOneRole(constant.RoleAdmin))
+	commodity.GET("/farmer-total/:farmer-id", ctrl.CommodityController.CountTotalCommodityByFarmer)
 
 	proposal := apiV1.Group("/proposal")
 	proposal.GET("/:commodity-id", ctrl.ProposalController.GetByCommodityIDForBuyer)

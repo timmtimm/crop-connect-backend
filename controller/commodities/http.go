@@ -235,6 +235,30 @@ func (cc *Controller) CountTotalCommodity(c echo.Context) error {
 	})
 }
 
+func (cc *Controller) CountTotalCommodityByFarmer(c echo.Context) error {
+	farmerID, err := primitive.ObjectIDFromHex(c.Param("farmer-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id petani tidak valid",
+		})
+	}
+
+	totalCommodity, statusCode, err := cc.commodityUC.CountTotalCommodityByFarmer(farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total komoditas petani",
+		Data:    totalCommodity,
+	})
+}
+
 /*
 Update
 */

@@ -382,6 +382,17 @@ func (cr *CommodityRepository) CountTotalCommodity(year int) (int, error) {
 	return result.Total, nil
 }
 
+func (cr *CommodityRepository) CountTotalCommodityByFarmer(farmerID primitive.ObjectID) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	count, err := cr.collection.CountDocuments(ctx, bson.M{
+		"farmerID": farmerID,
+	})
+
+	return int(count), err
+}
+
 /*
 Update
 */

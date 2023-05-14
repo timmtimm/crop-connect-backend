@@ -63,7 +63,7 @@ func main() {
 
 	fmt.Println("Initializing usecases...")
 	userUseCase := _userUseCase.NewUseCase(userRepository, regionRepository)
-	commodityUsecase := _commodityUseCase.NewUseCase(commodityRepository, cloudinary)
+	commodityUsecase := _commodityUseCase.NewUseCase(commodityRepository, userRepository, cloudinary)
 	proposalUseCase := _proposalUseCase.NewUseCase(proposalRepository, commodityRepository, regionRepository)
 	transactionUseCase := _transactionUseCase.NewUseCase(transactionRepository, commodityRepository, proposalRepository)
 	batchUseCase := _batchUseCase.NewUseCase(batchRepository, transactionRepository, proposalRepository, commodityRepository)

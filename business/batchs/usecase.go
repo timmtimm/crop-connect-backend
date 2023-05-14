@@ -94,6 +94,13 @@ func (bu *BatchUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
 }
 
 func (bu *BatchUseCase) GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error) {
+	_, err := bu.commodityRepository.GetByID(commodityID)
+	if err == mongo.ErrNoDocuments {
+		return []Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
 	batchs, err := bu.batchRepository.GetByCommodityID(commodityID)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
@@ -121,6 +128,11 @@ func (bu *BatchUseCase) CountByYear(year int) (int, int, error) {
 }
 
 func (bu *BatchUseCase) GetByTransactionID(transactionID primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
+	_, err := bu.transactionRepository.GetByID(transactionID)
+	if err != nil {
+		return Domain{}, http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+	}
+
 	batches, err := bu.batchRepository.GetByTransactionID(transactionID, buyerID, farmerID)
 	if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
