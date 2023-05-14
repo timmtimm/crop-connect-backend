@@ -86,10 +86,21 @@ func (tu *TransactionUseCase) GetByID(id primitive.ObjectID) (Domain, int, error
 func (tu *TransactionUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := tu.transactionRepository.GetByQuery(query)
 	if err != nil {
-		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("something")
 	}
 
 	return commodities, totalData, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
+	transaction, err := tu.transactionRepository.GetByIDAndBuyerIDOrFarmerID(id, buyerID, farmerID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+	}
+
+	return transaction, http.StatusOK, nil
 }
 
 func (tu *TransactionUseCase) GetTransactionsByCommodityName(query Query) ([]Domain, int, int, error) {

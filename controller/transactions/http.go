@@ -178,6 +178,66 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 	})
 }
 
+func (tc *Controller) GetByID(c echo.Context) error {
+	transactionID, err := primitive.ObjectIDFromHex(c.Param("transaction-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "transaction id tidak valid",
+		})
+	}
+
+	token, err := helper.GetPayloadFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	transaction := transactions.Domain{}
+	statusCode := http.StatusInternalServerError
+
+	userID, err := primitive.ObjectIDFromHex(token.UID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "token tidak valid",
+		})
+	}
+
+	buyerID := primitive.NilObjectID
+	farmerID := primitive.NilObjectID
+
+	if token.Role == constant.RoleBuyer {
+		buyerID = userID
+	} else {
+		farmerID = userID
+	}
+
+	transaction, statusCode, err = tc.transactionUC.GetByIDAndBuyerIDOrFarmerID(transactionID, buyerID, farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	transactionResponse, statusCode, err := response.FromDomainToBuyer(&transaction, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan transaksi",
+		Data:    transactionResponse,
+	})
+}
+
 func (tc *Controller) StatisticByYear(c echo.Context) error {
 	token, err := helper.GetPayloadFromToken(c)
 	if err != nil {

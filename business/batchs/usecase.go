@@ -120,6 +120,15 @@ func (bu *BatchUseCase) CountByYear(year int) (int, int, error) {
 	return statistic, http.StatusOK, nil
 }
 
+func (bu *BatchUseCase) GetByTransactionID(transactionID primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
+	batches, err := bu.batchRepository.GetByTransactionID(transactionID, buyerID, farmerID)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+	}
+
+	return batches, http.StatusOK, nil
+}
+
 /*
 Update
 */

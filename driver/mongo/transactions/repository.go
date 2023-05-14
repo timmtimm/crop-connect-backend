@@ -191,15 +191,22 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 	return ToDomainArray(result), countResult.Total, nil
 }
 
-func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (transactions.Domain, error) {
+func (tr *TransactionRepository) GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
+	filter := bson.M{
+		"_id": id,
+	}
+
+	if buyerID != primitive.NilObjectID {
+		filter["buyerID"] = buyerID
+	} else if farmerID != primitive.NilObjectID {
+		filter["farmerID"] = farmerID
+	}
+
 	var result Model
-	err := tr.collection.FindOne(ctx, bson.M{
-		"_id":     id,
-		"buyerID": buyerID,
-	}).Decode(&result)
+	err := tr.collection.FindOne(ctx, filter).Decode(&result)
 
 	return result.ToDomain(), err
 }

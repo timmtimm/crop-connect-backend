@@ -80,6 +80,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 
 	transaction := apiV1.Group("/transaction")
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	transaction.GET("/:transaction-id", ctrl.TransactionController.GetByID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	transaction.POST("/:proposal-id", ctrl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.PUT("/:transaction-id", ctrl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 	transaction.GET("/statistic", ctrl.TransactionController.StatisticByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
@@ -88,7 +89,8 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 
 	batch := apiV1.Group("/batch")
 	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
-	batch.GET("/:commodity-id", ctrl.BatchController.GetByCommodityID)
+	batch.GET("/transaction/:transaction-id", ctrl.BatchController.GetByTransactionID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	batch.GET("/commodity/:commodity-id", ctrl.BatchController.GetByCommodityID)
 	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckOneRole(constant.RoleAdmin))
 	// batch.PUT("/cancel/:batch-id", ctrl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
@@ -102,7 +104,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 
 	harvest := apiV1.Group("/harvest")
 	harvest.GET("", ctrl.HarvestController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
-	harvest.GET("/:batch-id", ctrl.HarvestController.GetByBatchID)
+	harvest.GET("/batch", ctrl.HarvestController.GetByBatchID)
 	harvest.POST("/:batch-id", ctrl.HarvestController.SubmitHarvest, _middleware.CheckOneRole(constant.RoleFarmer))
 	harvest.PUT("/validate/:harvest-id", ctrl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 

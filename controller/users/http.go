@@ -181,12 +181,16 @@ func (uc *Controller) GetFarmerByPaginationAndQueryForBuyer(c echo.Context) erro
 	}
 
 	userQuery := users.Query{
-		Skip:  queryPagination.Skip,
-		Limit: queryPagination.Limit,
-		Sort:  queryPagination.Sort,
-		Order: queryPagination.Order,
-		Name:  queryParam.Name,
-		Role:  constant.RoleFarmer,
+		Skip:     queryPagination.Skip,
+		Limit:    queryPagination.Limit,
+		Sort:     queryPagination.Sort,
+		Order:    queryPagination.Order,
+		Name:     queryParam.Name,
+		Role:     constant.RoleFarmer,
+		Province: queryParam.Province,
+		Regency:  queryParam.Regency,
+		District: queryParam.District,
+		RegionID: queryParam.RegionID,
 	}
 
 	users, totalData, statusCode, err := uc.userUC.GetByPaginationAndQuery(userQuery)

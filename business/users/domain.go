@@ -26,6 +26,10 @@ type Query struct {
 	Email       string
 	PhoneNumber string
 	Role        string
+	Province    string
+	Regency     string
+	District    string
+	RegionID    primitive.ObjectID
 }
 
 type Repository interface {

@@ -174,7 +174,7 @@ func (hc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 }
 
 func (hc *Controller) GetByBatchID(c echo.Context) error {
-	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
+	batchID, err := primitive.ObjectIDFromHex(c.QueryParam("batch-id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,

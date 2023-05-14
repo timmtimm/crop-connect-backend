@@ -86,7 +86,7 @@ func (cu *CommodityUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) 
 }
 
 func (cu *CommodityUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error) {
-	commodity, err := cu.commoditiesRepository.GetByID(id)
+	commodity, err := cu.commoditiesRepository.GetByIDWithoutDeleted(id)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	}

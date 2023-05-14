@@ -63,7 +63,7 @@ type Repository interface {
 	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByBuyerIDProposalIDAndStatus(buyerID primitive.ObjectID, proposalID primitive.ObjectID, status string) (Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
-	GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (Domain, error)
+	GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
 	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, error)
 	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, error)
 	StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]ModelStatisticTopCommodity, error)
@@ -79,6 +79,7 @@ type UseCase interface {
 	// Read
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error)
 	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, int, error)
 	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, int, error)
 	StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]StatisticTopCommodity, int, error)

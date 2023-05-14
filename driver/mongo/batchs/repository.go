@@ -21,6 +21,33 @@ func NewRepository(db *mongo.Database) batchs.Repository {
 	}
 }
 
+var lookupTransaction = bson.M{
+	"$lookup": bson.M{
+		"from":         "transactions",
+		"localField":   "transactionID",
+		"foreignField": "_id",
+		"as":           "transaction_info",
+	},
+}
+
+var lookupProposal = bson.M{
+	"$lookup": bson.M{
+		"from":         "proposals",
+		"localField":   "transaction_info.proposalID",
+		"foreignField": "_id",
+		"as":           "proposal_info",
+	},
+}
+
+var lookupCommodity = bson.M{
+	"$lookup": bson.M{
+		"from":         "commodities",
+		"localField":   "proposal_info.commodityID",
+		"foreignField": "_id",
+		"as":           "commodity_info",
+	},
+}
+
 /*
 Create
 */
@@ -73,33 +100,6 @@ func (br *BatchRepository) CountByProposalName(proposalName string) (int, error)
 func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-
-	lookupTransaction := bson.M{
-		"$lookup": bson.M{
-			"from":         "transactions",
-			"localField":   "transactionID",
-			"foreignField": "_id",
-			"as":           "transaction_info",
-		},
-	}
-
-	lookupProposal := bson.M{
-		"$lookup": bson.M{
-			"from":         "proposals",
-			"localField":   "transaction_info.proposalID",
-			"foreignField": "_id",
-			"as":           "proposal_info",
-		},
-	}
-
-	lookupCommodity := bson.M{
-		"$lookup": bson.M{
-			"from":         "commodities",
-			"localField":   "proposal_info.commodityID",
-			"foreignField": "_id",
-			"as":           "commodity_info",
-		},
-	}
 
 	match := bson.M{
 		"$match": bson.M{
@@ -302,6 +302,54 @@ func (br *BatchRepository) CountByYear(year int) (int, error) {
 	}
 
 	return result.Total, nil
+}
+
+func (br *BatchRepository) GetByTransactionID(transactionID primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (batchs.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"transactionID": transactionID,
+			},
+		},
+	}
+
+	if farmerID != primitive.NilObjectID || buyerID != primitive.NilObjectID {
+		pipeline = append(pipeline, lookupTransaction)
+
+		if farmerID != primitive.NilObjectID {
+			pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
+				"$match": bson.M{
+					"commodity_info.farmerID": farmerID,
+				},
+			})
+		}
+
+		if buyerID != primitive.NilObjectID {
+			pipeline = append(pipeline, bson.M{
+				"$match": bson.M{
+					"transaction_info.buyerID": buyerID,
+				},
+			})
+		}
+	}
+
+	cursor, err := br.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return batchs.Domain{}, err
+	}
+
+	var result Model
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&result)
+		if err != nil {
+			return batchs.Domain{}, err
+		}
+	}
+
+	return result.ToDomain(), nil
 }
 
 /*
