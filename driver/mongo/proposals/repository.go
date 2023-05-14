@@ -3,6 +3,7 @@ package proposals
 import (
 	"context"
 	"crop_connect/business/proposals"
+	"crop_connect/constant"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -117,6 +118,20 @@ func (pr *ProposalRepository) GetByCommodityIDAndName(commodityID primitive.Obje
 		"commodityID": commodityID,
 		"name":        name,
 		"deletedAt":   bson.M{"$exists": false},
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
+func (pr *ProposalRepository) GetByIDAccepted(id primitive.ObjectID) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := pr.collection.FindOne(ctx, bson.M{
+		"_id":       id,
+		"status":    constant.ProposalStatusApproved,
+		"deletedAt": bson.M{"$exists": false},
 	}).Decode(&result)
 
 	return result.ToDomain(), err

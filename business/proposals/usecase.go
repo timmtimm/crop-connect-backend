@@ -100,6 +100,17 @@ func (pu *ProposalUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Domain,
 	return proposals, http.StatusOK, nil
 }
 
+func (pu *ProposalUseCase) GetByIDAccepted(id primitive.ObjectID) (Domain, int, error) {
+	proposal, err := pu.proposalRepository.GetByIDAccepted(id)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
+	}
+
+	return proposal, http.StatusOK, nil
+}
+
 /*
 Update
 */

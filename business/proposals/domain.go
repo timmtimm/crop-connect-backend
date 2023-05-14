@@ -29,6 +29,7 @@ type Repository interface {
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
 	GetByCommodityIDAndAvailability(commodityID primitive.ObjectID, status string) ([]Domain, error)
 	GetByCommodityIDAndName(commodityID primitive.ObjectID, name string) (Domain, error)
+	GetByIDAccepted(id primitive.ObjectID) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	UnsetRejectReason(id primitive.ObjectID) (Domain, error)
@@ -43,6 +44,7 @@ type UseCase interface {
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
 	GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error)
+	GetByIDAccepted(id primitive.ObjectID) (Domain, int, error)
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)

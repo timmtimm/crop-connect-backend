@@ -73,11 +73,12 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	commodity.GET("/farmer-total/:farmer-id", ctrl.CommodityController.CountTotalCommodityByFarmer)
 
 	proposal := apiV1.Group("/proposal")
-	proposal.GET("/:commodity-id", ctrl.ProposalController.GetByCommodityIDForBuyer)
+	proposal.GET("/commodity/:commodity-id", ctrl.ProposalController.GetByCommodityIDForBuyer)
 	proposal.POST("/:commodity-id", ctrl.ProposalController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
 	proposal.PUT("/:proposal-id", ctrl.ProposalController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
 	proposal.DELETE("/:proposal-id", ctrl.ProposalController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
 	proposal.PUT("/validate/:proposal-id", ctrl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
+	proposal.GET("/id/:proposal-id", ctrl.ProposalController.GetByIDAccepted)
 
 	transaction := apiV1.Group("/transaction")
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))

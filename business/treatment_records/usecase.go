@@ -103,6 +103,13 @@ func (tru *TreatmentRecordUseCase) GetByPaginationAndQuery(query Query) ([]Domai
 }
 
 func (tru *TreatmentRecordUseCase) GetByBatchID(batchID primitive.ObjectID) ([]Domain, int, error) {
+	_, err := tru.batchRepository.GetByID(batchID)
+	if err == mongo.ErrNoDocuments {
+		return []Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
+	} else if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+	}
+
 	treatmentRecords, err := tru.treatmentRecordRepository.GetByBatchID(batchID)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")

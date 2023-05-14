@@ -108,13 +108,13 @@ func (pc *Controller) GetByCommodityIDForBuyer(c echo.Context) error {
 		})
 	}
 
-	_, statusCode, err := pc.commodityUC.GetByID(commodityID)
-	if err != nil {
-		return c.JSON(statusCode, helper.BaseResponse{
-			Status:  statusCode,
-			Message: "komoditas tidak ditemukan",
-		})
-	}
+	// _, statusCode, err := pc.commodityUC.GetByID(commodityID)
+	// if err != nil {
+	// 	return c.JSON(statusCode, helper.BaseResponse{
+	// 		Status:  statusCode,
+	// 		Message: "komoditas tidak ditemukan",
+	// 	})
+	// }
 
 	proposals, statusCode, err := pc.proposalUC.GetByCommodityID(commodityID)
 	if err != nil {
@@ -128,6 +128,30 @@ func (pc *Controller) GetByCommodityIDForBuyer(c echo.Context) error {
 		Status:  http.StatusOK,
 		Message: "proposal berhasil didapatkan",
 		Data:    response.FromDomainArrayToBuyer(proposals),
+	})
+}
+
+func (pc *Controller) GetByIDAccepted(c echo.Context) error {
+	proposalID, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id proposal tidak valid",
+		})
+	}
+
+	proposal, statusCode, err := pc.proposalUC.GetByIDAccepted(proposalID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil didapatkan",
+		Data:    response.FromDomainToBuyer(&proposal),
 	})
 }
 
