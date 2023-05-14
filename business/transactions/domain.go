@@ -67,6 +67,7 @@ type Repository interface {
 	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, error)
 	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, error)
 	StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]ModelStatisticTopCommodity, error)
+	CountByCommodityCode(Code primitive.ObjectID) (int, float64, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	RejectPendingByProposalID(proposalID primitive.ObjectID) error
@@ -83,6 +84,7 @@ type UseCase interface {
 	StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, int, error)
 	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, int, error)
 	StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]StatisticTopCommodity, int, error)
+	CountByCommodityID(commodityID primitive.ObjectID) (int, float64, int, error)
 	// Update
 	MakeDecision(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete

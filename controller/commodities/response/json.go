@@ -12,6 +12,7 @@ import (
 
 type Commodity struct {
 	ID             primitive.ObjectID `json:"_id"`
+	Code           primitive.ObjectID `json:"code"`
 	Farmer         userReponse.User   `json:"farmer"`
 	Name           string             `json:"name"`
 	Description    string             `json:"description"`
@@ -38,6 +39,7 @@ func FromDomain(domain commodities.Domain, userUC users.UseCase, regionUC region
 
 	return Commodity{
 		ID:             domain.ID,
+		Code:           domain.Code,
 		Farmer:         farmerResponse,
 		Name:           domain.Name,
 		Description:    domain.Description,

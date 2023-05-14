@@ -111,7 +111,7 @@ type ProposalWithCommodity struct {
 }
 
 func FromDomainToProposalWithCommodity(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase, regionUC regions.UseCase) (ProposalWithCommodity, int, error) {
-	commodity, statusCode, err := commodityUC.GetByID(domain.CommodityID)
+	commodity, statusCode, err := commodityUC.GetByIDWithoutDeleted(domain.CommodityID)
 	if err != nil {
 		return ProposalWithCommodity{}, statusCode, err
 	}

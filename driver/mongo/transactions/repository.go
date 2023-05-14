@@ -5,6 +5,8 @@ import (
 	"crop_connect/business/transactions"
 	"crop_connect/constant"
 	"crop_connect/dto"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,6 +40,24 @@ var (
 			"localField":   "proposal_info.commodityID",
 			"foreignField": "_id",
 			"as":           "commodity_info",
+		},
+	}
+
+	lookupBatch = bson.M{
+		"$lookup": bson.M{
+			"from":         "batchs",
+			"localField":   "_id",
+			"foreignField": "transactionID",
+			"as":           "batch_info",
+		},
+	}
+
+	lookupHarvest = bson.M{
+		"$lookup": bson.M{
+			"from":         "harvests",
+			"localField":   "batch_info._id",
+			"foreignField": "batchID",
+			"as":           "harvest_info",
 		},
 	}
 )
@@ -470,6 +490,70 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 	}
 
 	return results, nil
+}
+
+func (tr *TransactionRepository) CountByCommodityCode(Code primitive.ObjectID) (int, float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"status": constant.TransactionStatusAccepted,
+			},
+		}, lookupProposal, lookupCommodity,
+		bson.M{
+			"$match": bson.M{
+				"commodity_info.code": Code,
+			},
+		}, lookupBatch, lookupHarvest,
+		bson.M{
+			"$match": bson.M{
+				"harvest_info.status": constant.HarvestStatusApproved,
+			},
+		}, bson.M{
+			"$project": bson.M{
+				"harvest_info": bson.M{
+					"$arrayElemAt": bson.A{"$harvest_info", 0},
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id":              nil,
+				"totalTransaction": bson.M{"$sum": 1},
+				"totalWeight": bson.M{
+					"$sum": "$harvest_info.totalHarvest",
+				},
+			},
+		},
+	}
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(pipeline)
+	if err != nil {
+		panic(err)
+	}
+
+	// Print JSON
+	fmt.Println("SEBELUM APPEND")
+	fmt.Println(string(jsonData))
+
+	cursor, err := tr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	countResult := TotalTransactionWithWeight{}
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&countResult)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	fmt.Println(countResult)
+
+	return countResult.TotalTransaction, countResult.TotalWeight, nil
 }
 
 /*

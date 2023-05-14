@@ -103,3 +103,8 @@ func ToTotalTransactionByProvinceArray(models []TotalTransactionByProvince) []tr
 	}
 	return domains
 }
+
+type TotalTransactionWithWeight struct {
+	TotalTransaction int     `bson:"totalTransaction"`
+	TotalWeight      float64 `bson:"totalWeight"`
+}

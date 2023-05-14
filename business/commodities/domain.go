@@ -9,6 +9,7 @@ import (
 
 type Domain struct {
 	ID             primitive.ObjectID
+	Code           primitive.ObjectID
 	FarmerID       primitive.ObjectID
 	Name           string
 	Description    string

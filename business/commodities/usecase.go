@@ -47,6 +47,7 @@ func (cu *CommodityUseCase) Create(domain *Domain, images []*multipart.FileHeade
 		}
 
 		domain.ID = primitive.NewObjectID()
+		domain.Code = primitive.NewObjectID()
 		domain.IsAvailable = true
 		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
@@ -161,6 +162,7 @@ func (cu *CommodityUseCase) Update(domain *Domain, updateImage []*helper.UpdateI
 	}
 
 	domain.ID = primitive.NewObjectID()
+	domain.Code = commodity.Code
 	domain.CreatedAt = commodity.CreatedAt
 	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 

@@ -5,6 +5,7 @@ import (
 	"crop_connect/business/proposals"
 	"crop_connect/constant"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -150,6 +151,24 @@ func (tu *TransactionUseCase) StatisticTopCommodity(farmerID primitive.ObjectID,
 	}
 
 	return domainStatisticCommodity, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) CountByCommodityID(commodityID primitive.ObjectID) (int, float64, int, error) {
+	commodity, err := tu.commodityRepository.GetByID(commodityID)
+	if err == mongo.ErrNoDocuments {
+		return 0, 0, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return 0, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	fmt.Println(commodity)
+
+	totalTransaction, totalWeight, err := tu.transactionRepository.CountByCommodityCode(commodity.Code)
+	if err != nil {
+		return 0, 0, http.StatusInternalServerError, err
+	}
+
+	return totalTransaction, totalWeight, http.StatusOK, nil
 }
 
 /*

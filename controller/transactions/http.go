@@ -356,6 +356,30 @@ func (tc *Controller) StatisticTopCommodity(c echo.Context) error {
 	})
 }
 
+func (tc *Controller) CountByCommodityID(c echo.Context) error {
+	commodityID, err := primitive.ObjectIDFromHex(c.Param("commodity-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id komoditas tidak valid",
+		})
+	}
+
+	totalTransaction, totalWeight, statusCode, err := tc.transactionUC.CountByCommodityID(commodityID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total transaksi berdasarkan komoditas",
+		Data:    response.FromDomainToTransactionStatisticForCommodityPage(totalTransaction, totalWeight),
+	})
+}
+
 /*
 Update
 */

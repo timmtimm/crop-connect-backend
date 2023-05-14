@@ -87,6 +87,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	transaction.GET("/statistic", ctrl.TransactionController.StatisticByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
 	transaction.GET("/statistic-province", ctrl.TransactionController.StatisticTopProvince, _middleware.CheckOneRole(constant.RoleAdmin))
 	transaction.GET("/statistic-commodity", ctrl.TransactionController.StatisticTopCommodity, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
+	transaction.GET("/total-commodity/:commodity-id", ctrl.TransactionController.CountByCommodityID)
 
 	batch := apiV1.Group("/batch")
 	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
@@ -102,6 +103,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	treatmentRecord.PUT("/validate/:treatment-record-id", ctrl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.PUT("/note/:treatment-record-id", ctrl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.GET("/statistic-total", ctrl.TreatmentRecordController.CountByYear, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.GET("/batch", ctrl.TreatmentRecordController.GetByBatchID)
 
 	harvest := apiV1.Group("/harvest")
 	harvest.GET("", ctrl.HarvestController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))

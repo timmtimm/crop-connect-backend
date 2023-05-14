@@ -130,3 +130,15 @@ func FromDomainArrayToStatisticTopCommodity(domain []transactions.StatisticTopCo
 
 	return statistics, http.StatusOK, nil
 }
+
+type TransactionStatisticForCommodityPage struct {
+	TotalTransaction int     `json:"totalTransaction"`
+	TotalWeight      float64 `json:"totalWeight"`
+}
+
+func FromDomainToTransactionStatisticForCommodityPage(totalTransaction int, totalWeight float64) TransactionStatisticForCommodityPage {
+	return TransactionStatisticForCommodityPage{
+		TotalTransaction: totalTransaction,
+		TotalWeight:      totalWeight,
+	}
+}
