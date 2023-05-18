@@ -89,6 +89,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	transaction.GET("/statistic-province", ctrl.TransactionController.StatisticTopProvince, _middleware.CheckOneRole(constant.RoleAdmin))
 	transaction.GET("/statistic-commodity", ctrl.TransactionController.StatisticTopCommodity, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
 	transaction.GET("/total-commodity/:commodity-id", ctrl.TransactionController.CountByCommodityID)
+	transaction.PUT("/cancel/:transaction-id", ctrl.TransactionController.CancelOnPending, _middleware.CheckOneRole(constant.RoleBuyer))
 
 	batch := apiV1.Group("/batch")
 	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))

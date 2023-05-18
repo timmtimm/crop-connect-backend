@@ -49,6 +49,7 @@ func (pu *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (
 	_, err = pu.proposalRepository.GetByCommodityIDAndName(domain.CommodityID, domain.Name)
 	if err == mongo.ErrNoDocuments {
 		domain.ID = primitive.NewObjectID()
+		domain.Code = primitive.NewObjectID()
 		domain.Status = constant.ProposalStatusPending
 		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
@@ -194,9 +195,26 @@ func (pu *ProposalUseCase) UpdateCommodityID(oldCommodityID primitive.ObjectID, 
 		proposal.CommodityID = NewCommodityID
 		proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-		_, err = pu.proposalRepository.Update(&proposal)
-		if err != nil {
-			return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+		if proposal.Status == constant.ProposalStatusApproved {
+			err = pu.proposalRepository.Delete(proposal.ID)
+			if err == mongo.ErrNoDocuments {
+				return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+			} else if err != nil {
+				return http.StatusInternalServerError, errors.New("gagal menghapus proposal")
+			}
+
+			proposal.ID = primitive.NewObjectID()
+			_, err = pu.proposalRepository.Create(&proposal)
+			if err != nil {
+				return http.StatusInternalServerError, err
+			}
+		} else if proposal.Status == constant.ProposalStatusPending || proposal.Status == constant.ProposalStatusRejected {
+			_, err = pu.proposalRepository.Update(&proposal)
+			if err != nil {
+				return http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+			}
+		} else {
+			return http.StatusBadRequest, errors.New("status proposal tidak valid")
 		}
 	}
 

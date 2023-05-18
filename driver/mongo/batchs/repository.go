@@ -120,35 +120,15 @@ func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.
 	return ToDomainArray(result), nil
 }
 
-func (br *BatchRepository) GetByCommodityID(commodityID primitive.ObjectID) ([]batchs.Domain, error) {
+func (br *BatchRepository) GetByCommodityCode(commodityCode primitive.ObjectID) ([]batchs.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	lookupTransaction := bson.M{
-		"$lookup": bson.M{
-			"from":         "transactions",
-			"localField":   "transactionID",
-			"foreignField": "_id",
-			"as":           "transaction_info",
-		},
-	}
-
-	lookupProposal := bson.M{
-		"$lookup": bson.M{
-			"from":         "proposals",
-			"localField":   "transaction_info.proposalID",
-			"foreignField": "_id",
-			"as":           "proposal_info",
-		},
-	}
-
-	match := bson.M{
+	pipeline := bson.A{lookupTransaction, lookupProposal, lookupCommodity, bson.M{
 		"$match": bson.M{
-			"proposal_info.commodityID": commodityID,
+			"commodity_info.code": commodityCode,
 		},
-	}
-
-	pipeline := bson.A{lookupTransaction, lookupProposal, match}
+	}}
 	cursor, err := br.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err

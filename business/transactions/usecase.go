@@ -62,7 +62,7 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 			return http.StatusInternalServerError, errors.New("gagal membuat transaksi")
 		}
 
-		return http.StatusOK, nil
+		return http.StatusCreated, nil
 	} else {
 		return http.StatusConflict, errors.New("transaksi sedang diproses")
 	}
@@ -220,6 +220,27 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 	}
 
 	transaction.Status = domain.Status
+	transaction.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	_, err = tu.transactionRepository.Update(&transaction)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
+	}
+
+	return http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) CancelOnPending(id primitive.ObjectID, buyerID primitive.ObjectID) (int, error) {
+	transaction, err := tu.transactionRepository.GetByIDAndBuyerIDOrFarmerID(id, buyerID, primitive.NilObjectID)
+	if err != nil {
+		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+	}
+
+	if transaction.Status != constant.TransactionStatusPending {
+		return http.StatusConflict, errors.New("transaksi sudah dibuat keputusan")
+	}
+
+	transaction.Status = constant.TransactionStatusCancel
 	transaction.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	_, err = tu.transactionRepository.Update(&transaction)

@@ -75,7 +75,7 @@ func main() {
 	fmt.Println("Initializing controllers...")
 	userController := _userController.NewController(userUseCase, regionUseCase)
 	commodityController := _commodityController.NewController(commodityUsecase, userUseCase, proposalUseCase, regionUseCase)
-	proposalController := _proposalController.NewController(proposalUseCase, commodityUsecase)
+	proposalController := _proposalController.NewController(proposalUseCase, commodityUsecase, userUseCase, regionUseCase)
 	transactionController := _transactionController.NewController(transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, batchUseCase, regionUseCase)
 	batchController := _batchController.NewController(batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, regionUseCase)
 	treatmentRecordController := _treatmentRecordController.NewController(treatmentRecordUseCase, batchUseCase, transactionUseCase, proposalUseCase, commodityUsecase, userUseCase, regionUseCase)

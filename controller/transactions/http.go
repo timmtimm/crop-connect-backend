@@ -90,8 +90,8 @@ func (tc *Controller) Create(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, helper.BaseResponse{
-		Status:  http.StatusOK,
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
 		Message: "transaksi berhasil dibuat",
 	})
 }
@@ -434,6 +434,37 @@ func (tc *Controller) MakeDecision(c echo.Context) error {
 	return c.JSON(http.StatusOK, helper.BaseResponse{
 		Status:  http.StatusOK,
 		Message: "transaksi berhasil dibuat keputusan",
+	})
+}
+
+func (tc *Controller) CancelOnPending(c echo.Context) error {
+	transactionID, err := primitive.ObjectIDFromHex(c.Param("transaction-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "transaction id tidak valid",
+		})
+	}
+
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	statusCode, err := tc.transactionUC.CancelOnPending(transactionID, userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "transaksi berhasil dibatalkan",
 	})
 }
 

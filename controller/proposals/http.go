@@ -3,6 +3,8 @@ package proposals
 import (
 	"crop_connect/business/commodities"
 	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/users"
 	"crop_connect/controller/proposals/request"
 	"crop_connect/controller/proposals/response"
 	"crop_connect/helper"
@@ -15,12 +17,16 @@ import (
 type Controller struct {
 	proposalUC  proposals.UseCase
 	commodityUC commodities.UseCase
+	userUC      users.UseCase
+	regionUC    regions.UseCase
 }
 
-func NewController(proposalUC proposals.UseCase, commodityUC commodities.UseCase) *Controller {
+func NewController(proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		proposalUC:  proposalUC,
 		commodityUC: commodityUC,
+		userUC:      userUC,
+		regionUC:    regionUC,
 	}
 }
 
@@ -148,10 +154,18 @@ func (pc *Controller) GetByIDAccepted(c echo.Context) error {
 		})
 	}
 
+	proposalResponse, statusCode, err := response.FromDomainToProposalWithCommodity(&proposal, pc.userUC, pc.commodityUC, pc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
 	return c.JSON(http.StatusOK, helper.BaseResponse{
 		Status:  http.StatusOK,
 		Message: "proposal berhasil didapatkan",
-		Data:    response.FromDomainToBuyer(&proposal),
+		Data:    proposalResponse,
 	})
 }
 

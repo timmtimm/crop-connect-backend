@@ -4,6 +4,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Domain struct {
 	ID                    primitive.ObjectID
+	Code                  primitive.ObjectID
 	ValidatorID           primitive.ObjectID
 	CommodityID           primitive.ObjectID
 	RegionID              primitive.ObjectID

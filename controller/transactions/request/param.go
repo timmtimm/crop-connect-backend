@@ -39,11 +39,13 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 			return FilterQuery{}, errors.New("endDate harus berupa tanggal")
 		}
 
-		filter.EndDate = primitive.NewDateTimeFromTime(date)
+		filter.EndDate = primitive.NewDateTimeFromTime(date.Add(time.Hour * 24))
 	}
 
-	if filter.StartDate > filter.EndDate {
-		return FilterQuery{}, errors.New("startDate tidak boleh dari endDate")
+	if filter.StartDate != 0 && filter.EndDate != 0 {
+		if filter.StartDate > filter.EndDate {
+			return FilterQuery{}, errors.New("startDate tidak boleh dari endDate")
+		}
 	}
 
 	return filter, nil

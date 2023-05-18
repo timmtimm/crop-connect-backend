@@ -87,5 +87,6 @@ type UseCase interface {
 	CountByCommodityID(commodityID primitive.ObjectID) (int, float64, int, error)
 	// Update
 	MakeDecision(domain *Domain, farmerID primitive.ObjectID) (int, error)
+	CancelOnPending(id primitive.ObjectID, buyerID primitive.ObjectID) (int, error)
 	// Delete
 }
