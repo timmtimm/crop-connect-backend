@@ -19,5 +19,5 @@ func GetConfig(key string) string {
 }
 
 func ResontructeDomainName() []string {
-	return strings.Split(GetConfig("DOMAIN_NAME"), ",")
+	return strings.Split(GetConfig("APP_DOMAIN"), ",")
 }
