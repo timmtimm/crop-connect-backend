@@ -174,7 +174,7 @@ func (hc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 }
 
 func (hc *Controller) GetByBatchID(c echo.Context) error {
-	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
+	batchID, err := primitive.ObjectIDFromHex(c.QueryParam("batch-id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -202,6 +202,30 @@ func (hc *Controller) GetByBatchID(c echo.Context) error {
 		Status:  statusCode,
 		Message: "berhasil mendapatkan panen",
 		Data:    harvestResponses,
+	})
+}
+
+func (hc *Controller) CountByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	count, statusCode, err := hc.harvestUC.CountByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan jumlah panen",
+		Data:    count,
 	})
 }
 

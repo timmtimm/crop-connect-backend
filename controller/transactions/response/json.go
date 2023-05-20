@@ -64,3 +64,81 @@ func FromDomainArrayToBuyer(domain []transactions.Domain, proposalUC proposals.U
 
 	return buyers, http.StatusOK, nil
 }
+
+type Statistic struct {
+	Month            int     `json:"month"`
+	TotalAccepted    int     `json:"totalAccepted"`
+	TotalTransaction int     `json:"totalTransaction"`
+	TotalIncome      float64 `json:"totalIncome"`
+	TotalWeight      float64 `json:"totalWeight"`
+	TotalUniqueBuyer int     `json:"totalUniqueBuyer"`
+}
+
+func FromDomainArrayToStatistic(domain []transactions.Statistic) []Statistic {
+	var statistics []Statistic
+	for _, value := range domain {
+		statistics = append(statistics, Statistic{
+			Month:            value.Month,
+			TotalAccepted:    value.TotalAccepted,
+			TotalTransaction: value.TotalTransaction,
+			TotalIncome:      value.TotalIncome,
+			TotalWeight:      value.TotalWeight,
+			TotalUniqueBuyer: value.TotalUniqueBuyer,
+		})
+	}
+
+	return statistics
+}
+
+type TotalTransactionByProvince struct {
+	Province         string `json:"province"`
+	TotalAccepted    int    `json:"totalAccepted"`
+	TotalTransaction int    `json:"totalTransaction"`
+}
+
+func FromDomainArrayToStatisticProvince(domain []transactions.TotalTransactionByProvince) []TotalTransactionByProvince {
+	var totalTransactionByProvinces []TotalTransactionByProvince
+	for _, value := range domain {
+		totalTransactionByProvinces = append(totalTransactionByProvinces, TotalTransactionByProvince{
+			Province:         value.Province,
+			TotalAccepted:    value.TotalAccepted,
+			TotalTransaction: value.TotalTransaction,
+		})
+	}
+
+	return totalTransactionByProvinces
+}
+
+type StatisticTopCommodity struct {
+	Commodity commodityResponse.Commodity `json:"commodity"`
+	Total     int                         `json:"total"`
+}
+
+func FromDomainArrayToStatisticTopCommodity(domain []transactions.StatisticTopCommodity, userUC users.UseCase, regionUC regions.UseCase) ([]StatisticTopCommodity, int, error) {
+	var statistics []StatisticTopCommodity
+	for _, value := range domain {
+		commodity, statusCode, err := commodityResponse.FromDomain(value.Commodity, userUC, regionUC)
+		if err != nil {
+			return []StatisticTopCommodity{}, statusCode, err
+		}
+
+		statistics = append(statistics, StatisticTopCommodity{
+			Commodity: commodity,
+			Total:     value.Total,
+		})
+	}
+
+	return statistics, http.StatusOK, nil
+}
+
+type TransactionStatisticForCommodityPage struct {
+	TotalTransaction int     `json:"totalTransaction"`
+	TotalWeight      float64 `json:"totalWeight"`
+}
+
+func FromDomainToTransactionStatisticForCommodityPage(totalTransaction int, totalWeight float64) TransactionStatisticForCommodityPage {
+	return TransactionStatisticForCommodityPage{
+		TotalTransaction: totalTransaction,
+		TotalWeight:      totalWeight,
+	}
+}

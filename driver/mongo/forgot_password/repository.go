@@ -16,7 +16,7 @@ type ForgotPasswordRepository struct {
 
 func NewRepository(db *mongo.Database) forgotPassword.Repository {
 	return &ForgotPasswordRepository{
-		collection: db.Collection("forgot_password"),
+		collection: db.Collection("forgotPasswords"),
 	}
 }
 

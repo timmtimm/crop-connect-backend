@@ -1,6 +1,8 @@
 package users
 
 import (
+	"crop_connect/dto"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -26,6 +28,10 @@ type Query struct {
 	Email       string
 	PhoneNumber string
 	Role        string
+	Province    string
+	Regency     string
+	District    string
+	RegionID    primitive.ObjectID
 }
 
 type Repository interface {
@@ -36,6 +42,9 @@ type Repository interface {
 	GetByEmail(email string) (Domain, error)
 	GetByNameAndRole(name string, role string) ([]Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
+	GetFarmerByID(id primitive.ObjectID) (Domain, error)
+	StatisticNewUserByYear(year int) ([]dto.StatisticByYear, error)
+	CountTotalValidatorByYear(year int) (int, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -49,6 +58,9 @@ type UseCase interface {
 	Login(domain *Domain) (string, int, error)
 	GetByID(id primitive.ObjectID) (Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	GetFarmerByID(id primitive.ObjectID) (Domain, int, error)
+	StatisticNewUserByYear(year int) ([]dto.StatisticByYear, int, error)
+	CountTotalValidatorByYear(year int) (int, int, error)
 	// Update
 	UpdateProfile(domain *Domain) (Domain, int, error)
 	UpdatePassword(domain *Domain, newPassword string) (Domain, int, error)

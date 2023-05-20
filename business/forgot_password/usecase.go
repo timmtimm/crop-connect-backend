@@ -36,7 +36,7 @@ Create
 func (fpu *ForgotPasswordUseCase) Generate(email string) (int, error) {
 	_, err := fpu.userRepository.GetByEmail(email)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New("email tidak terdaftar")
+		return http.StatusCreated, errors.New("email tidak terdaftar")
 	}
 
 	domain := Domain{
@@ -49,7 +49,7 @@ func (fpu *ForgotPasswordUseCase) Generate(email string) (int, error) {
 	}
 	_, err = fpu.forgotPasswordRepository.Create(&domain)
 	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal membuat token")
+		return http.StatusCreated, errors.New("gagal membuat token")
 	}
 
 	_, _, err = fpu.mailgun.SendOneMailUsingTemplate("Lupa password Crop Connect?", constant.MailgunForgotPasswordTemplate, domain.Email, "", map[string]string{
@@ -57,10 +57,10 @@ func (fpu *ForgotPasswordUseCase) Generate(email string) (int, error) {
 	})
 	if err != nil {
 		if err := fpu.forgotPasswordRepository.HardDelete(domain.ID); err != nil {
-			return http.StatusInternalServerError, errors.New("gagal menghapus token")
+			return http.StatusCreated, errors.New("gagal menghapus token")
 		}
 
-		return http.StatusInternalServerError, errors.New("gagal mengirim email")
+		return http.StatusCreated, errors.New("gagal mengirim email")
 	}
 
 	return http.StatusCreated, nil

@@ -3,6 +3,9 @@ package proposals
 import (
 	"crop_connect/business/commodities"
 	"crop_connect/business/proposals"
+	"crop_connect/business/regions"
+	"crop_connect/business/users"
+	"crop_connect/constant"
 	"crop_connect/controller/proposals/request"
 	"crop_connect/controller/proposals/response"
 	"crop_connect/helper"
@@ -15,12 +18,16 @@ import (
 type Controller struct {
 	proposalUC  proposals.UseCase
 	commodityUC commodities.UseCase
+	userUC      users.UseCase
+	regionUC    regions.UseCase
 }
 
-func NewController(proposalUC proposals.UseCase, commodityUC commodities.UseCase) *Controller {
+func NewController(proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		proposalUC:  proposalUC,
 		commodityUC: commodityUC,
+		userUC:      userUC,
+		regionUC:    regionUC,
 	}
 }
 
@@ -108,13 +115,13 @@ func (pc *Controller) GetByCommodityIDForBuyer(c echo.Context) error {
 		})
 	}
 
-	_, statusCode, err := pc.commodityUC.GetByID(commodityID)
-	if err != nil {
-		return c.JSON(statusCode, helper.BaseResponse{
-			Status:  statusCode,
-			Message: "komoditas tidak ditemukan",
-		})
-	}
+	// _, statusCode, err := pc.commodityUC.GetByID(commodityID)
+	// if err != nil {
+	// 	return c.JSON(statusCode, helper.BaseResponse{
+	// 		Status:  statusCode,
+	// 		Message: "komoditas tidak ditemukan",
+	// 	})
+	// }
 
 	proposals, statusCode, err := pc.proposalUC.GetByCommodityID(commodityID)
 	if err != nil {
@@ -128,6 +135,94 @@ func (pc *Controller) GetByCommodityIDForBuyer(c echo.Context) error {
 		Status:  http.StatusOK,
 		Message: "proposal berhasil didapatkan",
 		Data:    response.FromDomainArrayToBuyer(proposals),
+	})
+}
+
+func (pc *Controller) GetByIDAccepted(c echo.Context) error {
+	proposalID, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id proposal tidak valid",
+		})
+	}
+
+	proposal, statusCode, err := pc.proposalUC.GetByIDAccepted(proposalID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	proposalResponse, statusCode, err := response.FromDomainToProposalWithCommodity(&proposal, pc.userUC, pc.commodityUC, pc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil didapatkan",
+		Data:    proposalResponse,
+	})
+}
+
+func (pc *Controller) StatisticByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	proposals, statusCode, err := pc.proposalUC.StatisticByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil didapatkan",
+		Data:    proposals,
+	})
+}
+
+func (pc *Controller) CountTotalProposalByFarmer(c echo.Context) error {
+	farmerID, err := primitive.ObjectIDFromHex(c.Param("farmer-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id petani tidak valid",
+		})
+	}
+
+	user, _, err := pc.userUC.GetByID(farmerID)
+	if user.Role != constant.RoleFarmer || err != nil {
+		return c.JSON(http.StatusNotFound, helper.BaseResponse{
+			Status:  http.StatusNotFound,
+			Message: "petani tidak ditemukan",
+		})
+	}
+
+	totalProposal, statusCode, err := pc.proposalUC.CountTotalProposalByFarmer(farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil didapatkan",
+		Data:    totalProposal,
 	})
 }
 

@@ -53,3 +53,58 @@ func ToDomainArray(models []Model) []transactions.Domain {
 	}
 	return domains
 }
+
+type StatisticModel struct {
+	Month            int     `bson:"month"`
+	TotalAccepted    int     `bson:"totalAccepted"`
+	TotalTransaction int     `bson:"totalTransaction"`
+	TotalIncome      float64 `bson:"totalIncome"`
+	TotalWeight      float64 `bson:"totalWeight"`
+	TotalUniqueBuyer int     `bson:"totalUniqueBuyer"`
+}
+
+func (model *StatisticModel) ToStatistic() transactions.Statistic {
+	return transactions.Statistic{
+		Month:            model.Month,
+		TotalAccepted:    model.TotalAccepted,
+		TotalTransaction: model.TotalTransaction,
+		TotalIncome:      model.TotalIncome,
+		TotalWeight:      model.TotalWeight,
+		TotalUniqueBuyer: model.TotalUniqueBuyer,
+	}
+}
+
+func ToStatisticArray(models []StatisticModel) []transactions.Statistic {
+	var domains []transactions.Statistic
+	for _, model := range models {
+		domains = append(domains, model.ToStatistic())
+	}
+	return domains
+}
+
+type TotalTransactionByProvince struct {
+	Province         string `bson:"_id"`
+	TotalAccepted    int    `bson:"totalAccepted"`
+	TotalTransaction int    `bson:"totalTransaction"`
+}
+
+func (model *TotalTransactionByProvince) ToTotalTransactionByProvince() transactions.TotalTransactionByProvince {
+	return transactions.TotalTransactionByProvince{
+		Province:         model.Province,
+		TotalAccepted:    model.TotalAccepted,
+		TotalTransaction: model.TotalTransaction,
+	}
+}
+
+func ToTotalTransactionByProvinceArray(models []TotalTransactionByProvince) []transactions.TotalTransactionByProvince {
+	var domains []transactions.TotalTransactionByProvince
+	for _, model := range models {
+		domains = append(domains, model.ToTotalTransactionByProvince())
+	}
+	return domains
+}
+
+type TotalTransactionWithWeight struct {
+	TotalTransaction int     `bson:"totalTransaction"`
+	TotalWeight      float64 `bson:"totalWeight"`
+}

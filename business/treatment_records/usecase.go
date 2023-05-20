@@ -103,12 +103,41 @@ func (tru *TreatmentRecordUseCase) GetByPaginationAndQuery(query Query) ([]Domai
 }
 
 func (tru *TreatmentRecordUseCase) GetByBatchID(batchID primitive.ObjectID) ([]Domain, int, error) {
+	_, err := tru.batchRepository.GetByID(batchID)
+	if err == mongo.ErrNoDocuments {
+		return []Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
+	} else if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+	}
+
 	treatmentRecords, err := tru.treatmentRecordRepository.GetByBatchID(batchID)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
 	}
 
 	return treatmentRecords, http.StatusOK, nil
+}
+
+func (tru *TreatmentRecordUseCase) CountByYear(year int) (int, int, error) {
+	statistic, err := tru.treatmentRecordRepository.CountByYear(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan statistik riwayat perawatan")
+	}
+
+	return statistic, http.StatusOK, nil
+}
+
+func (tru *TreatmentRecordUseCase) StatisticByYear(year int) ([]dto.StatisticByYear, int, error) {
+	statistic, err := tru.treatmentRecordRepository.StatisticByYear(year)
+	if err != nil {
+		return []dto.StatisticByYear{}, http.StatusInternalServerError, errors.New("gagal mendapatkan statistik riwayat perawatan")
+	}
+
+	if len(statistic) < 12 {
+		statistic = util.FillNotAvailableMonth(statistic)
+	}
+
+	return statistic, http.StatusOK, nil
 }
 
 /*

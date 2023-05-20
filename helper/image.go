@@ -22,7 +22,7 @@ func ValidateImage(image *multipart.FileHeader) (int, error) {
 
 	checkImageContentType := util.CheckStringOnArray([]string{"image/jpg", "image/jpeg", "image/png"}, image.Header.Get("Content-Type"))
 	if !checkImageContentType {
-		return http.StatusUnsupportedMediaType, errors.New("image type not supported")
+		return http.StatusUnsupportedMediaType, errors.New("tipe gambar tidak disupport")
 	}
 
 	return http.StatusOK, nil
@@ -47,12 +47,6 @@ func GetCreateImageRequest(c echo.Context, keys []string) ([]*multipart.FileHead
 
 func GetUpdateImageRequest(c echo.Context, keys []string, imageURLs []string, isChange []bool, isDelete []bool) ([]*UpdateImage, int, error) {
 	images := []*UpdateImage{}
-
-	if len(imageURLs) != len(isChange) {
-		return nil, http.StatusBadRequest, errors.New("array perubahan gambar tidak sesuai")
-	} else if len(imageURLs) != len(isDelete) {
-		return nil, http.StatusBadRequest, errors.New("array penghapusan gambar tidak sesuai")
-	}
 
 	for i := 0; i < len(imageURLs); i++ {
 		if isChange[i] {

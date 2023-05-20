@@ -157,7 +157,7 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 		})
 	}
 
-	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
+	pipelineForCount := append(pipeline, bson.M{"$count": "total"})
 	pipeline = append(pipeline, bson.M{
 		"$skip": query.Skip,
 	}, bson.M{
@@ -190,7 +190,42 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 		}
 	}
 
-	return ToDomainArray(result), countResult.TotalDocument, nil
+	return ToDomainArray(result), countResult.Total, nil
+}
+
+func (hr *HarvestRepository) CountByYear(year int) (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC),
+					"$lte": time.Date(year+1, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": nil,
+				"total": bson.M{
+					"$sum": "$totalHarvest",
+				},
+			},
+		},
+	}
+
+	cursor, err := hr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, err
+	}
+
+	var result []dto.TotalFloat
+	if err := cursor.All(ctx, &result); err != nil {
+		return 0, err
+	}
+
+	return result[0].Total, nil
 }
 
 /*

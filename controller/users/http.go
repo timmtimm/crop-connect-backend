@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Controller struct {
@@ -163,7 +164,7 @@ func (uc *Controller) GetProfile(c echo.Context) error {
 }
 
 func (uc *Controller) GetFarmerByPaginationAndQueryForBuyer(c echo.Context) error {
-	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "email", "role", "createdAt"})
+	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "createdAt"})
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -180,12 +181,16 @@ func (uc *Controller) GetFarmerByPaginationAndQueryForBuyer(c echo.Context) erro
 	}
 
 	userQuery := users.Query{
-		Skip:  queryPagination.Skip,
-		Limit: queryPagination.Limit,
-		Sort:  queryPagination.Sort,
-		Order: queryPagination.Order,
-		Name:  queryParam.Name,
-		Role:  constant.RoleFarmer,
+		Skip:     queryPagination.Skip,
+		Limit:    queryPagination.Limit,
+		Sort:     queryPagination.Sort,
+		Order:    queryPagination.Order,
+		Name:     queryParam.Name,
+		Role:     constant.RoleFarmer,
+		Province: queryParam.Province,
+		Regency:  queryParam.Regency,
+		District: queryParam.District,
+		RegionID: queryParam.RegionID,
 	}
 
 	users, totalData, statusCode, err := uc.userUC.GetByPaginationAndQuery(userQuery)
@@ -209,6 +214,38 @@ func (uc *Controller) GetFarmerByPaginationAndQueryForBuyer(c echo.Context) erro
 		Message:    "berhasil mendapatkan data user",
 		Data:       usersReponse,
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
+func (uc *Controller) GetFarmerByIDForBuyer(c echo.Context) error {
+	farmerID, err := primitive.ObjectIDFromHex(c.Param("farmer-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id komoditas tidak valid",
+		})
+	}
+
+	farmer, statusCode, err := uc.userUC.GetFarmerByID(farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	farmerResponse, statusCode, err := response.FromDomain(farmer, uc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan data petani",
+		Data:    farmerResponse,
 	})
 }
 
@@ -261,6 +298,54 @@ func (uc *Controller) GetByPaginationAndQueryForAdmin(c echo.Context) error {
 		Message:    "berhasil mendapatkan data user",
 		Data:       usersReponse,
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
+func (uc *Controller) StatisticNewUserByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	statisticUsers, statusCode, err := uc.userUC.StatisticNewUserByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan data user",
+		Data:    statisticUsers,
+	})
+}
+
+func (uc *Controller) CountTotalValidatorByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	total, statusCode, err := uc.userUC.CountTotalValidatorByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total validator",
+		Data:    total,
 	})
 }
 

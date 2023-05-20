@@ -3,6 +3,7 @@ package users
 import (
 	"crop_connect/business/regions"
 	"crop_connect/constant"
+	"crop_connect/dto"
 	"crop_connect/helper"
 	"crop_connect/util"
 	"errors"
@@ -129,6 +130,37 @@ func (uu *UserUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int,
 	return users, totalData, http.StatusOK, nil
 }
 
+func (uu *UserUseCase) GetFarmerByID(id primitive.ObjectID) (Domain, int, error) {
+	farmer, err := uu.userRepository.GetFarmerByID(id)
+	if err != nil {
+		return Domain{}, http.StatusNotFound, errors.New("gagal mendapatkan petani")
+	}
+
+	return farmer, http.StatusOK, nil
+}
+
+func (uu *UserUseCase) StatisticNewUserByYear(year int) ([]dto.StatisticByYear, int, error) {
+	statisticNewUser, err := uu.userRepository.StatisticNewUserByYear(year)
+	if err != nil {
+		return []dto.StatisticByYear{}, http.StatusInternalServerError, errors.New("gagal mendapatkan total komoditas")
+	}
+
+	if len(statisticNewUser) < 12 {
+		statisticNewUser = util.FillNotAvailableMonth(statisticNewUser)
+	}
+
+	return statisticNewUser, http.StatusOK, nil
+}
+
+func (uu *UserUseCase) CountTotalValidatorByYear(year int) (int, int, error) {
+	totalValidator, err := uu.userRepository.CountTotalValidatorByYear(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan total validator")
+	}
+
+	return totalValidator, http.StatusOK, nil
+}
+
 /*
 Update
 */
@@ -161,6 +193,7 @@ func (uu *UserUseCase) UpdateProfile(domain *Domain) (Domain, int, error) {
 	user.Description = domain.Description
 	user.Email = domain.Email
 	user.PhoneNumber = domain.PhoneNumber
+	user.RegionID = domain.RegionID
 	user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	user, err = uu.userRepository.Update(&user)

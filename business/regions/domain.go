@@ -4,11 +4,11 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Domain struct {
 	ID          primitive.ObjectID
-	Country     string
-	Province    string
-	Regency     string
-	District    string
-	Subdistrict string
+	Country     string // Negara
+	Province    string // Provinsi
+	Regency     string // Kota/Kabupaten
+	District    string // Kecamatan
+	Subdistrict string // Kelurahan/Desa
 }
 
 type Query struct {
@@ -28,7 +28,7 @@ type Repository interface {
 	GetProvince(country string) ([]string, error)
 	GetRegency(country string, province string) ([]string, error)
 	GetDistrict(country string, province string, regency string) ([]string, error)
-	GetSubdistrict(country string, province string, regency string, district string) ([]string, error)
+	GetSubdistrict(country string, province string, regency string, district string) ([]Domain, error)
 }
 
 type UseCase interface {
@@ -40,5 +40,5 @@ type UseCase interface {
 	GetByCountry(country string) ([]string, int, error)
 	GetByProvince(country string, province string) ([]string, int, error)
 	GetByRegency(country string, province string, regency string) ([]string, int, error)
-	GetByDistrict(country string, province string, regency string, district string) ([]string, int, error)
+	GetByDistrict(country string, province string, regency string, district string) ([]Domain, int, error)
 }

@@ -44,6 +44,8 @@ type Repository interface {
 	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByBatchID(batchID primitive.ObjectID) ([]Domain, error)
 	GetByQuery(query Query) ([]Domain, int, error)
+	CountByYear(year int) (int, error)
+	StatisticByYear(year int) ([]dto.StatisticByYear, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -55,9 +57,11 @@ type UseCase interface {
 	// Read
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByBatchID(batchID primitive.ObjectID) ([]Domain, int, error)
+	StatisticByYear(year int) ([]dto.StatisticByYear, int, error)
 	// Update
 	FillTreatmentRecord(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error)
 	Validate(domain *Domain, validatorID primitive.ObjectID) (Domain, int, error)
 	UpdateNotes(domain *Domain) (Domain, int, error)
+	CountByYear(year int) (int, int, error)
 	// Delete
 }

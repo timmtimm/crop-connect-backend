@@ -29,6 +29,7 @@ func PaginationToQuery(c echo.Context, availableSort []string) (QueryPagination,
 		Sort:  c.QueryParam("sort"),
 		Order: c.QueryParam("order"),
 	}
+	var err error
 
 	if pagination.Limit == "" {
 		pagination.Limit = "10"
@@ -42,11 +43,16 @@ func PaginationToQuery(c echo.Context, availableSort []string) (QueryPagination,
 		pagination.Order = "desc"
 	}
 
-	page, err := strconv.Atoi(pagination.Page)
-	if err != nil {
-		return QueryPagination{}, errors.New("halaman harus berupa angka")
-	} else if page < 1 {
-		return QueryPagination{}, errors.New("halaman tidak boleh kurang dari 1")
+	var page int
+	if pagination.Page != "" {
+		page, err = strconv.Atoi(pagination.Page)
+		if err != nil {
+			return QueryPagination{}, errors.New("halaman harus berupa angka")
+		} else if page < 1 {
+			return QueryPagination{}, errors.New("halaman tidak boleh kurang dari 1")
+		}
+	} else {
+		page = 1
 	}
 
 	limit, err := strconv.Atoi(pagination.Limit)

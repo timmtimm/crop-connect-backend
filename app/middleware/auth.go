@@ -12,8 +12,8 @@ func Authenticated() echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			_, err := helper.GetPayloadFromToken(c)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
-					Status:  http.StatusBadRequest,
+				return echo.NewHTTPError(http.StatusUnauthorized, helper.BaseResponse{
+					Status:  http.StatusUnauthorized,
 					Message: "token tidak valid",
 					Data:    nil,
 				})
@@ -29,8 +29,8 @@ func CheckOneRole(role string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token, err := helper.GetPayloadFromToken(c)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
-					Status:  http.StatusBadRequest,
+				return echo.NewHTTPError(http.StatusUnauthorized, helper.BaseResponse{
+					Status:  http.StatusUnauthorized,
 					Message: "token tidak valid",
 					Data:    nil,
 				})
@@ -40,9 +40,9 @@ func CheckOneRole(role string) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
-				Status:  http.StatusUnauthorized,
-				Message: "unauthorized",
+			return c.JSON(http.StatusForbidden, helper.BaseResponse{
+				Status:  http.StatusForbidden,
+				Message: "forbidden",
 				Data:    nil,
 			})
 		}
@@ -54,8 +54,8 @@ func CheckManyRole(roles []string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token, err := helper.GetPayloadFromToken(c)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, helper.BaseResponse{
-					Status:  http.StatusBadRequest,
+				return echo.NewHTTPError(http.StatusUnauthorized, helper.BaseResponse{
+					Status:  http.StatusUnauthorized,
 					Message: "token tidak valid",
 					Data:    nil,
 				})
@@ -67,9 +67,9 @@ func CheckManyRole(roles []string) echo.MiddlewareFunc {
 				}
 			}
 
-			return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
-				Status:  http.StatusUnauthorized,
-				Message: "unauthorized",
+			return c.JSON(http.StatusForbidden, helper.BaseResponse{
+				Status:  http.StatusForbidden,
+				Message: "forbidden",
 				Data:    nil,
 			})
 		}
