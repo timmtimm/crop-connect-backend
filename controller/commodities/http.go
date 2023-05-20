@@ -21,7 +21,7 @@ type Controller struct {
 	regionUC    regions.UseCase
 }
 
-func NewCommodityController(commodityUC commodities.UseCase, userUC users.UseCase, proposalUC proposals.UseCase, regionUC regions.UseCase) *Controller {
+func NewController(commodityUC commodities.UseCase, userUC users.UseCase, proposalUC proposals.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		commodityUC: commodityUC,
 		userUC:      userUC,
@@ -101,6 +101,14 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		})
 	}
 
+	queryRegion, err := request.QueryValidationForRegion(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
 	commodities, totalData, statusCode, err := cc.commodityUC.GetByPaginationAndQuery(commodities.Query{
 		Skip:     queryPagination.Skip,
 		Limit:    queryPagination.Limit,
@@ -110,6 +118,11 @@ func (cc *Controller) GetForBuyer(c echo.Context) error {
 		Farmer:   queryParam.Farmer,
 		MinPrice: queryParam.MinPrice,
 		MaxPrice: queryParam.MaxPrice,
+		FarmerID: queryParam.FarmerID,
+		Province: queryRegion.Province,
+		Regency:  queryRegion.Regency,
+		District: queryRegion.District,
+		RegionID: queryRegion.RegionID,
 	})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
@@ -195,6 +208,54 @@ func (cc *Controller) GetForFarmer(c echo.Context) error {
 		Status:  statusCode,
 		Message: "berhasil mendapatkan komoditas",
 		Data:    commodityResponse,
+	})
+}
+
+func (cc *Controller) CountTotalCommodity(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	totalCommodity, statusCode, err := cc.commodityUC.CountTotalCommodity(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total komoditas",
+		Data:    totalCommodity,
+	})
+}
+
+func (cc *Controller) CountTotalCommodityByFarmer(c echo.Context) error {
+	farmerID, err := primitive.ObjectIDFromHex(c.Param("farmer-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id petani tidak valid",
+		})
+	}
+
+	totalCommodity, statusCode, err := cc.commodityUC.CountTotalCommodityByFarmer(farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total komoditas petani",
+		Data:    totalCommodity,
 	})
 }
 

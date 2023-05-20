@@ -1,10 +1,8 @@
 package request
 
 import (
-	"crop_connect/constant"
-	"crop_connect/util"
 	"errors"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -21,25 +19,12 @@ type FilterQuery struct {
 }
 
 func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
-	filter := FilterQuery{}
-
-	commodity := c.QueryParam("commodity")
-	status := c.QueryParam("status")
-	startDate := c.QueryParam("startDate")
-	endDate := c.QueryParam("endDate")
-
-	if commodity != "" {
-		filter.Commodity = commodity
+	filter := FilterQuery{
+		Commodity: c.QueryParam("commodity"),
+		Status:    c.QueryParam("status"),
 	}
 
-	if status != "" {
-		filter.Status = status
-		if !util.CheckStringOnArray([]string{constant.TransactionStatusPending, constant.TransactionStatusAccepted, constant.ProposalStatusRejected}, status) {
-			return FilterQuery{}, fmt.Errorf("status tersedia hanya %s, %s, dan %s", constant.TransactionStatusPending, constant.TransactionStatusAccepted, constant.ProposalStatusRejected)
-		}
-	}
-
-	if startDate != "" {
+	if startDate := c.QueryParam("startDate"); startDate != "" {
 		date, err := time.Parse("2006-01-02", startDate)
 		if err != nil {
 			return FilterQuery{}, errors.New("startDate harus berupa tanggal")
@@ -48,20 +33,83 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 		filter.StartDate = primitive.NewDateTimeFromTime(date)
 	}
 
-	if endDate != "" {
+	if endDate := c.QueryParam("endDate"); endDate != "" {
 		date, err := time.Parse("2006-01-02", c.QueryParam("endDate"))
 		if err != nil {
 			return FilterQuery{}, errors.New("endDate harus berupa tanggal")
 		}
 
-		filter.EndDate = primitive.NewDateTimeFromTime(date)
+		filter.EndDate = primitive.NewDateTimeFromTime(date.Add(time.Hour * 24))
 	}
 
-	if startDate != "" && endDate != "" {
+	if filter.StartDate != 0 && filter.EndDate != 0 {
 		if filter.StartDate > filter.EndDate {
 			return FilterQuery{}, errors.New("startDate tidak boleh dari endDate")
 		}
 	}
 
 	return filter, nil
+}
+
+type QueryStatistic struct {
+	FarmerID primitive.ObjectID
+	Year     int
+}
+
+func QueryParamStatistic(c echo.Context) (QueryStatistic, error) {
+	query := QueryStatistic{}
+
+	if year := c.QueryParam("year"); year != "" {
+		yearInt, err := strconv.Atoi(year)
+		if err != nil {
+			return QueryStatistic{}, errors.New("year harus berupa angka")
+		}
+
+		if year > time.Now().Format("2006") {
+			return QueryStatistic{}, errors.New("year tidak boleh lebih dari tahun sekarang")
+		}
+
+		query.Year = yearInt
+	} else {
+		query.Year = time.Now().Year()
+	}
+
+	return query, nil
+}
+
+type QueryLimitAndYear struct {
+	Year  int
+	Limit int
+}
+
+func QueryParamLimitAndYear(c echo.Context) (QueryLimitAndYear, error) {
+	query := QueryLimitAndYear{}
+
+	if year := c.QueryParam("year"); year != "" {
+		yearInt, err := strconv.Atoi(year)
+		if err != nil {
+			return QueryLimitAndYear{}, errors.New("year harus berupa angka")
+		}
+
+		if year > time.Now().Format("2006") {
+			return QueryLimitAndYear{}, errors.New("year tidak boleh lebih dari tahun sekarang")
+		}
+
+		query.Year = yearInt
+	} else {
+		query.Year = time.Now().Year()
+	}
+
+	if limit := c.QueryParam("limit"); limit != "" {
+		limitInt, err := strconv.Atoi(limit)
+		if err != nil {
+			return QueryLimitAndYear{}, errors.New("limit harus berupa angka")
+		}
+
+		query.Limit = limitInt
+	} else {
+		query.Limit = 5
+	}
+
+	return query, nil
 }

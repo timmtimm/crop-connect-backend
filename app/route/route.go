@@ -5,6 +5,7 @@ import (
 	"crop_connect/constant"
 	"crop_connect/controller/batchs"
 	"crop_connect/controller/commodities"
+	forgotPassword "crop_connect/controller/forgot_password"
 	"crop_connect/controller/harvests"
 	"crop_connect/controller/proposals"
 	"crop_connect/controller/regions"
@@ -25,9 +26,10 @@ type ControllerList struct {
 	TreatmentRecordController *treatmentRecords.Controller
 	HarvestController         *harvests.Controller
 	RegionController          *regions.Controller
+	ForgotPasswordController  *forgotPassword.Controller
 }
 
-func (cl *ControllerList) Init(e *echo.Echo) {
+func (ctrl *ControllerList) Init(e *echo.Echo) {
 	e.GET("", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"message": "Hello World!",
@@ -45,48 +47,82 @@ func (cl *ControllerList) Init(e *echo.Echo) {
 	apiV1 := e.Group("/api/v1")
 
 	user := apiV1.Group("/user")
-	user.POST("/register", cl.UserController.Register)
-	user.POST("/register-validator", cl.UserController.RegisterValidator, _middleware.CheckOneRole(constant.RoleAdmin))
-	user.POST("/login", cl.UserController.Login)
-	user.GET("/profile", cl.UserController.GetProfile, _middleware.Authenticated())
-	user.PUT("/profile", cl.UserController.UpdateProfile, _middleware.Authenticated())
-	user.GET("/find-farmer/:farmer-name", cl.UserController.GetFarmerByName)
+	user.POST("/register", ctrl.UserController.Register)
+	user.POST("/register-validator", ctrl.UserController.RegisterValidator, _middleware.CheckOneRole(constant.RoleAdmin))
+	user.POST("/login", ctrl.UserController.Login)
+	user.GET("/profile", ctrl.UserController.GetProfile, _middleware.Authenticated())
+	user.PUT("/profile", ctrl.UserController.UpdateProfile, _middleware.Authenticated())
+	user.GET("", ctrl.UserController.GetByPaginationAndQueryForAdmin, _middleware.CheckOneRole(constant.RoleAdmin))
+	user.GET("/farmer", ctrl.UserController.GetFarmerByPaginationAndQueryForBuyer)
+	user.GET("/farmer/:farmer-id", ctrl.UserController.GetFarmerByIDForBuyer)
+	user.PUT("/change-password", ctrl.UserController.UpdatePassword, _middleware.Authenticated())
+	user.GET("/statistic-new-user", ctrl.UserController.StatisticNewUserByYear, _middleware.CheckOneRole(constant.RoleAdmin))
+	user.GET("/statistic-validator", ctrl.UserController.CountTotalValidatorByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
+
+	forgotPassword := user.Group("/forgot-password")
+	forgotPassword.POST("", ctrl.ForgotPasswordController.Generate)
+	forgotPassword.GET("/:token", ctrl.ForgotPasswordController.ValidateToken)
+	forgotPassword.PUT("/:token", ctrl.ForgotPasswordController.ResetPassword)
 
 	commodity := apiV1.Group("/commodity")
-	commodity.GET("/page/:page", cl.CommodityController.GetForBuyer)
-	commodity.GET("/farmer", cl.CommodityController.GetForFarmer, _middleware.CheckOneRole(constant.RoleFarmer))
-	commodity.POST("", cl.CommodityController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
-	commodity.GET("/:commodity-id", cl.CommodityController.GetByID)
-	commodity.PUT("/:commodity-id", cl.CommodityController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
-	commodity.DELETE("/:commodity-id", cl.CommodityController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
+	commodity.GET("", ctrl.CommodityController.GetForBuyer)
+	commodity.GET("/farmer", ctrl.CommodityController.GetForFarmer, _middleware.CheckOneRole(constant.RoleFarmer))
+	commodity.POST("", ctrl.CommodityController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
+	commodity.GET("/:commodity-id", ctrl.CommodityController.GetByID)
+	commodity.PUT("/:commodity-id", ctrl.CommodityController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
+	commodity.DELETE("/:commodity-id", ctrl.CommodityController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
+	commodity.GET("/statistic-total", ctrl.CommodityController.CountTotalCommodity, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
+	commodity.GET("/farmer-total/:farmer-id", ctrl.CommodityController.CountTotalCommodityByFarmer)
 
 	proposal := apiV1.Group("/proposal")
-	proposal.GET("/:commodity-id", cl.ProposalController.GetByCommodityIDForBuyer)
-	proposal.POST("/:commodity-id", cl.ProposalController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
-	proposal.PUT("/:proposal-id", cl.ProposalController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
-	proposal.DELETE("/:proposal-id", cl.ProposalController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
-	proposal.PUT("/validate/:proposal-id", cl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
+	proposal.GET("/commodity/:commodity-id", ctrl.ProposalController.GetByCommodityIDForBuyer)
+	proposal.POST("/:commodity-id", ctrl.ProposalController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.PUT("/:proposal-id", ctrl.ProposalController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.DELETE("/:proposal-id", ctrl.ProposalController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.PUT("/validate/:proposal-id", ctrl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
+	proposal.GET("/id/:proposal-id", ctrl.ProposalController.GetByIDAccepted)
+	proposal.GET("/statistic", ctrl.ProposalController.StatisticByYear, _middleware.CheckOneRole(constant.RoleAdmin))
+	proposal.GET("/farmer-total/:farmer-id", ctrl.ProposalController.CountTotalProposalByFarmer)
 
 	transaction := apiV1.Group("/transaction")
-	transaction.GET("/page/:page", cl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
-	transaction.POST("/:proposal-id", cl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
-	transaction.PUT("/:transaction-id", cl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
+	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	transaction.GET("/:transaction-id", ctrl.TransactionController.GetByID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	transaction.POST("/:proposal-id", ctrl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
+	transaction.PUT("/:transaction-id", ctrl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
+	transaction.GET("/statistic", ctrl.TransactionController.StatisticByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
+	transaction.GET("/statistic-province", ctrl.TransactionController.StatisticTopProvince, _middleware.CheckOneRole(constant.RoleAdmin))
+	transaction.GET("/statistic-commodity", ctrl.TransactionController.StatisticTopCommodity, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
+	transaction.GET("/total-commodity/:commodity-id", ctrl.TransactionController.CountByCommodityID)
+	transaction.PUT("/cancel/:transaction-id", ctrl.TransactionController.CancelOnPending, _middleware.CheckOneRole(constant.RoleBuyer))
 
 	batch := apiV1.Group("/batch")
-	batch.GET("/page/:page", cl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
-	batch.GET("/commodity/:commodity-id", cl.BatchController.GetByCommodityID)
-	// batch.PUT("/cancel/:batch-id", cl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
+	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
+	batch.GET("/transaction/:transaction-id", ctrl.BatchController.GetByTransactionID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	batch.GET("/commodity/:commodity-id", ctrl.BatchController.GetByCommodityID)
+	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
+	// batch.PUT("/cancel/:batch-id", ctrl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	treatmentRecord := apiV1.Group("/treatment-record")
-	treatmentRecord.GET("/page/:page", cl.TreatmentRecordController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
-	treatmentRecord.POST("/:batch-id", cl.TreatmentRecordController.RequestToFarmer, _middleware.CheckOneRole(constant.RoleValidator))
-	treatmentRecord.PUT("/:treatment-record-id", cl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
-	treatmentRecord.PUT("/validate/:treatment-record-id", cl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
-	treatmentRecord.PUT("/note/:treatment-record-id", cl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.GET("", ctrl.TreatmentRecordController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
+	treatmentRecord.POST("/:batch-id", ctrl.TreatmentRecordController.RequestToFarmer, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.PUT("/:treatment-record-id", ctrl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
+	treatmentRecord.PUT("/validate/:treatment-record-id", ctrl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.PUT("/note/:treatment-record-id", ctrl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.GET("/statistic", ctrl.TreatmentRecordController.StatisticByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
+	treatmentRecord.GET("/statistic-total", ctrl.TreatmentRecordController.CountByYear, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.GET("/batch", ctrl.TreatmentRecordController.GetByBatchID)
 
 	harvest := apiV1.Group("/harvest")
-	harvest.GET("/page/:page", cl.HarvestController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
-	harvest.GET("/:batch-id", cl.HarvestController.GetByBatchID)
-	harvest.POST("/:batch-id", cl.HarvestController.SubmitHarvest, _middleware.CheckOneRole(constant.RoleFarmer))
-	harvest.PUT("/validate/:harvest-id", cl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
+	harvest.GET("", ctrl.HarvestController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
+	harvest.GET("/batch", ctrl.HarvestController.GetByBatchID)
+	harvest.POST("/:batch-id", ctrl.HarvestController.SubmitHarvest, _middleware.CheckOneRole(constant.RoleFarmer))
+	harvest.PUT("/validate/:harvest-id", ctrl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
+	harvest.GET("/statistic-total", ctrl.HarvestController.CountByYear, _middleware.CheckOneRole(constant.RoleAdmin))
+
+	region := apiV1.Group("/region")
+	region.GET("/province", ctrl.RegionController.GetByCountry)
+	region.GET("/regency", ctrl.RegionController.GetByProvince)
+	region.GET("/district", ctrl.RegionController.GetByRegency)
+	region.GET("/sub-district", ctrl.RegionController.GetByDistrict)
+
 }

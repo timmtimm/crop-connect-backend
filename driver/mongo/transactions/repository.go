@@ -5,6 +5,8 @@ import (
 	"crop_connect/business/transactions"
 	"crop_connect/constant"
 	"crop_connect/dto"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,11 +18,49 @@ type TransactionRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) transactions.Repository {
+func NewRepository(db *mongo.Database) transactions.Repository {
 	return &TransactionRepository{
 		collection: db.Collection("transactions"),
 	}
 }
+
+var (
+	lookupProposal = bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+
+	lookupCommodity = bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+
+	lookupBatch = bson.M{
+		"$lookup": bson.M{
+			"from":         "batchs",
+			"localField":   "_id",
+			"foreignField": "transactionID",
+			"as":           "batch_info",
+		},
+	}
+
+	lookupHarvest = bson.M{
+		"$lookup": bson.M{
+			"from":         "harvests",
+			"localField":   "batch_info._id",
+			"foreignField": "batchID",
+			"as":           "harvest_info",
+		},
+	}
+)
 
 /*
 Create
@@ -110,24 +150,6 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		})
 	}
 
-	lookupProposal := bson.M{
-		"$lookup": bson.M{
-			"from":         "proposals",
-			"localField":   "proposalID",
-			"foreignField": "_id",
-			"as":           "proposal_info",
-		},
-	}
-
-	lookupCommodity := bson.M{
-		"$lookup": bson.M{
-			"from":         "commodities",
-			"localField":   "proposal_info.commodityID",
-			"foreignField": "_id",
-			"as":           "commodity_info",
-		},
-	}
-
 	if query.Commodity != "" {
 		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
@@ -153,7 +175,7 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		})
 	}
 
-	pipelineForCount := append(pipeline, bson.M{"$count": "totalDocument"})
+	pipelineForCount := append(pipeline, bson.M{"$count": "total"})
 	pipeline = append(pipeline, bson.M{
 		"$skip": query.Skip,
 	}, bson.M{
@@ -186,20 +208,362 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 		}
 	}
 
-	return ToDomainArray(result), countResult.TotalDocument, nil
+	return ToDomainArray(result), countResult.Total, nil
 }
 
-func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (transactions.Domain, error) {
+func (tr *TransactionRepository) GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
+	filter := bson.M{
+		"_id": id,
+	}
+
+	if buyerID != primitive.NilObjectID {
+		filter["buyerID"] = buyerID
+	} else if farmerID != primitive.NilObjectID {
+		filter["farmerID"] = farmerID
+	}
+
 	var result Model
-	err := tr.collection.FindOne(ctx, bson.M{
-		"_id":     id,
-		"buyerID": buyerID,
-	}).Decode(&result)
+	err := tr.collection.FindOne(ctx, filter).Decode(&result)
 
 	return result.ToDomain(), err
+}
+
+func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, year int) ([]transactions.Statistic, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var results []transactions.Statistic
+	var pipeline []interface{}
+
+	for month := 1; month <= 12; month++ {
+		if time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).Unix() > time.Now().Unix() {
+			results = append(results, transactions.Statistic{
+				Month:            int(time.Month(month)),
+				TotalAccepted:    0,
+				TotalTransaction: 0,
+				TotalIncome:      0,
+				TotalWeight:      0,
+				TotalUniqueBuyer: 0,
+			})
+
+			continue
+		}
+
+		if month < 12 {
+			pipeline = []interface{}{
+				bson.M{
+					"$match": bson.M{
+						"createdAt": bson.M{
+							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
+							"$lte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month+1), 1, 0, 0, 0, 0, time.UTC)),
+						},
+					},
+				},
+			}
+		} else {
+			pipeline = []interface{}{
+				bson.M{
+					"$match": bson.M{
+						"createdAt": bson.M{
+							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
+							"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
+						},
+					},
+				},
+			}
+		}
+
+		if farmerID != primitive.NilObjectID {
+			pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
+				"$match": bson.M{
+					"commodity_info.farmerID": farmerID,
+				},
+			})
+		}
+
+		pipeline = append(pipeline,
+			bson.M{
+				"$lookup": bson.M{
+					"from":         "batchs",
+					"localField":   "_id",
+					"foreignField": "transactionID",
+					"as":           "batch_info",
+				},
+			}, bson.M{
+				"$lookup": bson.M{
+					"from":         "harvests",
+					"localField":   "batch_info._id",
+					"foreignField": "batchID",
+					"as":           "harvest_info",
+				},
+			}, bson.M{
+				"$project": bson.M{
+					"buyerID":    "$buyerID",
+					"status":     "$status",
+					"totalPrice": "$totalPrice",
+					"harvest_info": bson.M{
+						"$arrayElemAt": bson.A{"$harvest_info", 0},
+					},
+				},
+			}, bson.M{
+				"$group": bson.M{
+					"_id": "transaction_statistic",
+					"totalAccepted": bson.M{
+						"$sum": bson.M{
+							"$cond": bson.A{
+								bson.M{
+									"$eq": bson.A{
+										"$status", constant.TransactionStatusAccepted,
+									},
+								}, 1, 0,
+							},
+						},
+					},
+					"totalTransaction": bson.M{
+						"$sum": 1,
+					},
+					"totalIncome": bson.M{
+						"$sum": "$totalPrice",
+					},
+					"totalWeight": bson.M{
+						"$sum": bson.M{
+							"$cond": bson.A{
+								bson.M{"$eq": bson.A{"$harvest_info.status", constant.HarvestStatusApproved}},
+								"$harvest_info.totalHarvest", 0},
+						},
+					},
+					"uniqueBuyer": bson.M{
+						"$addToSet": "$buyerID",
+					},
+				},
+			}, bson.M{
+				"$project": bson.M{
+					"totalAccepted":    "$totalAccepted",
+					"totalTransaction": "$totalTransaction",
+					"totalIncome":      "$totalIncome",
+					"totalWeight":      "$totalWeight",
+					"totalUniqueBuyer": bson.M{
+						"$size": "$uniqueBuyer",
+					},
+				},
+			},
+		)
+
+		cursor, err := tr.collection.Aggregate(ctx, pipeline)
+		if err != nil {
+			return nil, err
+		}
+
+		var result StatisticModel
+		for cursor.Next(ctx) {
+			err := cursor.Decode(&result)
+			if err != nil {
+				return nil, err
+			}
+		}
+		result.Month = month
+
+		results = append(results, result.ToStatistic())
+	}
+
+	return results, nil
+}
+
+func (tr *TransactionRepository) StatisticTopProvince(year int, limit int) ([]transactions.TotalTransactionByProvince, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": primitive.NewDateTimeFromTime(time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)),
+					"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
+				},
+			},
+		}, bson.M{
+			"$lookup": bson.M{
+				"from":         "regions",
+				"localField":   "regionID",
+				"foreignField": "_id",
+				"as":           "region_info",
+			},
+		}, bson.M{
+			"$project": bson.M{
+				"status": "$status",
+				"region_info": bson.M{
+					"$arrayElemAt": bson.A{"$region_info", 0},
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": "$region_info.province",
+				"totalAccepted": bson.M{
+					"$sum": bson.M{
+						"$cond": bson.A{
+							bson.M{"$eq": bson.A{"$status", constant.TransactionStatusAccepted}},
+							1, 0},
+					},
+				},
+				"totalTransaction": bson.M{
+					"$sum": 1,
+				},
+			},
+		}, bson.M{
+			"$sort": bson.M{
+				"total": -1,
+			},
+		}, bson.M{
+			"$limit": limit,
+		},
+	}
+
+	cursor, err := tr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []TotalTransactionByProvince
+	if err := cursor.All(ctx, &results); err != nil {
+		return []transactions.TotalTransactionByProvince{}, err
+	}
+
+	return ToTotalTransactionByProvinceArray(results), nil
+}
+
+func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]transactions.ModelStatisticTopCommodity, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": primitive.NewDateTimeFromTime(time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)),
+					"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
+				},
+			},
+		}, lookupProposal, lookupCommodity,
+	}
+
+	if farmerID != primitive.NilObjectID {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": farmerID,
+			},
+		})
+	}
+
+	pipeline = append(pipeline, bson.M{
+		"$project": bson.M{
+			"_id": "$commodity_info._id",
+			"commodity_info": bson.M{
+				"$arrayElemAt": bson.A{"$commodity_info", 0},
+			},
+		},
+	}, bson.M{
+		"$group": bson.M{
+			"_id": "$commodity_info.code",
+			"total": bson.M{
+				"$sum": 1,
+			},
+		},
+	}, bson.M{
+		"$sort": bson.M{
+			"total": -1,
+		},
+	}, bson.M{
+		"$limit": limit,
+	})
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(pipeline)
+	if err != nil {
+		panic(err)
+	}
+
+	// Print JSON
+	fmt.Println("SEBELUM APPEND")
+	fmt.Println(string(jsonData))
+
+	cursor, err := tr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []transactions.ModelStatisticTopCommodity
+	if err := cursor.All(ctx, &results); err != nil {
+		return []transactions.ModelStatisticTopCommodity{}, err
+	}
+
+	return results, nil
+}
+
+func (tr *TransactionRepository) CountByCommodityCode(Code primitive.ObjectID) (int, float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"status": constant.TransactionStatusAccepted,
+			},
+		}, lookupProposal, lookupCommodity,
+		bson.M{
+			"$match": bson.M{
+				"commodity_info.code": Code,
+			},
+		}, lookupBatch, lookupHarvest,
+		bson.M{
+			"$match": bson.M{
+				"harvest_info.status": constant.HarvestStatusApproved,
+			},
+		}, bson.M{
+			"$project": bson.M{
+				"harvest_info": bson.M{
+					"$arrayElemAt": bson.A{"$harvest_info", 0},
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id":              nil,
+				"totalTransaction": bson.M{"$sum": 1},
+				"totalWeight": bson.M{
+					"$sum": "$harvest_info.totalHarvest",
+				},
+			},
+		},
+	}
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(pipeline)
+	if err != nil {
+		panic(err)
+	}
+
+	// Print JSON
+	fmt.Println("SEBELUM APPEND")
+	fmt.Println(string(jsonData))
+
+	cursor, err := tr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	countResult := TotalTransactionWithWeight{}
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&countResult)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	fmt.Println(countResult)
+
+	return countResult.TotalTransaction, countResult.TotalWeight, nil
 }
 
 /*

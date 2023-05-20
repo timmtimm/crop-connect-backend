@@ -14,30 +14,28 @@ type FilterQuery struct {
 	Subdistrict string
 }
 
-func QueryParamValidation(c echo.Context) (FilterQuery, error) {
-	filter := FilterQuery{}
-
-	country := c.QueryParam("country")
-	province := c.QueryParam("province")
-	regency := c.QueryParam("regency")
-	district := c.QueryParam("district")
-
-	if country == "" {
-		return FilterQuery{}, errors.New("country wajib diisi")
-	}
-
-	filter.Country = country
-	if province != "" {
-		filter.Province = province
-	}
-
-	if regency != "" {
-		filter.Regency = regency
-	}
-
-	if district != "" {
-		filter.District = district
+func QueryParamValidationForQuery(c echo.Context) (FilterQuery, error) {
+	filter := FilterQuery{
+		Country:  c.QueryParam("country"),
+		Province: c.QueryParam("province"),
+		Regency:  c.QueryParam("regency"),
+		District: c.QueryParam("district"),
 	}
 
 	return filter, nil
+}
+
+func QueryParamValidation(c echo.Context, param []string) (map[string]string, error) {
+	result := map[string]string{}
+	for _, v := range param {
+		value := c.QueryParam(v)
+
+		if value == "" {
+			return map[string]string{}, errors.New("parameter " + v + " tidak boleh kosong")
+		}
+
+		result[v] = value
+	}
+
+	return result, nil
 }

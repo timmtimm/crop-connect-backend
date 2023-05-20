@@ -8,6 +8,7 @@ import (
 
 type Model struct {
 	ID             primitive.ObjectID `bson:"_id"`
+	Code           primitive.ObjectID `bson:"code"`
 	FarmerID       primitive.ObjectID `bson:"farmerID"`
 	Name           string             `bson:"name"`
 	Description    string             `bson:"description"`
@@ -24,6 +25,7 @@ type Model struct {
 func FromDomain(domain *commodities.Domain) *Model {
 	return &Model{
 		ID:             domain.ID,
+		Code:           domain.Code,
 		FarmerID:       domain.FarmerID,
 		Name:           domain.Name,
 		Description:    domain.Description,
@@ -41,6 +43,7 @@ func FromDomain(domain *commodities.Domain) *Model {
 func (model *Model) ToDomain() commodities.Domain {
 	return commodities.Domain{
 		ID:             model.ID,
+		Code:           model.Code,
 		FarmerID:       model.FarmerID,
 		Name:           model.Name,
 		Description:    model.Description,

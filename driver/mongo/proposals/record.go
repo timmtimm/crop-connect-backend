@@ -8,6 +8,7 @@ import (
 
 type Model struct {
 	ID                    primitive.ObjectID `bson:"_id"`
+	Code                  primitive.ObjectID `bson:"code"`
 	ValidatorID           primitive.ObjectID `bson:"validatorID,omitempty"`
 	CommodityID           primitive.ObjectID `bson:"commodityID"`
 	RegionID              primitive.ObjectID `bson:"regionID"`
@@ -27,6 +28,7 @@ type Model struct {
 func FromDomain(domain *proposals.Domain) *Model {
 	return &Model{
 		ID:                    domain.ID,
+		Code:                  domain.Code,
 		ValidatorID:           domain.ValidatorID,
 		CommodityID:           domain.CommodityID,
 		RegionID:              domain.RegionID,
@@ -47,6 +49,7 @@ func FromDomain(domain *proposals.Domain) *Model {
 func (model *Model) ToDomain() proposals.Domain {
 	return proposals.Domain{
 		ID:                    model.ID,
+		Code:                  model.Code,
 		ValidatorID:           model.ValidatorID,
 		CommodityID:           model.CommodityID,
 		RegionID:              model.RegionID,

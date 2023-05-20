@@ -5,6 +5,7 @@ import (
 	"crop_connect/business/proposals"
 	"crop_connect/constant"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,7 +19,7 @@ type TransactionUseCase struct {
 	proposalRepository    proposals.Repository
 }
 
-func NewTransactionUseCase(tr Repository, cr commodities.Repository, pr proposals.Repository) UseCase {
+func NewUseCase(tr Repository, cr commodities.Repository, pr proposals.Repository) UseCase {
 	return &TransactionUseCase{
 		transactionRepository: tr,
 		commodityRepository:   cr,
@@ -61,7 +62,7 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 			return http.StatusInternalServerError, errors.New("gagal membuat transaksi")
 		}
 
-		return http.StatusOK, nil
+		return http.StatusCreated, nil
 	} else {
 		return http.StatusConflict, errors.New("transaksi sedang diproses")
 	}
@@ -86,10 +87,21 @@ func (tu *TransactionUseCase) GetByID(id primitive.ObjectID) (Domain, int, error
 func (tu *TransactionUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := tu.transactionRepository.GetByQuery(query)
 	if err != nil {
-		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("something")
 	}
 
 	return commodities, totalData, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
+	transaction, err := tu.transactionRepository.GetByIDAndBuyerIDOrFarmerID(id, buyerID, farmerID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+	}
+
+	return transaction, http.StatusOK, nil
 }
 
 func (tu *TransactionUseCase) GetTransactionsByCommodityName(query Query) ([]Domain, int, int, error) {
@@ -99,6 +111,64 @@ func (tu *TransactionUseCase) GetTransactionsByCommodityName(query Query) ([]Dom
 	}
 
 	return commodities, totalData, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) StatisticByYear(farmerID primitive.ObjectID, year int) ([]Statistic, int, error) {
+	statistics, err := tu.transactionRepository.StatisticByYear(farmerID, year)
+	if err != nil {
+		return []Statistic{}, http.StatusInternalServerError, err
+	}
+
+	return statistics, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, int, error) {
+	statistics, err := tu.transactionRepository.StatisticTopProvince(year, limit)
+	if err != nil {
+		return []TotalTransactionByProvince{}, http.StatusInternalServerError, err
+	}
+
+	return statistics, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]StatisticTopCommodity, int, error) {
+	statistics, err := tu.transactionRepository.StatisticTopCommodity(farmerID, year, limit)
+	if err != nil {
+		return []StatisticTopCommodity{}, http.StatusInternalServerError, err
+	}
+
+	domainStatisticCommodity := []StatisticTopCommodity{}
+	for _, statistic := range statistics {
+		commodity, err := tu.commodityRepository.GetByCode(statistic.CommodityCode)
+		if err != nil {
+			return []StatisticTopCommodity{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+		}
+
+		domainStatisticCommodity = append(domainStatisticCommodity, StatisticTopCommodity{
+			Commodity: commodity,
+			Total:     statistic.Total,
+		})
+	}
+
+	return domainStatisticCommodity, http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) CountByCommodityID(commodityID primitive.ObjectID) (int, float64, int, error) {
+	commodity, err := tu.commodityRepository.GetByID(commodityID)
+	if err == mongo.ErrNoDocuments {
+		return 0, 0, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return 0, 0, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	fmt.Println(commodity)
+
+	totalTransaction, totalWeight, err := tu.transactionRepository.CountByCommodityCode(commodity.Code)
+	if err != nil {
+		return 0, 0, http.StatusInternalServerError, err
+	}
+
+	return totalTransaction, totalWeight, http.StatusOK, nil
 }
 
 /*
@@ -150,6 +220,27 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 	}
 
 	transaction.Status = domain.Status
+	transaction.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	_, err = tu.transactionRepository.Update(&transaction)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
+	}
+
+	return http.StatusOK, nil
+}
+
+func (tu *TransactionUseCase) CancelOnPending(id primitive.ObjectID, buyerID primitive.ObjectID) (int, error) {
+	transaction, err := tu.transactionRepository.GetByIDAndBuyerIDOrFarmerID(id, buyerID, primitive.NilObjectID)
+	if err != nil {
+		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
+	}
+
+	if transaction.Status != constant.TransactionStatusPending {
+		return http.StatusConflict, errors.New("transaksi sudah dibuat keputusan")
+	}
+
+	transaction.Status = constant.TransactionStatusCancel
 	transaction.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	_, err = tu.transactionRepository.Update(&transaction)

@@ -3,6 +3,8 @@ package proposals
 import (
 	"context"
 	"crop_connect/business/proposals"
+	"crop_connect/constant"
+	"crop_connect/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,11 +16,22 @@ type ProposalRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongoRepository(db *mongo.Database) proposals.Repository {
+func NewRepository(db *mongo.Database) proposals.Repository {
 	return &ProposalRepository{
 		collection: db.Collection("proposals"),
 	}
 }
+
+var (
+	lookupCommodity = bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+)
 
 /*
 Create
@@ -120,6 +133,101 @@ func (pr *ProposalRepository) GetByCommodityIDAndName(commodityID primitive.Obje
 	}).Decode(&result)
 
 	return result.ToDomain(), err
+}
+
+func (pr *ProposalRepository) GetByIDAccepted(id primitive.ObjectID) (proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := pr.collection.FindOne(ctx, bson.M{
+		"_id":       id,
+		"status":    constant.ProposalStatusApproved,
+		"deletedAt": bson.M{"$exists": false},
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
+func (pr *ProposalRepository) StatisticByYear(year int) ([]dto.StatisticByYear, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"status": constant.ProposalStatusApproved,
+				"createdAt": bson.M{
+					"$gte": time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC),
+					"$lte": time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC),
+				},
+				"deletedAt": bson.M{"$exists": false},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": bson.M{
+					"$month": "$createdAt",
+				},
+				"total": bson.M{
+					"$sum": 1,
+				},
+			},
+		},
+	}
+
+	var result []dto.StatisticByYear
+	cursor, err := pr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return []dto.StatisticByYear{}, err
+	}
+
+	err = cursor.All(ctx, &result)
+	if err != nil {
+		return []dto.StatisticByYear{}, err
+	}
+
+	return result, err
+}
+
+func (pr *ProposalRepository) CountTotalProposalByFarmer(farmerID primitive.ObjectID) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"deletedAt": bson.M{"$exists": false},
+			},
+		}, lookupCommodity, bson.M{
+			"$project": bson.M{
+				"commodity_info": bson.M{
+					"$arrayElemAt": bson.A{"$commodity_info", 0},
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": nil,
+				"total": bson.M{
+					"$sum": 1,
+				},
+			},
+		},
+	}
+
+	var result dto.TotalDocument
+	cursor, err := pr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, err
+	}
+
+	for cursor.Next(ctx) {
+		err = cursor.Decode(&result)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return result.Total, nil
 }
 
 /*

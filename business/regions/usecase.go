@@ -11,7 +11,7 @@ type RegionUseCase struct {
 	regionRepository Repository
 }
 
-func NewRegionUseCase(rr Repository) UseCase {
+func NewUseCase(rr Repository) UseCase {
 	return &RegionUseCase{
 		regionRepository: rr,
 	}
@@ -81,10 +81,10 @@ func (ru *RegionUseCase) GetByRegency(country string, province string, regency s
 	return regions, http.StatusOK, nil
 }
 
-func (ru *RegionUseCase) GetByDistrict(country string, province string, regency string, district string) ([]string, int, error) {
+func (ru *RegionUseCase) GetByDistrict(country string, province string, regency string, district string) ([]Domain, int, error) {
 	regions, err := ru.regionRepository.GetSubdistrict(country, province, regency, district)
 	if err != nil {
-		return []string{}, http.StatusInternalServerError, err
+		return []Domain{}, http.StatusInternalServerError, err
 	}
 
 	return regions, http.StatusOK, nil

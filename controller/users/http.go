@@ -3,12 +3,14 @@ package users
 import (
 	"crop_connect/business/regions"
 	"crop_connect/business/users"
+	"crop_connect/constant"
 	"crop_connect/controller/users/request"
 	"crop_connect/controller/users/response"
 	"crop_connect/helper"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Controller struct {
@@ -16,7 +18,7 @@ type Controller struct {
 	regionUC regions.UseCase
 }
 
-func NewUserController(userUC users.UseCase, regionUC regions.UseCase) *Controller {
+func NewController(userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		userUC:   userUC,
 		regionUC: regionUC,
@@ -31,8 +33,7 @@ func (uc *Controller) Register(c echo.Context) error {
 	userInput := request.RegisterUser{}
 	c.Bind(&userInput)
 
-	validationErr := userInput.Validate()
-	if validationErr != nil {
+	if validationErr := userInput.Validate(); validationErr != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
 			Message: "validasi gagal",
@@ -67,8 +68,7 @@ func (uc *Controller) RegisterValidator(c echo.Context) error {
 	userInput := request.RegisterValidator{}
 	c.Bind(&userInput)
 
-	validationErr := userInput.Validate()
-	if validationErr != nil {
+	if validationErr := userInput.Validate(); validationErr != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
 			Message: "validasi gagal",
@@ -163,10 +163,37 @@ func (uc *Controller) GetProfile(c echo.Context) error {
 	})
 }
 
-func (uc *Controller) GetFarmerByName(c echo.Context) error {
-	name := c.Param("farmer-name")
+func (uc *Controller) GetFarmerByPaginationAndQueryForBuyer(c echo.Context) error {
+	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "createdAt"})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
 
-	users, statusCode, err := uc.userUC.GetFarmerByName(name)
+	queryParam, err := request.QueryParamValidationForSearchFarmer(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	userQuery := users.Query{
+		Skip:     queryPagination.Skip,
+		Limit:    queryPagination.Limit,
+		Sort:     queryPagination.Sort,
+		Order:    queryPagination.Order,
+		Name:     queryParam.Name,
+		Role:     constant.RoleFarmer,
+		Province: queryParam.Province,
+		Regency:  queryParam.Regency,
+		District: queryParam.District,
+		RegionID: queryParam.RegionID,
+	}
+
+	users, totalData, statusCode, err := uc.userUC.GetByPaginationAndQuery(userQuery)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -183,9 +210,142 @@ func (uc *Controller) GetFarmerByName(c echo.Context) error {
 	}
 
 	return c.JSON(statusCode, helper.BaseResponse{
+		Status:     statusCode,
+		Message:    "berhasil mendapatkan data user",
+		Data:       usersReponse,
+		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
+func (uc *Controller) GetFarmerByIDForBuyer(c echo.Context) error {
+	farmerID, err := primitive.ObjectIDFromHex(c.Param("farmer-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id komoditas tidak valid",
+		})
+	}
+
+	farmer, statusCode, err := uc.userUC.GetFarmerByID(farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	farmerResponse, statusCode, err := response.FromDomain(farmer, uc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan data petani",
+		Data:    farmerResponse,
+	})
+}
+
+func (uc *Controller) GetByPaginationAndQueryForAdmin(c echo.Context) error {
+	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "email", "role", "createdAt"})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	queryParam, err := request.QueryParamValidationForSearchFarmer(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	userQuery := users.Query{
+		Skip:        queryPagination.Skip,
+		Limit:       queryPagination.Limit,
+		Sort:        queryPagination.Sort,
+		Order:       queryPagination.Order,
+		Name:        queryParam.Name,
+		Email:       queryParam.Email,
+		PhoneNumber: queryParam.PhoneNumber,
+		Role:        queryParam.Role,
+	}
+
+	users, totalData, statusCode, err := uc.userUC.GetByPaginationAndQuery(userQuery)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	usersReponse, statusCode, err := response.FromDomainArray(users, uc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:     statusCode,
+		Message:    "berhasil mendapatkan data user",
+		Data:       usersReponse,
+		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
+func (uc *Controller) StatisticNewUserByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	statisticUsers, statusCode, err := uc.userUC.StatisticNewUserByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "berhasil mendapatkan data user",
-		Data:    usersReponse,
+		Data:    statisticUsers,
+	})
+}
+
+func (uc *Controller) CountTotalValidatorByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	total, statusCode, err := uc.userUC.CountTotalValidatorByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total validator",
+		Data:    total,
 	})
 }
 
@@ -205,8 +365,7 @@ func (uc *Controller) UpdateProfile(c echo.Context) error {
 	userInput := request.Update{}
 	c.Bind(&userInput)
 
-	validationErr := userInput.Validate()
-	if validationErr != nil {
+	if validationErr := userInput.Validate(); validationErr != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
 			Message: "validasi gagal",
@@ -234,6 +393,43 @@ func (uc *Controller) UpdateProfile(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "berhasil update data user",
+	})
+}
+
+func (uc *Controller) UpdatePassword(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	userInput := request.ChangePassword{}
+	c.Bind(&userInput)
+
+	if validationErr := userInput.Validate(); validationErr != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "validasi gagal",
+			Error:   validationErr,
+		})
+	}
+
+	userDomain := userInput.ToDomain()
+	userDomain.ID = userID
+
+	_, statusCode, err := uc.userUC.UpdatePassword(userDomain, userInput.NewPassword)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil update password user",
 	})
 }
 

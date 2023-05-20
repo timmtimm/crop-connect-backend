@@ -10,6 +10,7 @@ import (
 )
 
 type User struct {
+	ID          primitive.ObjectID      `json:"_id"`
 	Region      regionResponse.Response `json:"region"`
 	Name        string                  `json:"name"`
 	Email       string                  `json:"email"`
@@ -27,6 +28,7 @@ func FromDomain(domain users.Domain, regionUC regions.UseCase) (User, int, error
 	}
 
 	return User{
+		ID:          domain.ID,
 		Region:      regionResponse.FromDomain(&region),
 		Name:        domain.Name,
 		Email:       domain.Email,

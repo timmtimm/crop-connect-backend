@@ -7,6 +7,7 @@ import (
 	"crop_connect/business/regions"
 	"crop_connect/business/transactions"
 	"crop_connect/business/users"
+	"crop_connect/constant"
 	"crop_connect/controller/batchs/request"
 	"crop_connect/controller/batchs/response"
 	"crop_connect/helper"
@@ -25,7 +26,7 @@ type Controller struct {
 	regionUC      regions.UseCase
 }
 
-func NewBatchController(batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
+func NewController(batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		batchUC:       batchUC,
 		transactionUC: transactionUC,
@@ -133,6 +134,87 @@ func (bc *Controller) GetByCommodityID(c echo.Context) error {
 		Status:  statusCode,
 		Message: "berhasil mendapatkan batch",
 		Data:    batchResponse,
+	})
+}
+
+func (bc *Controller) CountByYear(c echo.Context) error {
+	queryYear, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	count, statusCode, err := bc.batchUC.CountByYear(queryYear)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan jumlah batch",
+		Data:    count,
+	})
+}
+
+func (bc *Controller) GetByTransactionID(c echo.Context) error {
+	transactionID, err := primitive.ObjectIDFromHex(c.Param("transaction-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id transaksi tidak valid",
+		})
+	}
+
+	token, err := helper.GetPayloadFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	userID, err := primitive.ObjectIDFromHex(token.UID)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "token tidak valid",
+		})
+	}
+
+	buyerID := primitive.NilObjectID
+	farmerID := primitive.NilObjectID
+
+	if token.Role == constant.RoleBuyer {
+		buyerID = userID
+	} else if token.Role == constant.RoleFarmer {
+		farmerID = userID
+	}
+
+	batch, statusCode, err := bc.batchUC.GetByTransactionID(transactionID, buyerID, farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	batchReponse, statusCode, err := response.FromDomain(batch, bc.transactionUC, bc.proposalUC, bc.commodityUC, bc.userUC, bc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan batch",
+		Data:    batchReponse,
 	})
 }
 

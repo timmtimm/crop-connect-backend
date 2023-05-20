@@ -28,7 +28,7 @@ type Controller struct {
 	regionUC          regions.UseCase
 }
 
-func NewTreatmentRecordController(treatmentRecordUC treatmentRecord.UseCase, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
+func NewController(treatmentRecordUC treatmentRecord.UseCase, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) *Controller {
 	return &Controller{
 		treatmentRecordUC: treatmentRecordUC,
 		batchUC:           batchUC,
@@ -175,7 +175,7 @@ func (trc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 }
 
 func (trc *Controller) GetByBatchID(c echo.Context) error {
-	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
+	batchID, err := primitive.ObjectIDFromHex(c.QueryParam("batch-id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,
@@ -203,6 +203,54 @@ func (trc *Controller) GetByBatchID(c echo.Context) error {
 		Status:  statusCode,
 		Message: "berhasil mendapatkan riwayat perawatan",
 		Data:    treatmentRecordsResponse,
+	})
+}
+
+func (trc *Controller) CountByYear(c echo.Context) error {
+	queryYear, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	count, statusCode, err := trc.treatmentRecordUC.CountByYear(queryYear)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan jumlah riwayat perawatan",
+		Data:    count,
+	})
+}
+
+func (trc *Controller) StatisticByYear(c echo.Context) error {
+	queryYear, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	statistic, statusCode, err := trc.treatmentRecordUC.StatisticByYear(queryYear)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan statistik riwayat perawatan",
+		Data:    statistic,
 	})
 }
 

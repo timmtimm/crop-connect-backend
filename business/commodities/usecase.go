@@ -1,6 +1,7 @@
 package commodities
 
 import (
+	"crop_connect/business/users"
 	"crop_connect/constant"
 	"crop_connect/helper"
 	"crop_connect/helper/cloudinary"
@@ -15,12 +16,14 @@ import (
 
 type CommodityUseCase struct {
 	commoditiesRepository Repository
+	userRepository        users.Repository
 	cloudinary            cloudinary.Function
 }
 
-func NewCommodityUseCase(cr Repository, cldry cloudinary.Function) UseCase {
+func NewUseCase(cr Repository, ur users.Repository, cldry cloudinary.Function) UseCase {
 	return &CommodityUseCase{
 		commoditiesRepository: cr,
+		userRepository:        ur,
 		cloudinary:            cldry,
 	}
 }
@@ -44,6 +47,7 @@ func (cu *CommodityUseCase) Create(domain *Domain, images []*multipart.FileHeade
 		}
 
 		domain.ID = primitive.NewObjectID()
+		domain.Code = primitive.NewObjectID()
 		domain.IsAvailable = true
 		domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
@@ -86,7 +90,7 @@ func (cu *CommodityUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) 
 }
 
 func (cu *CommodityUseCase) GetByIDWithoutDeleted(id primitive.ObjectID) (Domain, int, error) {
-	commodity, err := cu.commoditiesRepository.GetByID(id)
+	commodity, err := cu.commoditiesRepository.GetByIDWithoutDeleted(id)
 	if err != nil {
 		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	}
@@ -101,6 +105,31 @@ func (cu *CommodityUseCase) GetByFarmerID(farmerID primitive.ObjectID) ([]Domain
 	}
 
 	return commodities, http.StatusOK, nil
+}
+
+func (cu *CommodityUseCase) CountTotalCommodity(year int) (int, int, error) {
+	totalCommodity, err := cu.commoditiesRepository.CountTotalCommodity(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan total komoditas")
+	}
+
+	return totalCommodity, http.StatusOK, nil
+}
+
+func (cu *CommodityUseCase) CountTotalCommodityByFarmer(farmerID primitive.ObjectID) (int, int, error) {
+	_, err := cu.userRepository.GetByID(farmerID)
+	if err == mongo.ErrNoDocuments {
+		return 0, http.StatusNotFound, errors.New("petani tidak ditemukan")
+	} else if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan petani")
+	}
+
+	totalCommodity, err := cu.commoditiesRepository.CountTotalCommodityByFarmer(farmerID)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan total komoditas")
+	}
+
+	return totalCommodity, http.StatusOK, nil
 }
 
 /*
@@ -133,6 +162,7 @@ func (cu *CommodityUseCase) Update(domain *Domain, updateImage []*helper.UpdateI
 	}
 
 	domain.ID = primitive.NewObjectID()
+	domain.Code = commodity.Code
 	domain.CreatedAt = commodity.CreatedAt
 	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
