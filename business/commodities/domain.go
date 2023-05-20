@@ -52,6 +52,7 @@ type Repository interface {
 	GetByQuery(query Query) ([]Domain, int, error)
 	CountTotalCommodity(year int) (int, error)
 	CountTotalCommodityByFarmer(farmerID primitive.ObjectID) (int, error)
+	GetByCode(code primitive.ObjectID) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete

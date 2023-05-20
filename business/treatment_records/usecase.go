@@ -127,6 +127,19 @@ func (tru *TreatmentRecordUseCase) CountByYear(year int) (int, int, error) {
 	return statistic, http.StatusOK, nil
 }
 
+func (tru *TreatmentRecordUseCase) StatisticByYear(year int) ([]dto.StatisticByYear, int, error) {
+	statistic, err := tru.treatmentRecordRepository.StatisticByYear(year)
+	if err != nil {
+		return []dto.StatisticByYear{}, http.StatusInternalServerError, errors.New("gagal mendapatkan statistik riwayat perawatan")
+	}
+
+	if len(statistic) < 12 {
+		statistic = util.FillNotAvailableMonth(statistic)
+	}
+
+	return statistic, http.StatusOK, nil
+}
+
 /*
 Update
 */

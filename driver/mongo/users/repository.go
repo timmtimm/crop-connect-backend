@@ -226,6 +226,82 @@ func (ur *UserRepository) GetFarmerByID(id primitive.ObjectID) (users.Domain, er
 	return result.ToDomain(), err
 }
 
+func (ur *UserRepository) StatisticNewUserByYear(year int) ([]dto.StatisticByYear, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"createdAt": bson.M{
+					"$gte": time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC),
+					"$lte": time.Date(year+1, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": bson.M{
+					"$month": "$createdAt",
+				},
+				"total": bson.M{
+					"$sum": 1,
+				},
+			},
+		},
+	}
+
+	cursor, err := ur.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return []dto.StatisticByYear{}, err
+	}
+
+	var result []dto.StatisticByYear
+	if err := cursor.All(ctx, &result); err != nil {
+		return []dto.StatisticByYear{}, err
+	}
+
+	return result, nil
+}
+
+func (ur *UserRepository) CountTotalValidatorByYear(year int) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"role": "validator",
+				"createdAt": bson.M{
+					"$gte": time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC),
+					"$lte": time.Date(year+1, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+			},
+		}, bson.M{
+			"$group": bson.M{
+				"_id": nil,
+				"total": bson.M{
+					"$sum": 1,
+				},
+			},
+		},
+	}
+
+	cursor, err := ur.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, err
+	}
+
+	var result dto.TotalDocument
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&result)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return result.Total, nil
+}
+
 /*
 Update
 */

@@ -39,8 +39,8 @@ type StatisticTopCommodity struct {
 }
 
 type ModelStatisticTopCommodity struct {
-	CommodityID primitive.ObjectID `bson:"_id"`
-	Total       int                `bson:"total"`
+	CommodityCode primitive.ObjectID `bson:"_id"`
+	Total         int                `bson:"total"`
 }
 
 type Query struct {

@@ -466,7 +466,7 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 		},
 	}, bson.M{
 		"$group": bson.M{
-			"_id": "$commodity_info._id",
+			"_id": "$commodity_info.code",
 			"total": bson.M{
 				"$sum": 1,
 			},
@@ -478,6 +478,16 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 	}, bson.M{
 		"$limit": limit,
 	})
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(pipeline)
+	if err != nil {
+		panic(err)
+	}
+
+	// Print JSON
+	fmt.Println("SEBELUM APPEND")
+	fmt.Println(string(jsonData))
 
 	cursor, err := tr.collection.Aggregate(ctx, pipeline)
 	if err != nil {

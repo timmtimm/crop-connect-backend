@@ -4,6 +4,7 @@ import (
 	"crop_connect/business/commodities"
 	"crop_connect/business/regions"
 	"crop_connect/constant"
+	"crop_connect/dto"
 	"crop_connect/util"
 	"errors"
 	"net/http"
@@ -110,6 +111,28 @@ func (pu *ProposalUseCase) GetByIDAccepted(id primitive.ObjectID) (Domain, int, 
 	}
 
 	return proposal, http.StatusOK, nil
+}
+
+func (pu *ProposalUseCase) StatisticByYear(year int) ([]dto.StatisticByYear, int, error) {
+	totalProposal, err := pu.proposalRepository.StatisticByYear(year)
+	if err != nil {
+		return []dto.StatisticByYear{}, http.StatusInternalServerError, err
+	}
+
+	if len(totalProposal) < 12 {
+		totalProposal = util.FillNotAvailableMonth(totalProposal)
+	}
+
+	return totalProposal, http.StatusOK, nil
+}
+
+func (pu *ProposalUseCase) CountTotalProposalByFarmer(farmerID primitive.ObjectID) (int, int, error) {
+	totalProposal, err := pu.proposalRepository.CountTotalProposalByFarmer(farmerID)
+	if err != nil {
+		return 0, http.StatusInternalServerError, err
+	}
+
+	return totalProposal, http.StatusOK, nil
 }
 
 /*

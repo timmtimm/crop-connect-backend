@@ -393,6 +393,19 @@ func (cr *CommodityRepository) CountTotalCommodityByFarmer(farmerID primitive.Ob
 	return int(count), err
 }
 
+func (cr *CommodityRepository) GetByCode(code primitive.ObjectID) (commodities.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var result Model
+	err := cr.collection.FindOne(ctx, bson.M{
+		"code":      code,
+		"deletedAt": bson.M{"$exists": false},
+	}).Decode(&result)
+
+	return result.ToDomain(), err
+}
+
 /*
 Update
 */

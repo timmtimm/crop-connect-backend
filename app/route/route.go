@@ -56,6 +56,8 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	user.GET("/farmer", ctrl.UserController.GetFarmerByPaginationAndQueryForBuyer)
 	user.GET("/farmer/:farmer-id", ctrl.UserController.GetFarmerByIDForBuyer)
 	user.PUT("/change-password", ctrl.UserController.UpdatePassword, _middleware.Authenticated())
+	user.GET("/statistic-new-user", ctrl.UserController.StatisticNewUserByYear, _middleware.CheckOneRole(constant.RoleAdmin))
+	user.GET("/statistic-validator", ctrl.UserController.CountTotalValidatorByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
 
 	forgotPassword := user.Group("/forgot-password")
 	forgotPassword.POST("", ctrl.ForgotPasswordController.Generate)
@@ -69,7 +71,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	commodity.GET("/:commodity-id", ctrl.CommodityController.GetByID)
 	commodity.PUT("/:commodity-id", ctrl.CommodityController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
 	commodity.DELETE("/:commodity-id", ctrl.CommodityController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
-	commodity.GET("/statistic-total", ctrl.CommodityController.CountTotalCommodity, _middleware.CheckOneRole(constant.RoleAdmin))
+	commodity.GET("/statistic-total", ctrl.CommodityController.CountTotalCommodity, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
 	commodity.GET("/farmer-total/:farmer-id", ctrl.CommodityController.CountTotalCommodityByFarmer)
 
 	proposal := apiV1.Group("/proposal")
@@ -79,6 +81,8 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	proposal.DELETE("/:proposal-id", ctrl.ProposalController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
 	proposal.PUT("/validate/:proposal-id", ctrl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))
 	proposal.GET("/id/:proposal-id", ctrl.ProposalController.GetByIDAccepted)
+	proposal.GET("/statistic", ctrl.ProposalController.StatisticByYear, _middleware.CheckOneRole(constant.RoleAdmin))
+	proposal.GET("/farmer-total/:farmer-id", ctrl.ProposalController.CountTotalProposalByFarmer)
 
 	transaction := apiV1.Group("/transaction")
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
@@ -95,7 +99,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/transaction/:transaction-id", ctrl.BatchController.GetByTransactionID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	batch.GET("/commodity/:commodity-id", ctrl.BatchController.GetByCommodityID)
-	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckOneRole(constant.RoleAdmin))
+	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
 	// batch.PUT("/cancel/:batch-id", ctrl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	treatmentRecord := apiV1.Group("/treatment-record")
@@ -104,6 +108,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	treatmentRecord.PUT("/:treatment-record-id", ctrl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
 	treatmentRecord.PUT("/validate/:treatment-record-id", ctrl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.PUT("/note/:treatment-record-id", ctrl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.GET("/statistic", ctrl.TreatmentRecordController.StatisticByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
 	treatmentRecord.GET("/statistic-total", ctrl.TreatmentRecordController.CountByYear, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.GET("/batch", ctrl.TreatmentRecordController.GetByBatchID)
 

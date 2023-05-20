@@ -3,6 +3,7 @@ package users
 import (
 	"crop_connect/business/regions"
 	"crop_connect/constant"
+	"crop_connect/dto"
 	"crop_connect/helper"
 	"crop_connect/util"
 	"errors"
@@ -136,6 +137,28 @@ func (uu *UserUseCase) GetFarmerByID(id primitive.ObjectID) (Domain, int, error)
 	}
 
 	return farmer, http.StatusOK, nil
+}
+
+func (uu *UserUseCase) StatisticNewUserByYear(year int) ([]dto.StatisticByYear, int, error) {
+	statisticNewUser, err := uu.userRepository.StatisticNewUserByYear(year)
+	if err != nil {
+		return []dto.StatisticByYear{}, http.StatusInternalServerError, errors.New("gagal mendapatkan total komoditas")
+	}
+
+	if len(statisticNewUser) < 12 {
+		statisticNewUser = util.FillNotAvailableMonth(statisticNewUser)
+	}
+
+	return statisticNewUser, http.StatusOK, nil
+}
+
+func (uu *UserUseCase) CountTotalValidatorByYear(year int) (int, int, error) {
+	totalValidator, err := uu.userRepository.CountTotalValidatorByYear(year)
+	if err != nil {
+		return 0, http.StatusInternalServerError, errors.New("gagal mendapatkan total validator")
+	}
+
+	return totalValidator, http.StatusOK, nil
 }
 
 /*

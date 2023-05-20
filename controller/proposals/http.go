@@ -5,6 +5,7 @@ import (
 	"crop_connect/business/proposals"
 	"crop_connect/business/regions"
 	"crop_connect/business/users"
+	"crop_connect/constant"
 	"crop_connect/controller/proposals/request"
 	"crop_connect/controller/proposals/response"
 	"crop_connect/helper"
@@ -166,6 +167,62 @@ func (pc *Controller) GetByIDAccepted(c echo.Context) error {
 		Status:  http.StatusOK,
 		Message: "proposal berhasil didapatkan",
 		Data:    proposalResponse,
+	})
+}
+
+func (pc *Controller) StatisticByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	proposals, statusCode, err := pc.proposalUC.StatisticByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil didapatkan",
+		Data:    proposals,
+	})
+}
+
+func (pc *Controller) CountTotalProposalByFarmer(c echo.Context) error {
+	farmerID, err := primitive.ObjectIDFromHex(c.Param("farmer-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id petani tidak valid",
+		})
+	}
+
+	user, _, err := pc.userUC.GetByID(farmerID)
+	if user.Role != constant.RoleFarmer || err != nil {
+		return c.JSON(http.StatusNotFound, helper.BaseResponse{
+			Status:  http.StatusNotFound,
+			Message: "petani tidak ditemukan",
+		})
+	}
+
+	totalProposal, statusCode, err := pc.proposalUC.CountTotalProposalByFarmer(farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "proposal berhasil didapatkan",
+		Data:    totalProposal,
 	})
 }
 

@@ -230,6 +230,30 @@ func (trc *Controller) CountByYear(c echo.Context) error {
 	})
 }
 
+func (trc *Controller) StatisticByYear(c echo.Context) error {
+	queryYear, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	statistic, statusCode, err := trc.treatmentRecordUC.StatisticByYear(queryYear)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan statistik riwayat perawatan",
+		Data:    statistic,
+	})
+}
+
 /*
 Update
 */

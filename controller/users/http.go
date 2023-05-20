@@ -301,6 +301,54 @@ func (uc *Controller) GetByPaginationAndQueryForAdmin(c echo.Context) error {
 	})
 }
 
+func (uc *Controller) StatisticNewUserByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	statisticUsers, statusCode, err := uc.userUC.StatisticNewUserByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan data user",
+		Data:    statisticUsers,
+	})
+}
+
+func (uc *Controller) CountTotalValidatorByYear(c echo.Context) error {
+	year, err := request.QueryParamValidationYear(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	total, statusCode, err := uc.userUC.CountTotalValidatorByYear(year)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan total validator",
+		Data:    total,
+	})
+}
+
 /*
 Update
 */

@@ -139,9 +139,9 @@ func (tu *TransactionUseCase) StatisticTopCommodity(farmerID primitive.ObjectID,
 
 	domainStatisticCommodity := []StatisticTopCommodity{}
 	for _, statistic := range statistics {
-		commodity, err := tu.commodityRepository.GetByID(statistic.CommodityID)
+		commodity, err := tu.commodityRepository.GetByCode(statistic.CommodityCode)
 		if err != nil {
-			return []StatisticTopCommodity{}, http.StatusInternalServerError, err
+			return []StatisticTopCommodity{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
 		}
 
 		domainStatisticCommodity = append(domainStatisticCommodity, StatisticTopCommodity{

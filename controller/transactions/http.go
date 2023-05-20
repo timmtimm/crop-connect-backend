@@ -380,6 +380,10 @@ func (tc *Controller) CountByCommodityID(c echo.Context) error {
 	})
 }
 
+// func (tc *Controller) StatisticByYear(c echo.Context) error {
+
+// }
+
 /*
 Update
 */
