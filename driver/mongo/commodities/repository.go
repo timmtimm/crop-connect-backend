@@ -387,7 +387,8 @@ func (cr *CommodityRepository) CountTotalCommodityByFarmer(farmerID primitive.Ob
 	defer cancel()
 
 	count, err := cr.collection.CountDocuments(ctx, bson.M{
-		"farmerID": farmerID,
+		"farmerID":  farmerID,
+		"deletedAt": bson.M{"$exists": false},
 	})
 
 	return int(count), err
