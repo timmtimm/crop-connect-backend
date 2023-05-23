@@ -8,6 +8,7 @@ import (
 	"crop_connect/controller/commodities/request"
 	"crop_connect/controller/commodities/response"
 	"crop_connect/helper"
+	"crop_connect/util"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -300,7 +301,7 @@ func (cc *Controller) Update(c echo.Context) error {
 		})
 	}
 
-	updateImage, statusCode, err := helper.GetUpdateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"}, commodity.ImageURLs, userInput.IsChange, userInput.IsDelete)
+	updateImage, statusCode, err := helper.GetUpdateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"}, commodity.ImageURLs, util.ConvertArrayStringToBool(userInput.IsChange), util.ConvertArrayStringToBool(userInput.IsDelete))
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

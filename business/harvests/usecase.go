@@ -11,7 +11,6 @@ import (
 	"crop_connect/helper/cloudinary"
 	"crop_connect/util"
 	"errors"
-	"fmt"
 	"mime/multipart"
 	"net/http"
 	"time"
@@ -96,8 +95,6 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 
 		var imageURLs []string
 		notes = util.RemoveNilStringInArray(notes)
-
-		fmt.Println(len(images), len(notes))
 
 		if len(images) != len(notes) {
 			return Domain{}, http.StatusBadRequest, errors.New("jumlah gambar dan catatan tidak sama")
