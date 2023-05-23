@@ -64,8 +64,9 @@ type Update struct {
 	Seed           string `form:"seed" json:"seed" validate:"required,min=3,max=100"`
 	PlantingPeriod int    `form:"plantingPeriod" json:"plantingPeriod" validate:"required,number"`
 	PricePerKg     int    `form:"pricePerKg" json:"pricePerKg" validate:"required,number"`
-	IsChange       []bool `json:"isChange" form:"isChange"`
-	IsDelete       []bool `json:"isDelete" form:"isDelete"`
+	IsAvailable    bool   `form:"isAvailable" json:"isAvailable"`
+	IsChange       string `json:"isChange" form:"isChange"`
+	IsDelete       string `json:"isDelete" form:"isDelete"`
 }
 
 func (req *Update) ToDomain() *commodities.Domain {
@@ -75,6 +76,7 @@ func (req *Update) ToDomain() *commodities.Domain {
 		Seed:           req.Seed,
 		PlantingPeriod: req.PlantingPeriod,
 		PricePerKg:     req.PricePerKg,
+		IsAvailable:    req.IsAvailable,
 	}
 }
 

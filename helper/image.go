@@ -48,7 +48,7 @@ func GetCreateImageRequest(c echo.Context, keys []string) ([]*multipart.FileHead
 func GetUpdateImageRequest(c echo.Context, keys []string, imageURLs []string, isChange []bool, isDelete []bool) ([]*UpdateImage, int, error) {
 	images := []*UpdateImage{}
 
-	for i := 0; i < len(imageURLs); i++ {
+	for i := 0; i < len(keys); i++ {
 		if isChange[i] {
 			image, _ := c.FormFile(keys[i])
 			if image == nil {
@@ -61,7 +61,7 @@ func GetUpdateImageRequest(c echo.Context, keys []string, imageURLs []string, is
 
 			images = append(images, &UpdateImage{
 				Image:    image,
-				IsChange: isChange[i],
+				IsChange: true,
 				IsDelete: false,
 			})
 		} else {

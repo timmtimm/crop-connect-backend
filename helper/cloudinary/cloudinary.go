@@ -137,14 +137,18 @@ func (c *Cloudinary) DeleteManyByURL(folder string, URLs []string) error {
 func (c *Cloudinary) UpdateArrayImage(folder string, imageURLs []string, updateImage []*helper.UpdateImage) ([]string, error) {
 	for i := 0; i < len(updateImage); i++ {
 		if updateImage[i].IsDelete {
-			imageURLs[i] = ""
+			imageURLs = append(imageURLs[:i], imageURLs[i+1:]...)
 		} else if updateImage[i].IsChange {
 			URL, err := c.UploadOneWithFilename(folder, updateImage[i].Image, util.GenerateUUID())
 			if err != nil {
 				return nil, err
 			}
 
-			imageURLs[i] = URL
+			if len(imageURLs) == i {
+				imageURLs = append(imageURLs, URL)
+			} else {
+				imageURLs[i] = URL
+			}
 		}
 	}
 

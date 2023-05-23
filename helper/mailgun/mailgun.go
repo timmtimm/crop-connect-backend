@@ -5,7 +5,6 @@ import (
 	"crop_connect/constant"
 	"crop_connect/util"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/mailgun/mailgun-go/v3"
@@ -56,7 +55,6 @@ func (mg *Mailgun) SendOneMailUsingTemplate(subject string, template string, rec
 	}
 
 	response, id, err := mg.Mailgun.Send(ctx, mail)
-	fmt.Println(response, id, err)
 
 	return response, id, err
 }
