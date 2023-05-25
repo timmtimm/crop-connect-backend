@@ -258,7 +258,7 @@ func (uc *Controller) GetByPaginationAndQueryForAdmin(c echo.Context) error {
 		})
 	}
 
-	queryParam, err := request.QueryParamValidationForSearchFarmer(c)
+	queryParam, err := request.QueryParamValidationForAdmin(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,

@@ -12,6 +12,7 @@ import (
 	"crop_connect/controller/transactions/response"
 	"crop_connect/helper"
 	"crop_connect/util"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -162,18 +163,42 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 		})
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainArrayToBuyer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
-	if err != nil {
+	if token.Role == constant.RoleBuyer {
+		transactionResponse, statusCode, err := response.FromDomainArrayToFarmer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
+
 		return c.JSON(statusCode, helper.BaseResponse{
-			Status:  statusCode,
-			Message: err.Error(),
+			Status:     statusCode,
+			Message:    "berhasil mendapatkan transaksi",
+			Data:       transactionResponse,
+			Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+		})
+	} else if token.Role == constant.RoleFarmer {
+		transactionResponse, statusCode, err := response.FromDomainArrayToFarmer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
+
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:     statusCode,
+			Message:    "berhasil mendapatkan transaksi",
+			Data:       transactionResponse,
+			Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
 		})
 	}
 
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:     statusCode,
 		Message:    "berhasil mendapatkan transaksi",
-		Data:       transactionResponse,
+		Data:       []interface{}{},
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
 	})
 }
@@ -427,6 +452,7 @@ func (tc *Controller) MakeDecision(c echo.Context) error {
 		})
 	}
 
+	fmt.Println("lolos6")
 	statusCode, err = tc.batchUC.Create(inputDomain.ID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
@@ -434,6 +460,8 @@ func (tc *Controller) MakeDecision(c echo.Context) error {
 			Message: err.Error(),
 		})
 	}
+
+	fmt.Println("lolosxxx")
 
 	return c.JSON(http.StatusOK, helper.BaseResponse{
 		Status:  http.StatusOK,

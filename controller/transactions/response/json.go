@@ -10,6 +10,7 @@ import (
 
 	commodityResponse "crop_connect/controller/commodities/response"
 	proposalResponse "crop_connect/controller/proposals/response"
+	userResponse "crop_connect/controller/users/response"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -63,6 +64,69 @@ func FromDomainArrayToBuyer(domain []transactions.Domain, proposalUC proposals.U
 	}
 
 	return buyers, http.StatusOK, nil
+}
+
+type All struct {
+	ID         primitive.ObjectID          `json:"_id"`
+	Buyer      userResponse.User           `json:"buyer"`
+	Commodity  commodityResponse.Commodity `json:"commodity"`
+	Proposal   proposalResponse.Buyer      `json:"proposal"`
+	Address    string                      `json:"address"`
+	Status     string                      `json:"status"`
+	TotalPrice float64                     `json:"totalPrice"`
+	CreatedAt  primitive.DateTime          `json:"createdAt"`
+}
+
+func FromDomainToFarmer(domain *transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (All, int, error) {
+	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(domain.ProposalID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	commodityDomain, statusCode, err := commodityUC.GetByIDWithoutDeleted(proposal.CommodityID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	commodity, statusCode, err := commodityResponse.FromDomain(commodityDomain, userUC, regionUC)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	buyer, statusCode, err := userUC.GetByID(domain.BuyerID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	buyerResponse, statusCode, err := userResponse.FromDomain(buyer, regionUC)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	return All{
+		ID:         domain.ID,
+		Buyer:      buyerResponse,
+		Commodity:  commodity,
+		Proposal:   proposalResponse.FromDomainToBuyer(&proposal),
+		Address:    domain.Address,
+		Status:     domain.Status,
+		TotalPrice: domain.TotalPrice,
+		CreatedAt:  domain.CreatedAt,
+	}, http.StatusOK, nil
+}
+
+func FromDomainArrayToFarmer(domains []transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]All, int, error) {
+	var all []All
+	for _, value := range domains {
+		allResponse, statusCode, err := FromDomainToFarmer(&value, proposalUC, commodityUC, userUC, regionUC)
+		if err != nil {
+			return []All{}, statusCode, err
+		}
+
+		all = append(all, allResponse)
+	}
+
+	return all, http.StatusOK, nil
 }
 
 type Statistic struct {

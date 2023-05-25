@@ -181,15 +181,21 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
 	}
 
+	fmt.Println("lolos1")
+
 	proposal, err := tu.proposalRepository.GetByIDWithoutDeleted(transaction.ProposalID)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("proposal tidak ditemukan")
 	}
 
+	fmt.Println("lolos2")
+
 	commodity, err := tu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("komoditas tidak ditemukan")
 	}
+
+	fmt.Println("lolos3")
 
 	if commodity.FarmerID != farmerID {
 		return http.StatusForbidden, errors.New("anda tidak memiliki akses")
@@ -200,11 +206,6 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 	}
 
 	if domain.Status == constant.TransactionStatusAccepted {
-		proposal, err := tu.proposalRepository.GetByID(transaction.ProposalID)
-		if err != nil {
-			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
-		}
-
 		err = tu.transactionRepository.RejectPendingByProposalID(transaction.ProposalID)
 		if err != nil {
 			return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
@@ -219,6 +220,8 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 		}
 	}
 
+	fmt.Println("lolos4")
+
 	transaction.Status = domain.Status
 	transaction.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
@@ -226,6 +229,8 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
 	}
+
+	fmt.Println("lolos5")
 
 	return http.StatusOK, nil
 }

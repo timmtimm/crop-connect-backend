@@ -135,6 +135,15 @@ func (pu *ProposalUseCase) CountTotalProposalByFarmer(farmerID primitive.ObjectI
 	return totalProposal, http.StatusOK, nil
 }
 
+func (pu *ProposalUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
+	proposals, total, err := pu.proposalRepository.GetByQuery(query)
+	if err != nil {
+		return []Domain{}, 0, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	return proposals, total, http.StatusOK, nil
+}
+
 /*
 Update
 */

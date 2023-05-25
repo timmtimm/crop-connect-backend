@@ -479,15 +479,15 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 		"$limit": limit,
 	})
 
-	// Convert to JSON
-	jsonData, err := json.Marshal(pipeline)
-	if err != nil {
-		panic(err)
-	}
+	// // Convert to JSON
+	// jsonData, err := json.Marshal(pipeline)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	// Print JSON
-	fmt.Println("SEBELUM APPEND")
-	fmt.Println(string(jsonData))
+	// // Print JSON
+	// fmt.Println("SEBELUM APPEND")
+	// fmt.Println(string(jsonData))
 
 	cursor, err := tr.collection.Aggregate(ctx, pipeline)
 	if err != nil {

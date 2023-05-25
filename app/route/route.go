@@ -83,6 +83,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	proposal.GET("/id/:proposal-id", ctrl.ProposalController.GetByIDAccepted)
 	proposal.GET("/statistic", ctrl.ProposalController.StatisticByYear, _middleware.CheckOneRole(constant.RoleAdmin))
 	proposal.GET("/farmer-total/:farmer-id", ctrl.ProposalController.CountTotalProposalByFarmer)
+	proposal.GET("", ctrl.ProposalController.GetByPaginationAndQuery, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	transaction := apiV1.Group("/transaction")
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
@@ -96,7 +97,8 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	transaction.PUT("/cancel/:transaction-id", ctrl.TransactionController.CancelOnPending, _middleware.CheckOneRole(constant.RoleBuyer))
 
 	batch := apiV1.Group("/batch")
-	batch.GET("", ctrl.BatchController.GetFarmerBatch, _middleware.CheckOneRole(constant.RoleFarmer))
+	batch.GET("", ctrl.BatchController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
+	// batch.POST("/create/:proposal-id", ctrl.BatchController.CreateForPerennials, _middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/transaction/:transaction-id", ctrl.BatchController.GetByTransactionID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
 	batch.GET("/commodity/:commodity-id", ctrl.BatchController.GetByCommodityID)
 	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))

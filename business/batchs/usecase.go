@@ -42,7 +42,7 @@ func (bu *BatchUseCase) Create(transactionID primitive.ObjectID) (int, error) {
 		return http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
 	}
 
-	proposal, err := bu.proposalRepository.GetByID(transaction.ProposalID)
+	proposal, err := bu.proposalRepository.GetByIDWithoutDeleted(transaction.ProposalID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
@@ -54,7 +54,7 @@ func (bu *BatchUseCase) Create(transactionID primitive.ObjectID) (int, error) {
 		return http.StatusInternalServerError, errors.New("gagal menghitung jumlah batch")
 	}
 
-	commodity, err := bu.commodityRepository.GetByID(proposal.CommodityID)
+	commodity, err := bu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	} else if err != nil {

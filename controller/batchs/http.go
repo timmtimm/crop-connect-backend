@@ -45,7 +45,7 @@ Create
 Read
 */
 
-func (bc *Controller) GetFarmerBatch(c echo.Context) error {
+func (bc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "status", "createdAt"})
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
