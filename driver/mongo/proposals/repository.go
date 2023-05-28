@@ -230,6 +230,100 @@ func (pr *ProposalRepository) CountTotalProposalByFarmer(farmerID primitive.Obje
 	return result.Total, nil
 }
 
+func (pr *ProposalRepository) GetByQuery(query proposals.Query) ([]proposals.Domain, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"deletedAt": bson.M{"$exists": false},
+			},
+		},
+	}
+
+	if query.CommodityID != primitive.NilObjectID {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"commodityID": query.CommodityID,
+			},
+		})
+	}
+
+	if query.FarmerID != primitive.NilObjectID {
+		pipeline = append(pipeline, lookupCommodity, bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": query.FarmerID,
+			},
+		})
+	}
+
+	if query.Name != "" {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"name": bson.M{
+					"$regex":   query.Name,
+					"$options": "i",
+				},
+			},
+		})
+	}
+
+	if query.Status != "" {
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"status": query.Status,
+			},
+		})
+	}
+
+	paginationSkip := bson.M{
+		"$skip": query.Skip,
+	}
+
+	paginationLimit := bson.M{
+		"$limit": query.Limit,
+	}
+
+	paginationSort := bson.M{
+		"$sort": bson.M{query.Sort: query.Order},
+	}
+
+	pipelineForCount := make([]interface{}, len(pipeline))
+	copy(pipelineForCount, pipeline)
+	pipelineForCount = append(pipelineForCount, bson.M{
+		"$count": "total",
+	})
+
+	pipeline = append(pipeline, paginationSkip, paginationLimit, paginationSort)
+
+	cursor, err := pr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return []proposals.Domain{}, 0, err
+	}
+
+	cursorCount, err := pr.collection.Aggregate(ctx, pipelineForCount)
+	if err != nil {
+		return []proposals.Domain{}, 0, err
+	}
+
+	var result []Model
+	var countResult dto.TotalDocument
+
+	if err := cursor.All(ctx, &result); err != nil {
+		return []proposals.Domain{}, 0, err
+	}
+
+	for cursorCount.Next(ctx) {
+		err := cursorCount.Decode(&countResult)
+		if err != nil {
+			return []proposals.Domain{}, 0, err
+		}
+	}
+
+	return ToDomainArray(result), countResult.Total, nil
+}
+
 /*
 Update
 */

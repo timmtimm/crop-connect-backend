@@ -94,7 +94,7 @@ func (uc *Controller) RegisterValidator(c echo.Context) error {
 
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
-		Message: "registrasi validasi sukses",
+		Message: "registrasi validator sukses",
 		Data:    token,
 	})
 }
@@ -258,7 +258,7 @@ func (uc *Controller) GetByPaginationAndQueryForAdmin(c echo.Context) error {
 		})
 	}
 
-	queryParam, err := request.QueryParamValidationForSearchFarmer(c)
+	queryParam, err := request.QueryParamValidationForAdmin(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
 			Status:  http.StatusBadRequest,

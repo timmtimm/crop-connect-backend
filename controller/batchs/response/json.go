@@ -5,40 +5,40 @@ import (
 	"crop_connect/business/commodities"
 	"crop_connect/business/proposals"
 	"crop_connect/business/regions"
-	"crop_connect/business/transactions"
 	"crop_connect/business/users"
-	"crop_connect/controller/transactions/response"
 	"errors"
 	"net/http"
+
+	proposalResponse "crop_connect/controller/proposals/response"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Batch struct {
-	ID                   primitive.ObjectID `json:"_id"`
-	Transaction          response.Buyer     `json:"transaction"`
-	Name                 string             `json:"name"`
-	EstimatedHarvestDate primitive.DateTime `json:"estimatedHarvestDate"`
-	Status               string             `json:"status"`
-	CancelReason         string             `json:"cancelReason,omitempty"`
-	CreatedAt            primitive.DateTime `json:"createdAt"`
-	UpdatedAt            primitive.DateTime `json:"updatedAt,omitempty"`
+	ID                   primitive.ObjectID                     `json:"_id"`
+	Proposal             proposalResponse.ProposalWithCommodity `json:"proposal"`
+	Name                 string                                 `json:"name"`
+	EstimatedHarvestDate primitive.DateTime                     `json:"estimatedHarvestDate"`
+	Status               string                                 `json:"status"`
+	CancelReason         string                                 `json:"cancelReason,omitempty"`
+	CreatedAt            primitive.DateTime                     `json:"createdAt"`
+	UpdatedAt            primitive.DateTime                     `json:"updatedAt,omitempty"`
 }
 
-func FromDomain(domain batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Batch, int, error) {
-	transaction, statusCode, err := transactionUC.GetByID(domain.TransactionID)
+func FromDomain(domain batchs.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Batch, int, error) {
+	proposal, statusCode, err := proposalUC.GetByID(domain.ProposalID)
 	if err != nil {
 		return Batch{}, statusCode, errors.New("gagal mendapatkan transaksi")
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainToBuyer(&transaction, proposalUC, commodityUC, userUC, regionUC)
+	responseForProposal, statusCode, err := proposalResponse.FromDomainToProposalWithCommodity(&proposal, userUC, commodityUC, regionUC)
 	if err != nil {
 		return Batch{}, statusCode, errors.New("gagal mendapatkan transaksi")
 	}
 
 	return Batch{
 		ID:                   domain.ID,
-		Transaction:          transactionResponse,
+		Proposal:             responseForProposal,
 		Name:                 domain.Name,
 		EstimatedHarvestDate: domain.EstimatedHarvestDate,
 		Status:               domain.Status,
@@ -48,10 +48,10 @@ func FromDomain(domain batchs.Domain, transactionUC transactions.UseCase, propos
 	}, http.StatusOK, nil
 }
 
-func FromDomainArray(domain []batchs.Domain, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]Batch, int, error) {
+func FromDomainArray(domain []batchs.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]Batch, int, error) {
 	var batches []Batch
 	for _, value := range domain {
-		batch, statusCode, err := FromDomain(value, transactionUC, proposalUC, commodityUC, userUC, regionUC)
+		batch, statusCode, err := FromDomain(value, proposalUC, commodityUC, userUC, regionUC)
 		if err != nil {
 			return []Batch{}, statusCode, err
 		}
@@ -62,7 +62,7 @@ func FromDomainArray(domain []batchs.Domain, transactionUC transactions.UseCase,
 	return batches, http.StatusOK, nil
 }
 
-type BatchWithoutTransaction struct {
+type BatchWithoutProposal struct {
 	ID                   primitive.ObjectID `json:"_id"`
 	Name                 string             `json:"name"`
 	EstimatedHarvestDate primitive.DateTime `json:"estimatedHarvestDate"`
@@ -72,8 +72,8 @@ type BatchWithoutTransaction struct {
 	UpdatedAt            primitive.DateTime `json:"updatedAt,omitempty"`
 }
 
-func FromDomainWithoutTransaction(domain *batchs.Domain) BatchWithoutTransaction {
-	return BatchWithoutTransaction{
+func FromDomainWithoutProposal(domain *batchs.Domain) BatchWithoutProposal {
+	return BatchWithoutProposal{
 		ID:                   domain.ID,
 		Name:                 domain.Name,
 		EstimatedHarvestDate: domain.EstimatedHarvestDate,

@@ -1,6 +1,7 @@
 package response
 
 import (
+	"crop_connect/business/batchs"
 	"crop_connect/business/commodities"
 	"crop_connect/business/proposals"
 	"crop_connect/business/regions"
@@ -8,24 +9,32 @@ import (
 	"crop_connect/business/users"
 	"net/http"
 
+	batchResponse "crop_connect/controller/batchs/response"
 	commodityResponse "crop_connect/controller/commodities/response"
 	proposalResponse "crop_connect/controller/proposals/response"
+	userResponse "crop_connect/controller/users/response"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Buyer struct {
-	ID         primitive.ObjectID          `json:"_id"`
-	Commodity  commodityResponse.Commodity `json:"commodity"`
-	Proposal   proposalResponse.Buyer      `json:"proposal"`
-	Address    string                      `json:"address"`
-	Status     string                      `json:"status"`
-	TotalPrice float64                     `json:"totalPrice"`
-	CreatedAt  primitive.DateTime          `json:"createdAt"`
+	ID         primitive.ObjectID                 `json:"_id"`
+	Commodity  commodityResponse.Commodity        `json:"commodity"`
+	Proposal   proposalResponse.Buyer             `json:"proposal"`
+	Batch      batchResponse.BatchWithoutProposal `json:"batch"`
+	Address    string                             `json:"address"`
+	Status     string                             `json:"status"`
+	TotalPrice float64                            `json:"totalPrice"`
+	CreatedAt  primitive.DateTime                 `json:"createdAt"`
 }
 
-func FromDomainToBuyer(domain *transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Buyer, int, error) {
-	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(domain.ProposalID)
+func FromDomainToBuyer(domain *transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Buyer, int, error) {
+	batch, statusCode, err := batchUC.GetByID(domain.BatchID)
+	if err != nil {
+		return Buyer{}, statusCode, err
+	}
+
+	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(batch.ProposalID)
 	if err != nil {
 		return Buyer{}, statusCode, err
 	}
@@ -44,6 +53,7 @@ func FromDomainToBuyer(domain *transactions.Domain, proposalUC proposals.UseCase
 		ID:         domain.ID,
 		Commodity:  commodity,
 		Proposal:   proposalResponse.FromDomainToBuyer(&proposal),
+		Batch:      batchResponse.FromDomainWithoutProposal(&batch),
 		Address:    domain.Address,
 		Status:     domain.Status,
 		TotalPrice: domain.TotalPrice,
@@ -51,10 +61,10 @@ func FromDomainToBuyer(domain *transactions.Domain, proposalUC proposals.UseCase
 	}, http.StatusOK, nil
 }
 
-func FromDomainArrayToBuyer(domain []transactions.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]Buyer, int, error) {
+func FromDomainArrayToBuyer(domain []transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]Buyer, int, error) {
 	var buyers []Buyer
 	for _, value := range domain {
-		buyer, statusCode, err := FromDomainToBuyer(&value, proposalUC, commodityUC, userUC, regionUC)
+		buyer, statusCode, err := FromDomainToBuyer(&value, batchUC, proposalUC, commodityUC, userUC, regionUC)
 		if err != nil {
 			return []Buyer{}, statusCode, err
 		}
@@ -63,6 +73,75 @@ func FromDomainArrayToBuyer(domain []transactions.Domain, proposalUC proposals.U
 	}
 
 	return buyers, http.StatusOK, nil
+}
+
+type All struct {
+	ID         primitive.ObjectID          `json:"_id"`
+	Buyer      userResponse.User           `json:"buyer"`
+	Commodity  commodityResponse.Commodity `json:"commodity"`
+	Proposal   proposalResponse.Buyer      `json:"proposal"`
+	Batch      batchResponse.Batch         `json:"batch"`
+	Address    string                      `json:"address"`
+	Status     string                      `json:"status"`
+	TotalPrice float64                     `json:"totalPrice"`
+	CreatedAt  primitive.DateTime          `json:"createdAt"`
+}
+
+func FromDomainToFarmer(domain *transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (All, int, error) {
+	batch, statusCode, err := batchUC.GetByID(domain.BatchID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(batch.ProposalID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	commodityDomain, statusCode, err := commodityUC.GetByIDWithoutDeleted(proposal.CommodityID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	commodity, statusCode, err := commodityResponse.FromDomain(commodityDomain, userUC, regionUC)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	buyer, statusCode, err := userUC.GetByID(domain.BuyerID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	buyerResponse, statusCode, err := userResponse.FromDomain(buyer, regionUC)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
+	return All{
+		ID:         domain.ID,
+		Buyer:      buyerResponse,
+		Commodity:  commodity,
+		Proposal:   proposalResponse.FromDomainToBuyer(&proposal),
+		Address:    domain.Address,
+		Status:     domain.Status,
+		TotalPrice: domain.TotalPrice,
+		CreatedAt:  domain.CreatedAt,
+	}, http.StatusOK, nil
+}
+
+func FromDomainArrayToFarmer(domains []transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]All, int, error) {
+	var all []All
+	for _, value := range domains {
+		allResponse, statusCode, err := FromDomainToFarmer(&value, batchUC, proposalUC, commodityUC, userUC, regionUC)
+		if err != nil {
+			return []All{}, statusCode, err
+		}
+
+		all = append(all, allResponse)
+	}
+
+	return all, http.StatusOK, nil
 }
 
 type Statistic struct {

@@ -18,6 +18,7 @@ type Create struct {
 	EstimatedTotalHarvest float64 `form:"estimatedTotalHarvest" json:"estimatedTotalHarvest" validate:"required,number"`
 	PlantingArea          float64 `form:"plantingArea" json:"plantingArea" validate:"required,number"`
 	Address               string  `form:"address" json:"address" validate:"required"`
+	IsAvailable           bool    `form:"isAvailable" json:"isAvailable"`
 }
 
 func (req *Create) ToDomain() (*proposals.Domain, error) {
@@ -33,6 +34,7 @@ func (req *Create) ToDomain() (*proposals.Domain, error) {
 		EstimatedTotalHarvest: req.EstimatedTotalHarvest,
 		PlantingArea:          req.PlantingArea,
 		Address:               req.Address,
+		IsAvailable:           req.IsAvailable,
 	}, nil
 }
 

@@ -20,6 +20,7 @@ type Commodity struct {
 	PlantingPeriod int                `json:"plantingPeriod"`
 	ImageURLs      []string           `json:"imageURLs"`
 	PricePerKg     int                `json:"pricePerKg"`
+	IsPerennials   bool               `json:"isPerennials"`
 	IsAvailable    bool               `json:"isAvailable"`
 	CreatedAt      primitive.DateTime `json:"createdAt"`
 	UpdatedAt      primitive.DateTime `json:"updatedAt,omitempty"`
@@ -47,6 +48,7 @@ func FromDomain(domain commodities.Domain, userUC users.UseCase, regionUC region
 		PlantingPeriod: domain.PlantingPeriod,
 		ImageURLs:      domain.ImageURLs,
 		PricePerKg:     domain.PricePerKg,
+		IsPerennials:   domain.IsPerennials,
 		IsAvailable:    domain.IsAvailable,
 		CreatedAt:      domain.CreatedAt,
 		UpdatedAt:      domain.UpdatedAt,

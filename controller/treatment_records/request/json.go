@@ -60,7 +60,13 @@ func (req *RequestToFarmer) Validate() []helper.ValidationError {
 }
 
 type FillTreatmentRecord struct {
-	Notes []string `form:"notes" json:"notes"`
+	Note1    string `form:"note1" json:"note1"`
+	Note2    string `form:"note2" json:"note2"`
+	Note3    string `form:"note3" json:"note3"`
+	Note4    string `form:"note4" json:"note4"`
+	Note5    string `form:"note5" json:"note5"`
+	IsChange string `json:"isChange" form:"isChange"`
+	IsDelete string `json:"isDelete" form:"isDelete"`
 }
 
 type Validate struct {

@@ -25,6 +25,17 @@ type Domain struct {
 	DeletedAt             primitive.DateTime
 }
 
+type Query struct {
+	Skip        int64
+	Limit       int64
+	Sort        string
+	Order       int
+	CommodityID primitive.ObjectID
+	FarmerID    primitive.ObjectID
+	Name        string
+	Status      string
+}
+
 type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
@@ -37,6 +48,7 @@ type Repository interface {
 	GetByIDAccepted(id primitive.ObjectID) (Domain, error)
 	StatisticByYear(year int) ([]dto.StatisticByYear, error)
 	CountTotalProposalByFarmer(farmerID primitive.ObjectID) (int, error)
+	GetByQuery(query Query) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	UnsetRejectReason(id primitive.ObjectID) (Domain, error)
@@ -54,6 +66,7 @@ type UseCase interface {
 	GetByIDAccepted(id primitive.ObjectID) (Domain, int, error)
 	StatisticByYear(year int) ([]dto.StatisticByYear, int, error)
 	CountTotalProposalByFarmer(farmerID primitive.ObjectID) (int, int, error)
+	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)

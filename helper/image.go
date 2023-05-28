@@ -45,7 +45,7 @@ func GetCreateImageRequest(c echo.Context, keys []string) ([]*multipart.FileHead
 	return images, http.StatusOK, nil
 }
 
-func GetUpdateImageRequest(c echo.Context, keys []string, imageURLs []string, isChange []bool, isDelete []bool) ([]*UpdateImage, int, error) {
+func GetUpdateImageRequest(c echo.Context, keys []string, isChange []bool, isDelete []bool) ([]*UpdateImage, int, error) {
 	images := []*UpdateImage{}
 
 	for i := 0; i < len(keys); i++ {
