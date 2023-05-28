@@ -94,7 +94,7 @@ func (uc *Controller) RegisterValidator(c echo.Context) error {
 
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
-		Message: "registrasi validasi sukses",
+		Message: "registrasi validator sukses",
 		Data:    token,
 	})
 }

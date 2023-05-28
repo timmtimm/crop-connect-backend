@@ -5,8 +5,6 @@ import (
 	"crop_connect/business/transactions"
 	"crop_connect/constant"
 	"crop_connect/dto"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -538,16 +536,6 @@ func (tr *TransactionRepository) CountByCommodityCode(Code primitive.ObjectID) (
 		},
 	}
 
-	// Convert to JSON
-	jsonData, err := json.Marshal(pipeline)
-	if err != nil {
-		panic(err)
-	}
-
-	// Print JSON
-	fmt.Println("SEBELUM APPEND")
-	fmt.Println(string(jsonData))
-
 	cursor, err := tr.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return 0, 0, err
@@ -561,9 +549,25 @@ func (tr *TransactionRepository) CountByCommodityCode(Code primitive.ObjectID) (
 		}
 	}
 
-	fmt.Println(countResult)
-
 	return countResult.TotalTransaction, countResult.TotalWeight, nil
+}
+
+func (tr *TransactionRepository) GetByBuyerIDBatchIDAndStatus(buyerID primitive.ObjectID, batchID primitive.ObjectID, status string) (transactions.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	var transaction Model
+	err := tr.collection.FindOne(ctx, bson.M{
+		"buyerID": buyerID,
+		"batchID": batchID,
+		"status":  status,
+	}).Decode(&transaction)
+
+	if err != nil {
+		return transactions.Domain{}, err
+	}
+
+	return transaction.ToDomain(), nil
 }
 
 /*
@@ -587,13 +591,13 @@ func (tr *TransactionRepository) Update(domain *transactions.Domain) (transactio
 	return *domain, nil
 }
 
-func (tr *TransactionRepository) RejectPendingByProposalID(proposalID primitive.ObjectID) error {
+func (tr *TransactionRepository) RejectPendingByTransactedID(transactedID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	_, err := tr.collection.UpdateMany(ctx, bson.M{
-		"proposalID": proposalID,
-		"status":     constant.TransactionStatusPending,
+		"transactedID": transactedID,
+		"status":       constant.TransactionStatusPending,
 	}, bson.M{
 		"$set": bson.M{
 			"status":    constant.TransactionStatusRejected,

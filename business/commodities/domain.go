@@ -17,6 +17,7 @@ type Domain struct {
 	PlantingPeriod int
 	ImageURLs      []string
 	PricePerKg     int
+	IsPerennials   bool
 	IsAvailable    bool
 	CreatedAt      primitive.DateTime
 	UpdatedAt      primitive.DateTime
@@ -24,19 +25,20 @@ type Domain struct {
 }
 
 type Query struct {
-	Skip     int64
-	Limit    int64
-	Sort     string
-	Order    int
-	Name     string
-	Farmer   string
-	FarmerID primitive.ObjectID
-	MinPrice int
-	MaxPrice int
-	Province string
-	Regency  string
-	District string
-	RegionID primitive.ObjectID
+	Skip         int64
+	Limit        int64
+	Sort         string
+	Order        int
+	Name         string
+	Farmer       string
+	FarmerID     primitive.ObjectID
+	MinPrice     int
+	MaxPrice     int
+	IsPerennials bool
+	Province     string
+	Regency      string
+	District     string
+	RegionID     primitive.ObjectID
 }
 
 type Repository interface {

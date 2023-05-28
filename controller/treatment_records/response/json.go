@@ -22,7 +22,7 @@ type TreatmentRecord struct {
 	Requester    userResponse.User                      `json:"requester"`
 	Accepter     interface{}                            `json:"accepter,omitempty"`
 	Proposal     proposalResponse.ProposalWithCommodity `json:"proposal"`
-	Batch        batchResponse.BatchWithoutTransaction  `json:"batch"`
+	Batch        batchResponse.BatchWithoutProposal     `json:"batch"`
 	Number       int                                    `json:"number"`
 	Date         primitive.DateTime                     `json:"date"`
 	Status       string                                 `json:"status"`
@@ -35,22 +35,12 @@ type TreatmentRecord struct {
 }
 
 func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (*TreatmentRecord, int, error) {
-	requester, statusCode, err := userUC.GetByID(domain.RequesterID)
-	if err != nil {
-		return nil, statusCode, err
-	}
-
 	batch, statusCode, err := batchUC.GetByID(domain.BatchID)
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	transaction, statusCode, err := transactionUC.GetByID(batch.TransactionID)
-	if err != nil {
-		return nil, statusCode, err
-	}
-
-	proposal, statusCode, err := proposalUC.GetByID(transaction.ProposalID)
+	proposal, statusCode, err := proposalUC.GetByID(batch.ProposalID)
 	if err != nil {
 		return nil, statusCode, err
 	}
@@ -60,7 +50,7 @@ func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transacti
 		return nil, statusCode, err
 	}
 
-	requester, statusCode, err = userUC.GetByID(domain.RequesterID)
+	requester, statusCode, err := userUC.GetByID(domain.RequesterID)
 	if err != nil {
 		return nil, statusCode, err
 	}
@@ -74,7 +64,7 @@ func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transacti
 		ID:           domain.ID,
 		Requester:    requesterResponse,
 		Proposal:     proposalResponse,
-		Batch:        batchResponse.FromDomainWithoutTransaction(&batch),
+		Batch:        batchResponse.FromDomainWithoutProposal(&batch),
 		Number:       domain.Number,
 		Date:         domain.Date,
 		Status:       domain.Status,

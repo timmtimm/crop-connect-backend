@@ -15,7 +15,7 @@ import (
 func Seed(regionUC regions.UseCase) {
 	path, _ := os.Getwd()
 
-	files, err := ioutil.ReadDir(filepath.Join(path, "seeds/country"))
+	files, err := ioutil.ReadDir(filepath.Join(path, "seeds/regions/country"))
 	if err != nil {
 		panic(err)
 	}
@@ -25,7 +25,8 @@ func Seed(regionUC regions.UseCase) {
 			continue
 		}
 
-		data, err := os.Open(filepath.Join(path, "seeds/country/"+file.Name()))
+		fmt.Println(filepath.Join(path, "seeds/regions/country/"+file.Name()))
+		data, err := os.Open(filepath.Join(path, "seeds/regions/country/"+file.Name()))
 		if err != nil {
 			panic(err)
 		}

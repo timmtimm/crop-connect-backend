@@ -2,7 +2,9 @@ package request
 
 import (
 	"crop_connect/business/transactions"
+	"crop_connect/constant"
 	"crop_connect/helper"
+	"crop_connect/util"
 	"errors"
 	"strings"
 
@@ -12,19 +14,33 @@ import (
 )
 
 type Create struct {
-	RegionID string `form:"regionID" json:"regionID" validate:"required"`
-	Address  string `form:"address" json:"address" validate:"required"`
+	TransactionType string `form:"transactionType" json:"transactionType" validate:"required"`
+	TransactedID    string `form:"transactedID" json:"transactedID" validate:"required"`
+	RegionID        string `form:"regionID" json:"regionID" validate:"required"`
+	Address         string `form:"address" json:"address" validate:"required"`
 }
 
 func (req *Create) ToDomain() (*transactions.Domain, error) {
+	isAvailable := util.CheckStringOnArray([]string{constant.TransactionTypeAnnuals, constant.TransactionTypePerennials}, req.TransactionType)
+	if !isAvailable {
+		return nil, errors.New("jenis transaksi tidak tersedia")
+	}
+
+	transactedObjID, err := primitive.ObjectIDFromHex(req.TransactedID)
+	if err != nil {
+		return nil, errors.New("id yang ditransaksikan tidak valid")
+	}
+
 	regionObjID, err := primitive.ObjectIDFromHex(req.RegionID)
 	if err != nil {
 		return nil, errors.New("id daerah tidak valid")
 	}
 
 	return &transactions.Domain{
-		RegionID: regionObjID,
-		Address:  req.Address,
+		TransactionType: req.TransactionType,
+		TransactedID:    transactedObjID,
+		RegionID:        regionObjID,
+		Address:         req.Address,
 	}, nil
 }
 

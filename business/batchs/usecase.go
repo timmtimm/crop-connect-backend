@@ -3,7 +3,6 @@ package batchs
 import (
 	"crop_connect/business/commodities"
 	"crop_connect/business/proposals"
-	"crop_connect/business/transactions"
 	"crop_connect/constant"
 	"errors"
 	"fmt"
@@ -15,18 +14,16 @@ import (
 )
 
 type BatchUseCase struct {
-	batchRepository       Repository
-	transactionRepository transactions.Repository
-	proposalRepository    proposals.Repository
-	commodityRepository   commodities.Repository
+	batchRepository     Repository
+	proposalRepository  proposals.Repository
+	commodityRepository commodities.Repository
 }
 
-func NewUseCase(br Repository, tr transactions.Repository, pr proposals.Repository, cr commodities.Repository) UseCase {
+func NewUseCase(br Repository, pr proposals.Repository, cr commodities.Repository) UseCase {
 	return &BatchUseCase{
-		batchRepository:       br,
-		transactionRepository: tr,
-		proposalRepository:    pr,
-		commodityRepository:   cr,
+		batchRepository:     br,
+		proposalRepository:  pr,
+		commodityRepository: cr,
 	}
 }
 
@@ -34,24 +31,12 @@ func NewUseCase(br Repository, tr transactions.Repository, pr proposals.Reposito
 Create
 */
 
-func (bu *BatchUseCase) Create(transactionID primitive.ObjectID) (int, error) {
-	transaction, err := bu.transactionRepository.GetByID(transactionID)
-	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
-	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
-	}
-
-	proposal, err := bu.proposalRepository.GetByIDWithoutDeleted(transaction.ProposalID)
+func (bu *BatchUseCase) Create(proposalID primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
+	proposal, err := bu.proposalRepository.GetByIDWithoutDeleted(proposalID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
 		return http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
-	}
-
-	lastBatch, err := bu.batchRepository.CountByProposalName(proposal.Name)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal menghitung jumlah batch")
 	}
 
 	commodity, err := bu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
@@ -61,12 +46,34 @@ func (bu *BatchUseCase) Create(transactionID primitive.ObjectID) (int, error) {
 		return http.StatusInternalServerError, errors.New("gagal mendapatkan periode tanam")
 	}
 
+	if farmerID != commodity.FarmerID {
+		return http.StatusForbidden, errors.New("proposal tidak ditemukan")
+	}
+
+	if !commodity.IsPerennials {
+		return http.StatusBadRequest, errors.New("komoditas ini tidak bisa dibuat batch")
+	}
+
+	proposal.IsAvailable = false
+	proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	_, err = bu.proposalRepository.Update(&proposal)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengubah proposal")
+	}
+
+	lastBatch, err := bu.batchRepository.CountByProposalCode(proposal.Code)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
 	domain := &Domain{
 		ID:                   primitive.NewObjectID(),
-		TransactionID:        transactionID,
+		ProposalID:           proposalID,
 		Name:                 fmt.Sprintf("%s - %d", proposal.Name, lastBatch+1),
 		EstimatedHarvestDate: primitive.NewDateTimeFromTime(time.Now().AddDate(0, 0, commodity.PlantingPeriod)),
 		Status:               constant.BatchStatusPlanting,
+		IsAvailable:          true,
 		CreatedAt:            primitive.NewDateTimeFromTime(time.Now()),
 	}
 
@@ -83,6 +90,7 @@ Read
 */
 
 func (bu *BatchUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
+	fmt.Println(id)
 	batch, err := bu.batchRepository.GetByID(id)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
@@ -125,20 +133,6 @@ func (bu *BatchUseCase) CountByYear(year int) (int, int, error) {
 	}
 
 	return statistic, http.StatusOK, nil
-}
-
-func (bu *BatchUseCase) GetByTransactionID(transactionID primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
-	_, err := bu.transactionRepository.GetByID(transactionID)
-	if err != nil {
-		return Domain{}, http.StatusNotFound, errors.New("transaksi tidak ditemukan")
-	}
-
-	batches, err := bu.batchRepository.GetByTransactionID(transactionID, buyerID, farmerID)
-	if err != nil {
-		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
-	}
-
-	return batches, http.StatusOK, nil
 }
 
 /*

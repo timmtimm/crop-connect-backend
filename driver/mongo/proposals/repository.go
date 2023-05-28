@@ -5,7 +5,6 @@ import (
 	"crop_connect/business/proposals"
 	"crop_connect/constant"
 	"crop_connect/dto"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -75,8 +74,6 @@ func (pr *ProposalRepository) GetByIDWithoutDeleted(id primitive.ObjectID) (prop
 	err := pr.collection.FindOne(ctx, bson.M{
 		"_id": id,
 	}).Decode(&result)
-
-	fmt.Println(result, err)
 
 	return result.ToDomain(), err
 }

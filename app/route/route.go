@@ -87,8 +87,8 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 
 	transaction := apiV1.Group("/transaction")
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	transaction.POST("", ctrl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.GET("/:transaction-id", ctrl.TransactionController.GetByID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
-	transaction.POST("/:proposal-id", ctrl.TransactionController.Create, _middleware.CheckOneRole(constant.RoleBuyer))
 	transaction.PUT("/:transaction-id", ctrl.TransactionController.MakeDecision, _middleware.CheckOneRole(constant.RoleFarmer))
 	transaction.GET("/statistic", ctrl.TransactionController.StatisticByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleFarmer}))
 	transaction.GET("/statistic-province", ctrl.TransactionController.StatisticTopProvince, _middleware.CheckOneRole(constant.RoleAdmin))
@@ -98,8 +98,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 
 	batch := apiV1.Group("/batch")
 	batch.GET("", ctrl.BatchController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
-	// batch.POST("/create/:proposal-id", ctrl.BatchController.CreateForPerennials, _middleware.CheckOneRole(constant.RoleFarmer))
-	batch.GET("/transaction/:transaction-id", ctrl.BatchController.GetByTransactionID, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
+	batch.POST("/create/:proposal-id", ctrl.BatchController.CreateForPerennials, _middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/commodity/:commodity-id", ctrl.BatchController.GetByCommodityID)
 	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
 	// batch.PUT("/cancel/:batch-id", ctrl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
@@ -107,6 +106,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	treatmentRecord := apiV1.Group("/treatment-record")
 	treatmentRecord.GET("", ctrl.TreatmentRecordController.GetByPaginationAndQuery, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
 	treatmentRecord.POST("/:batch-id", ctrl.TreatmentRecordController.RequestToFarmer, _middleware.CheckOneRole(constant.RoleValidator))
+	treatmentRecord.GET("/:treatment-record-id", ctrl.TreatmentRecordController.GetByID, _middleware.CheckManyRole([]string{constant.RoleValidator, constant.RoleFarmer}))
 	treatmentRecord.PUT("/:treatment-record-id", ctrl.TreatmentRecordController.FillTreatmentRecord, _middleware.CheckOneRole(constant.RoleFarmer))
 	treatmentRecord.PUT("/validate/:treatment-record-id", ctrl.TreatmentRecordController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 	treatmentRecord.PUT("/note/:treatment-record-id", ctrl.TreatmentRecordController.UpdateNotes, _middleware.CheckOneRole(constant.RoleValidator))

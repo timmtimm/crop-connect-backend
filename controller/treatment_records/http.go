@@ -12,6 +12,7 @@ import (
 	"crop_connect/controller/treatment_records/request"
 	"crop_connect/controller/treatment_records/response"
 	"crop_connect/helper"
+	"crop_connect/util"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -254,6 +255,58 @@ func (trc *Controller) StatisticByYear(c echo.Context) error {
 	})
 }
 
+func (trc *Controller) GetByID(c echo.Context) error {
+	treatmentRecordID, err := primitive.ObjectIDFromHex(c.Param("treatment-record-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "treatment record id tidak valid",
+		})
+	}
+
+	token, err := helper.GetPayloadFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	farmerID := primitive.NilObjectID
+
+	if token.Role == constant.RoleFarmer {
+		farmerID, err = primitive.ObjectIDFromHex(token.UID)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+				Status:  http.StatusUnauthorized,
+				Message: "token tidak valid",
+			})
+		}
+	}
+
+	treatmentRecord, statusCode, err := trc.treatmentRecordUC.GetByIDAndFarmerID(treatmentRecordID, farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	treatmentRecordResponse, statusCode, err := response.FromDomain(treatmentRecord, trc.batchUC, trc.transactionUC, trc.proposalUC, trc.commodityUC, trc.userUC, trc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan riwayat perawtan",
+		Data:    treatmentRecordResponse,
+	})
+}
+
 /*
 Update
 */
@@ -282,6 +335,38 @@ func (trc *Controller) FillTreatmentRecord(c echo.Context) error {
 		ID: treatmentRecordID,
 	}
 
+	treatmentRecord, statusCode, err := trc.treatmentRecordUC.GetByIDAndFarmerID(treatmentRecordID, userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	// For update if some treatment record already uploaded
+	if len(treatmentRecord.Treatment) > 0 {
+		updateImages, statusCode, err := helper.GetUpdateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"}, util.ConvertArrayStringToBool(userInput.IsChange), util.ConvertArrayStringToBool(userInput.IsDelete))
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
+
+		_, statusCode, err = trc.treatmentRecordUC.UpdateTreatmentRecord(&inputDomain, userID, updateImages, []string{userInput.Note1, userInput.Note2, userInput.Note3, userInput.Note4, userInput.Note5})
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
+
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: "berhasil memperbarui riwayat perawatan",
+		})
+	}
+
 	images, statusCode, err := helper.GetCreateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
@@ -297,7 +382,7 @@ func (trc *Controller) FillTreatmentRecord(c echo.Context) error {
 		})
 	}
 
-	_, statusCode, err = trc.treatmentRecordUC.FillTreatmentRecord(&inputDomain, userID, images, userInput.Notes)
+	_, statusCode, err = trc.treatmentRecordUC.FillTreatmentRecord(&inputDomain, userID, images, []string{userInput.Note1, userInput.Note2, userInput.Note3, userInput.Note4, userInput.Note5})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -309,6 +394,7 @@ func (trc *Controller) FillTreatmentRecord(c echo.Context) error {
 		Status:  statusCode,
 		Message: "catatan perawatan berhasil diisi",
 	})
+
 }
 
 func (trc *Controller) Validate(c echo.Context) error {
