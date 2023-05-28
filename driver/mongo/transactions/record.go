@@ -7,42 +7,45 @@ import (
 )
 
 type Model struct {
-	ID         primitive.ObjectID `bson:"_id"`
-	BuyerID    primitive.ObjectID `bson:"buyerID"`
-	ProposalID primitive.ObjectID `bson:"proposalID"`
-	RegionID   primitive.ObjectID `bson:"regionID"`
-	Address    string             `bson:"address"`
-	Status     string             `bson:"status"`
-	TotalPrice float64            `bson:"totalPrice"`
-	CreatedAt  primitive.DateTime `bson:"createdAt"`
-	UpdatedAt  primitive.DateTime `bson:"updatedAt,omitempty"`
+	ID              primitive.ObjectID `bson:"_id"`
+	BuyerID         primitive.ObjectID `bson:"buyerID"`
+	RegionID        primitive.ObjectID `bson:"regionID"`
+	TransactionType string             `bson:"transactionType"`
+	TransactedID    primitive.ObjectID `bson:"transactedID"`
+	Address         string             `bson:"address"`
+	Status          string             `bson:"status"`
+	TotalPrice      float64            `bson:"totalPrice"`
+	CreatedAt       primitive.DateTime `bson:"createdAt"`
+	UpdatedAt       primitive.DateTime `bson:"updatedAt,omitempty"`
 }
 
 func FromDomain(domain *transactions.Domain) *Model {
 	return &Model{
-		ID:         domain.ID,
-		BuyerID:    domain.BuyerID,
-		ProposalID: domain.ProposalID,
-		RegionID:   domain.RegionID,
-		Address:    domain.Address,
-		Status:     domain.Status,
-		TotalPrice: domain.TotalPrice,
-		CreatedAt:  domain.CreatedAt,
-		UpdatedAt:  domain.UpdatedAt,
+		ID:              domain.ID,
+		BuyerID:         domain.BuyerID,
+		TransactionType: domain.TransactionType,
+		TransactedID:    domain.TransactedID,
+		RegionID:        domain.RegionID,
+		Address:         domain.Address,
+		Status:          domain.Status,
+		TotalPrice:      domain.TotalPrice,
+		CreatedAt:       domain.CreatedAt,
+		UpdatedAt:       domain.UpdatedAt,
 	}
 }
 
 func (model *Model) ToDomain() transactions.Domain {
 	return transactions.Domain{
-		ID:         model.ID,
-		BuyerID:    model.BuyerID,
-		ProposalID: model.ProposalID,
-		RegionID:   model.RegionID,
-		Address:    model.Address,
-		Status:     model.Status,
-		TotalPrice: model.TotalPrice,
-		CreatedAt:  model.CreatedAt,
-		UpdatedAt:  model.UpdatedAt,
+		ID:              model.ID,
+		BuyerID:         model.BuyerID,
+		TransactionType: model.TransactionType,
+		TransactedID:    model.TransactedID,
+		RegionID:        model.RegionID,
+		Address:         model.Address,
+		Status:          model.Status,
+		TotalPrice:      model.TotalPrice,
+		CreatedAt:       model.CreatedAt,
+		UpdatedAt:       model.UpdatedAt,
 	}
 }
 

@@ -2,6 +2,7 @@ package treatment_records
 
 import (
 	"crop_connect/dto"
+	"crop_connect/helper"
 	"mime/multipart"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -58,8 +59,10 @@ type UseCase interface {
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByBatchID(batchID primitive.ObjectID) ([]Domain, int, error)
 	StatisticByYear(year int) ([]dto.StatisticByYear, int, error)
+	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error)
 	// Update
 	FillTreatmentRecord(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error)
+	UpdateTreatmentRecord(domain *Domain, farmerID primitive.ObjectID, updateImages []*helper.UpdateImage, notes []string) (Domain, int, error)
 	Validate(domain *Domain, validatorID primitive.ObjectID) (Domain, int, error)
 	UpdateNotes(domain *Domain) (Domain, int, error)
 	CountByYear(year int) (int, int, error)

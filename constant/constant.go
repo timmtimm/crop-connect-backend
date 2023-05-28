@@ -12,6 +12,10 @@ const (
 	ProposalStatusApproved = "approved"
 	ProposalStatusRejected = "rejected"
 
+	// transaction type
+	TransactionTypePerennials = "perennials"
+	TransactionTypeAnnuals    = "annuals"
+
 	// status transaction
 	TransactionStatusPending  = "pending"
 	TransactionStatusAccepted = "accepted"

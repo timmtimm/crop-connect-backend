@@ -22,6 +22,35 @@ func NewRepository(db *mongo.Database) treatmentRecord.Repository {
 	}
 }
 
+var (
+	lookupBatch = bson.M{
+		"$lookup": bson.M{
+			"from":         "batchs",
+			"localField":   "batchID",
+			"foreignField": "_id",
+			"as":           "batch_info",
+		},
+	}
+
+	lookupProposal = bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "batch_info.proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+
+	lookupCommodity = bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+)
+
 /*
 Create
 */

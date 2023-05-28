@@ -16,6 +16,7 @@ type Model struct {
 	PlantingPeriod int                `bson:"plantingPeriod"`
 	ImageURLs      []string           `bson:"imageURLs"`
 	PricePerKg     int                `bson:"pricePerKg"`
+	IsPerennials   bool               `bson:"isPerennials"`
 	IsAvailable    bool               `bson:"isAvailable"`
 	CreatedAt      primitive.DateTime `bson:"createdAt"`
 	UpdatedAt      primitive.DateTime `bson:"updatedAt,omitempty"`
@@ -33,6 +34,7 @@ func FromDomain(domain *commodities.Domain) *Model {
 		PlantingPeriod: domain.PlantingPeriod,
 		ImageURLs:      domain.ImageURLs,
 		PricePerKg:     domain.PricePerKg,
+		IsPerennials:   domain.IsPerennials,
 		IsAvailable:    domain.IsAvailable,
 		CreatedAt:      domain.CreatedAt,
 		UpdatedAt:      domain.UpdatedAt,
@@ -51,6 +53,7 @@ func (model *Model) ToDomain() commodities.Domain {
 		PlantingPeriod: model.PlantingPeriod,
 		ImageURLs:      model.ImageURLs,
 		PricePerKg:     model.PricePerKg,
+		IsPerennials:   model.IsPerennials,
 		IsAvailable:    model.IsAvailable,
 		CreatedAt:      model.CreatedAt,
 		UpdatedAt:      model.UpdatedAt,

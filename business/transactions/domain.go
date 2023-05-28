@@ -7,15 +7,17 @@ import (
 )
 
 type Domain struct {
-	ID         primitive.ObjectID
-	BuyerID    primitive.ObjectID
-	ProposalID primitive.ObjectID
-	RegionID   primitive.ObjectID
-	Address    string
-	Status     string
-	TotalPrice float64
-	CreatedAt  primitive.DateTime
-	UpdatedAt  primitive.DateTime
+	ID              primitive.ObjectID
+	BuyerID         primitive.ObjectID
+	TransactionType string
+	TransactedID    primitive.ObjectID
+	RegionID        primitive.ObjectID
+	BatchID         primitive.ObjectID
+	Address         string
+	Status          string
+	TotalPrice      float64
+	CreatedAt       primitive.DateTime
+	UpdatedAt       primitive.DateTime
 }
 
 type Statistic struct {
@@ -68,9 +70,10 @@ type Repository interface {
 	StatisticTopProvince(year int, limit int) ([]TotalTransactionByProvince, error)
 	StatisticTopCommodity(farmerID primitive.ObjectID, year int, limit int) ([]ModelStatisticTopCommodity, error)
 	CountByCommodityCode(Code primitive.ObjectID) (int, float64, error)
+	GetByBuyerIDBatchIDAndStatus(buyerID primitive.ObjectID, batchID primitive.ObjectID, status string) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
-	RejectPendingByProposalID(proposalID primitive.ObjectID) error
+	RejectPendingByTransactedID(transactedID primitive.ObjectID) error
 	// Delete
 }
 

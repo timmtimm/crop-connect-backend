@@ -43,14 +43,6 @@ Create
 */
 
 func (tc *Controller) Create(c echo.Context) error {
-	proposalID, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
-			Status:  http.StatusBadRequest,
-			Message: "proposal id tidak valid",
-		})
-	}
-
 	userInput := request.Create{}
 	c.Bind(&userInput)
 
@@ -62,7 +54,6 @@ func (tc *Controller) Create(c echo.Context) error {
 			Error:   validationErr,
 		})
 	}
-
 	userID, err := helper.GetUIDFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
@@ -70,7 +61,6 @@ func (tc *Controller) Create(c echo.Context) error {
 			Message: "token tidak valid",
 		})
 	}
-
 	inputDomain, err := userInput.ToDomain()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
@@ -79,7 +69,6 @@ func (tc *Controller) Create(c echo.Context) error {
 		})
 	}
 
-	inputDomain.ProposalID = proposalID
 	inputDomain.BuyerID = userID
 
 	statusCode, err := tc.transactionUC.Create(inputDomain)
@@ -89,7 +78,6 @@ func (tc *Controller) Create(c echo.Context) error {
 			Message: err.Error(),
 		})
 	}
-
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "transaksi berhasil dibuat",
@@ -162,18 +150,42 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 		})
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainArrayToBuyer(transactions, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
-	if err != nil {
+	if token.Role == constant.RoleBuyer {
+		transactionResponse, statusCode, err := response.FromDomainArrayToFarmer(transactions, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
+
 		return c.JSON(statusCode, helper.BaseResponse{
-			Status:  statusCode,
-			Message: err.Error(),
+			Status:     statusCode,
+			Message:    "berhasil mendapatkan transaksi",
+			Data:       transactionResponse,
+			Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+		})
+	} else if token.Role == constant.RoleFarmer {
+		transactionResponse, statusCode, err := response.FromDomainArrayToFarmer(transactions, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
+
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:     statusCode,
+			Message:    "berhasil mendapatkan transaksi",
+			Data:       transactionResponse,
+			Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
 		})
 	}
 
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:     statusCode,
 		Message:    "berhasil mendapatkan transaksi",
-		Data:       transactionResponse,
+		Data:       []interface{}{},
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
 	})
 }
@@ -223,7 +235,7 @@ func (tc *Controller) GetByID(c echo.Context) error {
 		})
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainToBuyer(&transaction, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+	transactionResponse, statusCode, err := response.FromDomainToBuyer(&transaction, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -420,14 +432,6 @@ func (tc *Controller) MakeDecision(c echo.Context) error {
 	inputDomain.ID = transactionID
 
 	statusCode, err := tc.transactionUC.MakeDecision(inputDomain, userID)
-	if err != nil {
-		return c.JSON(statusCode, helper.BaseResponse{
-			Status:  statusCode,
-			Message: err.Error(),
-		})
-	}
-
-	statusCode, err = tc.batchUC.Create(inputDomain.ID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

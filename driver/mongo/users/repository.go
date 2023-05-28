@@ -186,6 +186,15 @@ func (ur *UserRepository) GetByQuery(query users.Query) ([]users.Domain, int, er
 		"$sort": bson.M{query.Sort: query.Order},
 	})
 
+	// // Convert to JSON
+	// jsonData, err := json.Marshal(pipeline)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// // Print JSON
+	// fmt.Println(string(jsonData))
+
 	cursor, err := ur.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, 0, err

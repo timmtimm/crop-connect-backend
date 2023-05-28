@@ -226,6 +226,66 @@ func (pc *Controller) CountTotalProposalByFarmer(c echo.Context) error {
 	})
 }
 
+func (pc *Controller) GetByPaginationAndQuery(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "token tidak valid",
+		})
+	}
+
+	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "status", "plantingArea", "estimatedTotalHarvest", "isAvailable", "createdAt"})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	queryparam, err := request.QueryParamValidation(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	query := proposals.Query{
+		Skip:        queryPagination.Skip,
+		Limit:       queryPagination.Limit,
+		Sort:        queryPagination.Sort,
+		Order:       queryPagination.Order,
+		FarmerID:    userID,
+		CommodityID: queryparam.CommodityID,
+		Name:        queryparam.Name,
+		Status:      queryparam.Status,
+	}
+
+	proposals, totalData, statusCode, err := pc.proposalUC.GetByPaginationAndQuery(query)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	proposalResponse, statusCode, err := response.FromDomainArrayToProposalWithCommodity(proposals, pc.userUC, pc.commodityUC, pc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:     http.StatusOK,
+		Message:    "berhasil mendapatkan proposal",
+		Data:       proposalResponse,
+		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+	})
+}
+
 /*
 Update
 */

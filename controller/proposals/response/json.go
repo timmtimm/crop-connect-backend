@@ -138,3 +138,17 @@ func FromDomainToProposalWithCommodity(domain *proposals.Domain, userUC users.Us
 		IsAvailable:           domain.IsAvailable,
 	}, http.StatusOK, nil
 }
+
+func FromDomainArrayToProposalWithCommodity(domain []proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase, regionUC regions.UseCase) ([]ProposalWithCommodity, int, error) {
+	var response []ProposalWithCommodity
+	for _, value := range domain {
+		proposal, statusCode, err := FromDomainToProposalWithCommodity(&value, userUC, commodityUC, regionUC)
+		if err != nil {
+			return []ProposalWithCommodity{}, statusCode, err
+		}
+
+		response = append(response, proposal)
+	}
+
+	return response, http.StatusOK, nil
+}

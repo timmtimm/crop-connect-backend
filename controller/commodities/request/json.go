@@ -16,6 +16,8 @@ type Create struct {
 	Seed           string `form:"seed" json:"seed" validate:"required,min=3,max=100"`
 	PlantingPeriod int    `form:"plantingPeriod" json:"plantingPeriod" validate:"required,number"`
 	PricePerKg     int    `form:"pricePerKg" json:"pricePerKg" validate:"required,number"`
+	IsAvailable    bool   `form:"isAvailable" json:"isAvailable"`
+	IsPerennials   bool   `form:"isPerennials" json:"isPerennials"`
 }
 
 func (req *Create) ToDomain() *commodities.Domain {
@@ -25,6 +27,8 @@ func (req *Create) ToDomain() *commodities.Domain {
 		Seed:           req.Seed,
 		PlantingPeriod: req.PlantingPeriod,
 		PricePerKg:     req.PricePerKg,
+		IsAvailable:    req.IsAvailable,
+		IsPerennials:   req.IsPerennials,
 	}
 }
 

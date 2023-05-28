@@ -35,6 +35,7 @@ Create
 func (cu *CommodityUseCase) Create(domain *Domain, images []*multipart.FileHeader) (int, error) {
 	_, err := cu.commoditiesRepository.GetByNameAndFarmerID(domain.Name, domain.FarmerID)
 	if err == mongo.ErrNoDocuments {
+		domain.ImageURLs = []string{}
 		if len(images) != 0 {
 			for _, image := range images {
 				cloudinaryURL, err := cu.cloudinary.UploadOneWithGeneratedFilename(constant.CloudinaryFolderCommodities, image)

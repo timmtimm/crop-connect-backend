@@ -21,32 +21,32 @@ func NewRepository(db *mongo.Database) batchs.Repository {
 	}
 }
 
-var lookupTransaction = bson.M{
-	"$lookup": bson.M{
-		"from":         "transactions",
-		"localField":   "transactionID",
-		"foreignField": "_id",
-		"as":           "transaction_info",
-	},
-}
-
-var lookupProposal = bson.M{
-	"$lookup": bson.M{
-		"from":         "proposals",
-		"localField":   "transaction_info.proposalID",
-		"foreignField": "_id",
-		"as":           "proposal_info",
-	},
-}
-
-var lookupCommodity = bson.M{
-	"$lookup": bson.M{
-		"from":         "commodities",
-		"localField":   "proposal_info.commodityID",
-		"foreignField": "_id",
-		"as":           "commodity_info",
-	},
-}
+var (
+	lookupTransaction = bson.M{
+		"$lookup": bson.M{
+			"from":         "transactions",
+			"localField":   "transactionID",
+			"foreignField": "_id",
+			"as":           "transaction_info",
+		},
+	}
+	lookupProposal = bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "transaction_info.proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+	lookupCommodity = bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+)
 
 /*
 Create
@@ -80,34 +80,58 @@ func (br *BatchRepository) GetByID(id primitive.ObjectID) (batchs.Domain, error)
 	return result.ToDomain(), err
 }
 
-func (br *BatchRepository) CountByProposalName(proposalName string) (int, error) {
+func (br *BatchRepository) CountByProposalCode(proposalCode primitive.ObjectID) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	count, err := br.collection.CountDocuments(ctx, bson.M{
-		"name": bson.M{
-			"$regex":   proposalName,
-			"$options": "i",
+	pipeline := []interface{}{
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "proposals",
+				"localField":   "proposalID",
+				"foreignField": "_id",
+				"as":           "proposal_info",
+			},
+		}, bson.M{
+			"$project": bson.M{
+				"proposal_info": bson.M{
+					"$arrayElemAt": bson.A{"$proposal_info", 0},
+				},
+			},
+		}, bson.M{
+			"$match": bson.M{
+				"proposal_info.code": proposalCode,
+			},
+		}, bson.M{
+			"$count": "total",
 		},
-	})
+	}
+
+	cursor, err := br.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return 0, err
 	}
 
-	return int(count), nil
+	var countResult dto.TotalDocument
+	for cursor.Next(ctx) {
+		err := cursor.Decode(&countResult)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return countResult.Total, nil
 }
 
 func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	match := bson.M{
+	pipeline := bson.A{lookupTransaction, lookupProposal, lookupCommodity, bson.M{
 		"$match": bson.M{
 			"commodity_info.farmerID": farmerID,
 		},
-	}
-
-	pipeline := bson.A{lookupTransaction, lookupProposal, lookupCommodity, match}
+	}}
 	cursor, err := br.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err

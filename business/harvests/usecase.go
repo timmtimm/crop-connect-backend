@@ -41,6 +41,28 @@ func NewUseCase(hr Repository, br batchs.Repository, trr treatmentRecords.Reposi
 	}
 }
 
+func (hu *HarvestUseCase) CheckFarmerIDByProposalID(proposalID primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
+	proposal, err := hu.proposalRepository.GetByIDWithoutDeleted(proposalID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("proposal tidak ditemukan")
+	}
+
+	commodity, err := hu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("komoditas tidak ditemukan")
+	}
+
+	if commodity.FarmerID != farmerID {
+		return http.StatusForbidden, errors.New("anda tidak memiliki akses")
+	}
+
+	return http.StatusOK, nil
+}
+
 /*
 Create
 */
@@ -68,29 +90,9 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 
 	checkHarvest, err := hu.harvestRepository.GetByBatchID(domain.BatchID)
 	if err == mongo.ErrNoDocuments {
-		transaction, err := hu.transactionRepository.GetByID(batch.TransactionID)
-		if err == mongo.ErrNoDocuments {
-			return Domain{}, http.StatusNotFound, errors.New("transaksi tidak ditemukan")
-		} else if err != nil {
-			return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
-		}
-
-		proposal, err := hu.proposalRepository.GetByID(transaction.ProposalID)
-		if err == mongo.ErrNoDocuments {
-			return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
-		} else if err != nil {
-			return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
-		}
-
-		commodity, err := hu.commodityRepository.GetByID(proposal.CommodityID)
-		if err == mongo.ErrNoDocuments {
-			return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
-		} else if err != nil {
-			return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
-		}
-
-		if commodity.FarmerID != farmerID {
-			return Domain{}, http.StatusForbidden, errors.New("anda tidak memiliki akses")
+		statusCode, err := hu.CheckFarmerIDByProposalID(batch.ProposalID, farmerID)
+		if err != nil {
+			return Domain{}, statusCode, err
 		}
 
 		var imageURLs []string

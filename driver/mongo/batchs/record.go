@@ -8,11 +8,12 @@ import (
 
 type Model struct {
 	ID                   primitive.ObjectID `bson:"_id"`
-	TransactionID        primitive.ObjectID `bson:"transactionID"`
+	ProposalID           primitive.ObjectID `bson:"proposalID"`
 	Name                 string             `bson:"name"`
 	EstimatedHarvestDate primitive.DateTime `bson:"estimatedHarvestDate"`
 	Status               string             `bson:"status"`
 	CancelReason         string             `bson:"cancelReason,omitempty"`
+	IsAvailable          bool               `bson:"isAvailable"`
 	CreatedAt            primitive.DateTime `bson:"createdAt"`
 	UpdatedAt            primitive.DateTime `bson:"updatedAt,omitempty"`
 }
@@ -20,11 +21,12 @@ type Model struct {
 func FromDomain(domain *batchs.Domain) *Model {
 	return &Model{
 		ID:                   domain.ID,
-		TransactionID:        domain.TransactionID,
+		ProposalID:           domain.ProposalID,
 		Name:                 domain.Name,
 		EstimatedHarvestDate: domain.EstimatedHarvestDate,
 		Status:               domain.Status,
 		CancelReason:         domain.CancelReason,
+		IsAvailable:          domain.IsAvailable,
 		CreatedAt:            domain.CreatedAt,
 		UpdatedAt:            domain.UpdatedAt,
 	}
@@ -33,11 +35,12 @@ func FromDomain(domain *batchs.Domain) *Model {
 func (model *Model) ToDomain() batchs.Domain {
 	return batchs.Domain{
 		ID:                   model.ID,
-		TransactionID:        model.TransactionID,
+		ProposalID:           model.ProposalID,
 		Name:                 model.Name,
 		EstimatedHarvestDate: model.EstimatedHarvestDate,
 		Status:               model.Status,
 		CancelReason:         model.CancelReason,
+		IsAvailable:          model.IsAvailable,
 		CreatedAt:            model.CreatedAt,
 		UpdatedAt:            model.UpdatedAt,
 	}

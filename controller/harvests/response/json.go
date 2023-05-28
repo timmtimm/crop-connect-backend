@@ -21,7 +21,7 @@ type Harvest struct {
 	ID           string                                 `json:"_id"`
 	Accepter     interface{}                            `json:"accepter,omitempty"`
 	Proposal     proposalResponse.ProposalWithCommodity `json:"proposal"`
-	Batch        batchResponse.BatchWithoutTransaction  `json:"batch"`
+	Batch        batchResponse.BatchWithoutProposal     `json:"batch"`
 	Date         primitive.DateTime                     `json:"date"`
 	Status       string                                 `json:"status"`
 	TotalHarvest float64                                `json:"totalHarvest"`
@@ -40,12 +40,7 @@ func FromDomain(domain *harvests.Domain, batchUC batchs.UseCase, transactionUC t
 		return Harvest{}, statusCode, err
 	}
 
-	transaction, statusCode, err := transactionUC.GetByID(batch.TransactionID)
-	if err != nil {
-		return Harvest{}, statusCode, err
-	}
-
-	proposal, statusCode, err := proposalUC.GetByID(transaction.ProposalID)
+	proposal, statusCode, err := proposalUC.GetByID(batch.ProposalID)
 	if err != nil {
 		return Harvest{}, statusCode, err
 	}
@@ -72,7 +67,7 @@ func FromDomain(domain *harvests.Domain, batchUC batchs.UseCase, transactionUC t
 	harvestResponse = Harvest{
 		ID:           domain.ID.Hex(),
 		Proposal:     proposalResponse,
-		Batch:        batchResponse.FromDomainWithoutTransaction(&batch),
+		Batch:        batchResponse.FromDomainWithoutProposal(&batch),
 		Date:         domain.Date,
 		Status:       domain.Status,
 		TotalHarvest: domain.TotalHarvest,
