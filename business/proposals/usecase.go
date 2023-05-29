@@ -144,6 +144,28 @@ func (pu *ProposalUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, 
 	return proposals, total, http.StatusOK, nil
 }
 
+func (pu *ProposalUseCase) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
+	proposal, err := pu.proposalRepository.GetByID(id)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	commodity, err := pu.commodityRepository.GetByID(proposal.CommodityID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data komoditas")
+	}
+
+	if commodity.FarmerID != farmerID {
+		return Domain{}, http.StatusForbidden, errors.New("proposal tidak ditemukan")
+	}
+
+	return proposal, http.StatusOK, nil
+}
+
 /*
 Update
 */
@@ -156,9 +178,11 @@ func (pu *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 	}
 
-	_, err = pu.commodityRepository.GetByIDAndFarmerID(proposal.CommodityID, farmerID)
+	commodity, err := pu.commodityRepository.GetByIDAndFarmerID(proposal.CommodityID, farmerID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return http.StatusInternalServerError, errors.New("gagal mengambil data komoditas")
 	}
 
 	if proposal.RegionID != domain.RegionID {
@@ -168,6 +192,8 @@ func (pu *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 		} else if err != nil {
 			return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 		}
+	} else if proposal.IsAvailable != domain.IsAvailable && commodity.IsPerennials {
+		return http.StatusBadRequest, errors.New("proposal tidak dapat diubah karena komoditas ini termasuk tanaman tahunan")
 	}
 
 	if proposal.Name != domain.Name {
