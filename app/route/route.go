@@ -77,6 +77,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	proposal := apiV1.Group("/proposal")
 	proposal.GET("/commodity/:commodity-id", ctrl.ProposalController.GetByCommodityIDForBuyer)
 	proposal.POST("/:commodity-id", ctrl.ProposalController.Create, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.GET("/:proposal-id", ctrl.ProposalController.GetByID, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleAdmin}))
 	proposal.PUT("/:proposal-id", ctrl.ProposalController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
 	proposal.DELETE("/:proposal-id", ctrl.ProposalController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
 	proposal.PUT("/validate/:proposal-id", ctrl.ProposalController.ValidateByValidator, _middleware.CheckOneRole(constant.RoleValidator))

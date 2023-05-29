@@ -67,6 +67,7 @@ type UseCase interface {
 	StatisticByYear(year int) ([]dto.StatisticByYear, int, error)
 	CountTotalProposalByFarmer(farmerID primitive.ObjectID) (int, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
+	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error)
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)

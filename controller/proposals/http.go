@@ -286,6 +286,57 @@ func (pc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 	})
 }
 
+func (pc *Controller) GetByID(c echo.Context) error {
+	proposalID, err := primitive.ObjectIDFromHex(c.Param("proposal-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id proposal tidak valid",
+		})
+	}
+
+	token, err := helper.GetPayloadFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "token tidak valid",
+		})
+	}
+
+	farmerID := primitive.NilObjectID
+	if token.Role == constant.RoleFarmer {
+		farmerID, err = primitive.ObjectIDFromHex(token.UID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+				Status:  http.StatusBadRequest,
+				Message: "id petani tidak valid",
+			})
+		}
+	}
+
+	proposal, statusCode, err := pc.proposalUC.GetByIDAndFarmerID(proposalID, farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	proposalResponse, statusCode, err := response.FromDomainToProposalWithCommodity(&proposal, pc.userUC, pc.commodityUC, pc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "berhasil mendapatkan proposal",
+		Data:    proposalResponse,
+	})
+}
+
 /*
 Update
 */
