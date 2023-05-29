@@ -32,11 +32,17 @@ Create
 */
 
 func (bu *BatchUseCase) Create(proposalID primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
-	proposal, err := bu.proposalRepository.GetByIDWithoutDeleted(proposalID)
+	proposal, err := bu.proposalRepository.GetByID(proposalID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
 		return http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
+	}
+
+	if proposal.Status != constant.ProposalStatusApproved {
+		return http.StatusBadRequest, errors.New("proposal belum disetujui")
+	} else if proposal.IsAvailable == false {
+		return http.StatusBadRequest, errors.New("proposal tidak tersedia")
 	}
 
 	commodity, err := bu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)

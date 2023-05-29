@@ -7,6 +7,7 @@ import (
 	"crop_connect/business/regions"
 	"crop_connect/business/transactions"
 	"crop_connect/business/users"
+	"crop_connect/constant"
 	"net/http"
 
 	batchResponse "crop_connect/controller/batchs/response"
@@ -220,4 +221,106 @@ func FromDomainToTransactionStatisticForCommodityPage(totalTransaction int, tota
 		TotalTransaction: totalTransaction,
 		TotalWeight:      totalWeight,
 	}
+}
+
+type TransactionAnnuals struct {
+	ID         primitive.ObjectID                 `json:"_id"`
+	Buyer      userResponse.User                  `json:"buyer"`
+	Commodity  commodityResponse.Commodity        `json:"commodity"`
+	Proposal   proposalResponse.Buyer             `json:"proposal"`
+	Batch      batchResponse.BatchWithoutProposal `json:"batch"`
+	Address    string                             `json:"address"`
+	Status     string                             `json:"status"`
+	TotalPrice float64                            `json:"totalPrice"`
+	CreatedAt  primitive.DateTime                 `json:"createdAt"`
+}
+
+func ConvertToTransactionResponse(domain *transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (interface{}, int, error) {
+	buyer, statusCode, err := userUC.GetByID(domain.BuyerID)
+	if err != nil {
+		return TransactionAnnuals{}, statusCode, err
+	}
+
+	buyerResponse, statusCode, err := userResponse.FromDomain(buyer, regionUC)
+	if err != nil {
+		return TransactionAnnuals{}, statusCode, err
+	}
+
+	response := TransactionAnnuals{
+		ID:         domain.ID,
+		Buyer:      buyerResponse,
+		Address:    domain.Address,
+		Status:     domain.Status,
+		TotalPrice: domain.TotalPrice,
+		CreatedAt:  domain.CreatedAt,
+	}
+
+	if domain.TransactionType == constant.TransactionTypeAnnuals {
+		proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(domain.ProposalID)
+		if err != nil {
+			return TransactionAnnuals{}, statusCode, err
+		}
+
+		commodityDomain, statusCode, err := commodityUC.GetByIDWithoutDeleted(proposal.CommodityID)
+		if err != nil {
+			return TransactionAnnuals{}, statusCode, err
+		}
+
+		commodityForResponse, statusCode, err := commodityResponse.FromDomain(commodityDomain, userUC, regionUC)
+		if err != nil {
+			return TransactionAnnuals{}, statusCode, err
+		}
+
+		response.Commodity = commodityForResponse
+		response.Proposal = proposalResponse.FromDomainToBuyer(&proposal)
+
+		if domain.Status == constant.TransactionStatusAccepted {
+			batch, statusCode, err := batchUC.GetByID(domain.BatchID)
+			if err != nil {
+				return TransactionAnnuals{}, statusCode, err
+			}
+
+			response.Batch = batchResponse.FromDomainWithoutProposal(&batch)
+		}
+	} else if domain.TransactionType == constant.TransactionTypePerennials {
+		batch, statusCode, err := batchUC.GetByID(domain.BatchID)
+		if err != nil {
+			return TransactionAnnuals{}, statusCode, err
+		}
+
+		proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(domain.ProposalID)
+		if err != nil {
+			return TransactionAnnuals{}, statusCode, err
+		}
+
+		commodityDomain, statusCode, err := commodityUC.GetByIDWithoutDeleted(proposal.CommodityID)
+		if err != nil {
+			return TransactionAnnuals{}, statusCode, err
+		}
+
+		commodityForResponse, statusCode, err := commodityResponse.FromDomain(commodityDomain, userUC, regionUC)
+		if err != nil {
+			return TransactionAnnuals{}, statusCode, err
+		}
+
+		response.Commodity = commodityForResponse
+		response.Proposal = proposalResponse.FromDomainToBuyer(&proposal)
+		response.Batch = batchResponse.FromDomainWithoutProposal(&batch)
+	}
+
+	return response, http.StatusOK, nil
+}
+
+func FromArrayToResponseArray(domain []transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) ([]interface{}, int, error) {
+	var response []interface{}
+	for _, value := range domain {
+		transactionResponse, statusCode, err := ConvertToTransactionResponse(&value, batchUC, proposalUC, commodityUC, userUC, regionUC)
+		if err != nil {
+			return []interface{}{}, statusCode, err
+		}
+
+		response = append(response, transactionResponse)
+	}
+
+	return response, http.StatusOK, nil
 }

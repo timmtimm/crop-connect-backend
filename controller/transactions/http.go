@@ -150,42 +150,18 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 		})
 	}
 
-	if token.Role == constant.RoleBuyer {
-		transactionResponse, statusCode, err := response.FromDomainArrayToFarmer(transactions, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
-		if err != nil {
-			return c.JSON(statusCode, helper.BaseResponse{
-				Status:  statusCode,
-				Message: err.Error(),
-			})
-		}
-
+	transactionResponse, statusCode, err := response.FromArrayToResponseArray(transactions, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
-			Status:     statusCode,
-			Message:    "berhasil mendapatkan transaksi",
-			Data:       transactionResponse,
-			Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
-		})
-	} else if token.Role == constant.RoleFarmer {
-		transactionResponse, statusCode, err := response.FromDomainArrayToFarmer(transactions, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
-		if err != nil {
-			return c.JSON(statusCode, helper.BaseResponse{
-				Status:  statusCode,
-				Message: err.Error(),
-			})
-		}
-
-		return c.JSON(statusCode, helper.BaseResponse{
-			Status:     statusCode,
-			Message:    "berhasil mendapatkan transaksi",
-			Data:       transactionResponse,
-			Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
+			Status:  statusCode,
+			Message: err.Error(),
 		})
 	}
 
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:     statusCode,
 		Message:    "berhasil mendapatkan transaksi",
-		Data:       []interface{}{},
+		Data:       transactionResponse,
 		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
 	})
 }
@@ -235,7 +211,7 @@ func (tc *Controller) GetByID(c echo.Context) error {
 		})
 	}
 
-	transactionResponse, statusCode, err := response.FromDomainToBuyer(&transaction, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
+	transactionResponse, statusCode, err := response.ConvertToTransactionResponse(&transaction, tc.batchUC, tc.proposalUC, tc.commodityUC, tc.userUC, tc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -391,10 +367,6 @@ func (tc *Controller) CountByCommodityID(c echo.Context) error {
 		Data:    response.FromDomainToTransactionStatisticForCommodityPage(totalTransaction, totalWeight),
 	})
 }
-
-// func (tc *Controller) StatisticByYear(c echo.Context) error {
-
-// }
 
 /*
 Update

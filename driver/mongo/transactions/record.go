@@ -11,7 +11,8 @@ type Model struct {
 	BuyerID         primitive.ObjectID `bson:"buyerID"`
 	RegionID        primitive.ObjectID `bson:"regionID"`
 	TransactionType string             `bson:"transactionType"`
-	TransactedID    primitive.ObjectID `bson:"transactedID"`
+	ProposalID      primitive.ObjectID `bson:"proposalID"`
+	BatchID         primitive.ObjectID `bson:"batchID,omitempty"`
 	Address         string             `bson:"address"`
 	Status          string             `bson:"status"`
 	TotalPrice      float64            `bson:"totalPrice"`
@@ -24,7 +25,8 @@ func FromDomain(domain *transactions.Domain) *Model {
 		ID:              domain.ID,
 		BuyerID:         domain.BuyerID,
 		TransactionType: domain.TransactionType,
-		TransactedID:    domain.TransactedID,
+		ProposalID:      domain.ProposalID,
+		BatchID:         domain.BatchID,
 		RegionID:        domain.RegionID,
 		Address:         domain.Address,
 		Status:          domain.Status,
@@ -39,7 +41,8 @@ func (model *Model) ToDomain() transactions.Domain {
 		ID:              model.ID,
 		BuyerID:         model.BuyerID,
 		TransactionType: model.TransactionType,
-		TransactedID:    model.TransactedID,
+		ProposalID:      model.ProposalID,
+		BatchID:         model.BatchID,
 		RegionID:        model.RegionID,
 		Address:         model.Address,
 		Status:          model.Status,

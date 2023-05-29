@@ -15,33 +15,47 @@ import (
 
 type Create struct {
 	TransactionType string `form:"transactionType" json:"transactionType" validate:"required"`
-	TransactedID    string `form:"transactedID" json:"transactedID" validate:"required"`
+	ProposalID      string `form:"proposalID" json:"proposalID"`
+	BatchID         string `form:"batchID" json:"batchID"`
 	RegionID        string `form:"regionID" json:"regionID" validate:"required"`
 	Address         string `form:"address" json:"address" validate:"required"`
 }
 
 func (req *Create) ToDomain() (*transactions.Domain, error) {
+	domain := transactions.Domain{
+		TransactionType: req.TransactionType,
+		Address:         req.Address,
+	}
+
+	var err error
+
 	isAvailable := util.CheckStringOnArray([]string{constant.TransactionTypeAnnuals, constant.TransactionTypePerennials}, req.TransactionType)
 	if !isAvailable {
 		return nil, errors.New("jenis transaksi tidak tersedia")
 	}
 
-	transactedObjID, err := primitive.ObjectIDFromHex(req.TransactedID)
-	if err != nil {
-		return nil, errors.New("id yang ditransaksikan tidak valid")
+	if req.TransactionType == constant.TransactionTypeAnnuals {
+		proposalObjID, err := primitive.ObjectIDFromHex(req.ProposalID)
+		if err != nil {
+			return nil, errors.New("id proposal tidak valid")
+		}
+
+		domain.ProposalID = proposalObjID
+	} else if req.TransactionType == constant.TransactionTypePerennials {
+		batchObjID, err := primitive.ObjectIDFromHex(req.BatchID)
+		if err != nil {
+			return nil, errors.New("id batch tidak valid")
+		}
+
+		domain.BatchID = batchObjID
 	}
 
-	regionObjID, err := primitive.ObjectIDFromHex(req.RegionID)
+	domain.RegionID, err = primitive.ObjectIDFromHex(req.RegionID)
 	if err != nil {
 		return nil, errors.New("id daerah tidak valid")
 	}
 
-	return &transactions.Domain{
-		TransactionType: req.TransactionType,
-		TransactedID:    transactedObjID,
-		RegionID:        regionObjID,
-		Address:         req.Address,
-	}, nil
+	return &domain, nil
 }
 
 func (req *Create) Validate() []helper.ValidationError {
