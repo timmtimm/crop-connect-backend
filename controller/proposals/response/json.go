@@ -108,6 +108,8 @@ type ProposalWithCommodity struct {
 	PlantingArea          float64                     `json:"plantingArea"`
 	Address               string                      `json:"address"`
 	IsAvailable           bool                        `json:"isAvailable"`
+	Status                string                      `json:"status"`
+	CreatedAt             primitive.DateTime          `json:"createdAt"`
 }
 
 func FromDomainToProposalWithCommodity(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase, regionUC regions.UseCase) (ProposalWithCommodity, int, error) {
@@ -136,6 +138,8 @@ func FromDomainToProposalWithCommodity(domain *proposals.Domain, userUC users.Us
 		PlantingArea:          domain.PlantingArea,
 		Address:               domain.Address,
 		IsAvailable:           domain.IsAvailable,
+		Status:                domain.Status,
+		CreatedAt:             domain.CreatedAt,
 	}, http.StatusOK, nil
 }
 
