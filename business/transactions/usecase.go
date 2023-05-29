@@ -5,6 +5,7 @@ import (
 	"crop_connect/business/commodities"
 	"crop_connect/business/proposals"
 	"crop_connect/constant"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -62,7 +63,7 @@ Create
 
 func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 	if domain.TransactionType == constant.TransactionTypeAnnuals {
-		proposal, err := tu.proposalRepository.GetByID(domain.TransactedID)
+		proposal, err := tu.proposalRepository.GetByID(domain.ProposalID)
 		if err == mongo.ErrNoDocuments {
 			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 		} else if err != nil {
@@ -84,10 +85,10 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 			return http.StatusConflict, errors.New("komoditas hanya bisa ditransaksikan melalui batch")
 		}
 
-		_, err = tu.transactionRepository.GetByBuyerIDProposalIDAndStatus(domain.BuyerID, domain.TransactedID, constant.TransactionStatusPending)
+		_, err = tu.transactionRepository.GetByBuyerIDProposalIDAndStatus(domain.BuyerID, domain.ProposalID, constant.TransactionStatusPending)
 		if err == mongo.ErrNoDocuments {
 
-			commodity, err := tu.commodityRepository.GetByID(proposal.CommodityID)
+			commodity, err := tu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
 			if err == mongo.ErrNoDocuments {
 				return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 			} else if err != nil {
@@ -109,12 +110,10 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 			return http.StatusConflict, errors.New("transaksi sedang diproses")
 		}
 	} else if domain.TransactionType == constant.TransactionTypePerennials {
-		batch, err := tu.batchRepository.GetByID(domain.TransactedID)
+		batch, err := tu.batchRepository.GetByID(domain.BatchID)
 		if err == mongo.ErrNoDocuments {
-
 			return http.StatusNotFound, errors.New("batch tidak ditemukan")
 		} else if err != nil {
-
 			return http.StatusInternalServerError, errors.New("gagal mengambil data batch")
 		}
 
@@ -122,14 +121,14 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 			return http.StatusConflict, errors.New("batch tidak tersedia")
 		}
 
-		proposal, err := tu.proposalRepository.GetByID(batch.ProposalID)
+		proposal, err := tu.proposalRepository.GetByIDWithoutDeleted(batch.ProposalID)
 		if err == mongo.ErrNoDocuments {
 			return http.StatusNotFound, errors.New("proposal tidak ditemukan")
 		} else if err != nil {
 			return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 		}
 
-		commodity, err := tu.commodityRepository.GetByID(proposal.CommodityID)
+		commodity, err := tu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
 		if err == mongo.ErrNoDocuments {
 			return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 		} else if err != nil {
@@ -140,7 +139,7 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 			return http.StatusConflict, errors.New("komoditas hanya bisa ditransaksikan melalui proposal")
 		}
 
-		_, err = tu.transactionRepository.GetByBuyerIDBatchIDAndStatus(domain.BuyerID, domain.TransactedID, constant.TransactionStatusPending)
+		_, err = tu.transactionRepository.GetByBuyerIDBatchIDAndStatus(domain.BuyerID, domain.BatchID, constant.TransactionStatusPending)
 		if err == mongo.ErrNoDocuments {
 
 			proposal, err := tu.proposalRepository.GetByIDWithoutDeleted(batch.ProposalID)
@@ -158,6 +157,7 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 			}
 
 			domain.ID = primitive.NewObjectID()
+			domain.ProposalID = batch.ProposalID
 			domain.Status = constant.TransactionStatusPending
 			domain.TotalPrice = float64(commodity.PricePerKg) * proposal.EstimatedTotalHarvest
 			domain.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
@@ -194,7 +194,7 @@ func (tu *TransactionUseCase) GetByID(id primitive.ObjectID) (Domain, int, error
 func (tu *TransactionUseCase) GetByPaginationAndQuery(query Query) ([]Domain, int, int, error) {
 	commodities, totalData, err := tu.transactionRepository.GetByQuery(query)
 	if err != nil {
-		return []Domain{}, 0, http.StatusInternalServerError, errors.New("something")
+		return []Domain{}, 0, http.StatusInternalServerError, err
 	}
 
 	return commodities, totalData, http.StatusOK, nil
@@ -244,11 +244,14 @@ func (tu *TransactionUseCase) StatisticTopCommodity(farmerID primitive.ObjectID,
 		return []StatisticTopCommodity{}, http.StatusInternalServerError, err
 	}
 
+	json, _ := json.Marshal(statistics)
+	fmt.Println(string(json))
+
 	domainStatisticCommodity := []StatisticTopCommodity{}
 	for _, statistic := range statistics {
 		commodity, err := tu.commodityRepository.GetByCode(statistic.CommodityCode)
 		if err != nil {
-			return []StatisticTopCommodity{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+			return []StatisticTopCommodity{}, http.StatusInternalServerError, err
 		}
 
 		domainStatisticCommodity = append(domainStatisticCommodity, StatisticTopCommodity{
@@ -291,13 +294,13 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 	}
 
 	if transaction.TransactionType == constant.TransactionTypeAnnuals {
-		proposal, commodity, statusCode, err := tu.CheckFarmerIDByProposalID(transaction.TransactedID, farmerID)
+		proposal, commodity, statusCode, err := tu.CheckFarmerIDByProposalID(transaction.ProposalID, farmerID)
 		if err != nil {
 			return statusCode, err
 		}
 
 		if domain.Status == constant.TransactionStatusAccepted {
-			err = tu.transactionRepository.RejectPendingByTransactedID(transaction.TransactedID)
+			err = tu.transactionRepository.RejectPendingByProposalID(transaction.ProposalID)
 			if err != nil {
 				return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
 			}
@@ -317,7 +320,7 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 
 			domain := &batchs.Domain{
 				ID:                   primitive.NewObjectID(),
-				ProposalID:           transaction.TransactedID,
+				ProposalID:           transaction.ProposalID,
 				Name:                 fmt.Sprintf("%s - %d", proposal.Name, lastBatch+1),
 				EstimatedHarvestDate: primitive.NewDateTimeFromTime(time.Now().AddDate(0, 0, commodity.PlantingPeriod)),
 				Status:               constant.BatchStatusPlanting,
@@ -328,9 +331,11 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 			if err != nil {
 				return http.StatusInternalServerError, errors.New("gagal membuat batch")
 			}
+
+			transaction.BatchID = domain.ID
 		}
 	} else if transaction.TransactionType == constant.TransactionTypePerennials {
-		batch, err := tu.batchRepository.GetByID(transaction.TransactedID)
+		batch, err := tu.batchRepository.GetByID(transaction.BatchID)
 		if err == mongo.ErrNoDocuments {
 			return http.StatusNotFound, errors.New("batch tidak ditemukan")
 		} else if err != nil {
@@ -343,12 +348,12 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 		}
 
 		if domain.Status == constant.TransactionStatusAccepted {
-			batch, err := tu.batchRepository.GetByID(transaction.TransactedID)
+			batch, err := tu.batchRepository.GetByID(transaction.BatchID)
 			if err != nil {
 				return http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
 			}
 
-			err = tu.transactionRepository.RejectPendingByTransactedID(transaction.TransactedID)
+			err = tu.transactionRepository.RejectPendingByBatchID(transaction.BatchID)
 			if err != nil {
 				return http.StatusInternalServerError, errors.New("gagal mengupdate transaksi")
 			}

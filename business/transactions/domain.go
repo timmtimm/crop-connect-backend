@@ -10,7 +10,7 @@ type Domain struct {
 	ID              primitive.ObjectID
 	BuyerID         primitive.ObjectID
 	TransactionType string
-	TransactedID    primitive.ObjectID
+	ProposalID      primitive.ObjectID
 	RegionID        primitive.ObjectID
 	BatchID         primitive.ObjectID
 	Address         string
@@ -73,7 +73,8 @@ type Repository interface {
 	GetByBuyerIDBatchIDAndStatus(buyerID primitive.ObjectID, batchID primitive.ObjectID, status string) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
-	RejectPendingByTransactedID(transactedID primitive.ObjectID) error
+	RejectPendingByProposalID(proposalID primitive.ObjectID) error
+	RejectPendingByBatchID(batchID primitive.ObjectID) error
 	// Delete
 }
 

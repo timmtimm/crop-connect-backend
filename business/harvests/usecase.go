@@ -8,6 +8,7 @@ import (
 	treatmentRecords "crop_connect/business/treatment_records"
 	"crop_connect/constant"
 	"crop_connect/dto"
+	"crop_connect/helper"
 	"crop_connect/helper/cloudinary"
 	"crop_connect/util"
 	"errors"
@@ -41,26 +42,26 @@ func NewUseCase(hr Repository, br batchs.Repository, trr treatmentRecords.Reposi
 	}
 }
 
-func (hu *HarvestUseCase) CheckFarmerIDByProposalID(proposalID primitive.ObjectID, farmerID primitive.ObjectID) (int, error) {
+func (hu *HarvestUseCase) CheckFarmerIDByProposalID(proposalID primitive.ObjectID, farmerID primitive.ObjectID) (proposals.Domain, commodities.Domain, int, error) {
 	proposal, err := hu.proposalRepository.GetByIDWithoutDeleted(proposalID)
 	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		return proposals.Domain{}, commodities.Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("proposal tidak ditemukan")
+		return proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("proposal tidak ditemukan")
 	}
 
 	commodity, err := hu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
 	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		return proposals.Domain{}, commodities.Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("komoditas tidak ditemukan")
+		return proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("komoditas tidak ditemukan")
 	}
 
 	if commodity.FarmerID != farmerID {
-		return http.StatusForbidden, errors.New("anda tidak memiliki akses")
+		return proposals.Domain{}, commodities.Domain{}, http.StatusForbidden, errors.New("anda tidak memiliki akses")
 	}
 
-	return http.StatusOK, nil
+	return proposal, commodity, http.StatusOK, nil
 }
 
 /*
@@ -90,7 +91,7 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 
 	checkHarvest, err := hu.harvestRepository.GetByBatchID(domain.BatchID)
 	if err == mongo.ErrNoDocuments {
-		statusCode, err := hu.CheckFarmerIDByProposalID(batch.ProposalID, farmerID)
+		_, _, statusCode, err := hu.CheckFarmerIDByProposalID(batch.ProposalID, farmerID)
 		if err != nil {
 			return Domain{}, statusCode, err
 		}
@@ -98,11 +99,7 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 		var imageURLs []string
 		notes = util.RemoveNilStringInArray(notes)
 
-		if len(images) != len(notes) {
-			return Domain{}, http.StatusBadRequest, errors.New("jumlah gambar dan catatan tidak sama")
-		}
-
-		if len(images) > 0 {
+		if len(images) > 0 && len(notes) > 0 {
 			imageURLs, err = hu.cloudinary.UploadManyWithGeneratedFilename(constant.CloudinaryFolderHarvests, images)
 			if err != nil {
 				return Domain{}, http.StatusInternalServerError, errors.New("gagal mengunggah gambar")
@@ -197,6 +194,37 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 
 	if domain.Status == constant.HarvestStatusApproved {
 		domain.AccepterID = validatorID
+		domain.RevisionNote = ""
+
+		batch, err := hu.batchRepository.GetByID(harvest.BatchID)
+		if err == mongo.ErrNoDocuments {
+			return Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
+		} else if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+		}
+
+		batch.Status = constant.BatchStatusHarvest
+		batch.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		_, err = hu.batchRepository.Update(&batch)
+		if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui batch")
+		}
+
+		proposal, err := hu.proposalRepository.GetByID(batch.ProposalID)
+		if err == mongo.ErrNoDocuments {
+			return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+		} else if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
+		}
+
+		proposal.IsAvailable = true
+		proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+		_, err = hu.proposalRepository.Update(&proposal)
+		if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+		}
 	}
 
 	if domain.Status == constant.HarvestStatusRevision {
@@ -210,9 +238,19 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 	harvest.Status = domain.Status
 	harvest.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-	_, err = hu.harvestRepository.Update(&harvest)
-	if err != nil {
-		return Domain{}, http.StatusInternalServerError, errors.New("gagal memvalidasi hasil panen")
+	return *domain, http.StatusOK, nil
+}
+
+func (hu *HarvestUseCase) UpdateHarvest(domain *Domain, farmerID primitive.ObjectID, updateImages []*helper.UpdateImage, notes []string) (Domain, int, error) {
+	harvest, err := hu.harvestRepository.GetByID(domain.ID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("panen tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan panen")
+	}
+
+	if harvest.Status == constant.HarvestStatusApproved {
+		return Domain{}, http.StatusConflict, errors.New("panen sudah diterima")
 	}
 
 	batch, err := hu.batchRepository.GetByID(harvest.BatchID)
@@ -222,14 +260,48 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
 	}
 
-	batch.Status = constant.BatchStatusHarvest
-
-	_, err = hu.batchRepository.Update(&batch)
+	_, _, statusCode, err := hu.CheckFarmerIDByProposalID(batch.ProposalID, farmerID)
 	if err != nil {
-		return Domain{}, http.StatusInternalServerError, errors.New("gagal memvalidasi hasil panen")
+		return Domain{}, statusCode, err
 	}
 
-	return *domain, http.StatusOK, nil
+	if len(updateImages) > 0 && len(notes) > 0 {
+		imageURLs := []string{}
+		for _, imageAndNote := range harvest.Harvest {
+			imageURLs = append(imageURLs, imageAndNote.ImageURL)
+		}
+
+		newImageURLs, err := hu.cloudinary.UpdateArrayImage(constant.CloudinaryFolderCommodities, imageURLs, updateImages)
+		if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate gambar")
+		}
+
+		for i := 0; i < len(newImageURLs); i++ {
+			if len(newImageURLs) == i {
+				harvest.Harvest = append(harvest.Harvest, dto.ImageAndNote{
+					ImageURL: newImageURLs[i],
+					Note:     notes[i],
+				})
+			} else {
+				harvest.Harvest[i] = dto.ImageAndNote{
+					ImageURL: newImageURLs[i],
+					Note:     notes[i],
+				}
+			}
+		}
+	} else {
+		return Domain{}, http.StatusBadRequest, errors.New("gambar dan catatan tidak boleh kosong")
+	}
+
+	harvest.Status = constant.HarvestStatusPending
+	harvest.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	harvest, err = hu.harvestRepository.Update(&harvest)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui panen")
+	}
+
+	return harvest, http.StatusOK, nil
 }
 
 /*

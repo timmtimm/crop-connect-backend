@@ -37,14 +37,14 @@ func (pu *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("daerah tidak ditemukan")
 	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+		return http.StatusInternalServerError, errors.New("gagal mengambil data daerah")
 	}
 
 	_, err = pu.commodityRepository.GetByIDAndFarmerID(domain.CommodityID, farmerID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	} else if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+		return http.StatusInternalServerError, errors.New("gagal mengambil data komoditas")
 	}
 
 	_, err = pu.proposalRepository.GetByCommodityIDAndName(domain.CommodityID, domain.Name)
