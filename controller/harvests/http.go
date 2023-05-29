@@ -12,6 +12,7 @@ import (
 	"crop_connect/controller/harvests/request"
 	"crop_connect/controller/harvests/response"
 	"crop_connect/helper"
+	"crop_connect/util"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -84,7 +85,7 @@ func (hc *Controller) SubmitHarvest(c echo.Context) error {
 	inputDomain := userInput.ToDomain()
 	inputDomain.BatchID = batchID
 
-	_, statusCode, err = hc.harvestUC.SubmitHarvest(inputDomain, userID, images, userInput.Notes)
+	_, statusCode, err = hc.harvestUC.SubmitHarvest(inputDomain, userID, images, []string{userInput.Note1, userInput.Note2, userInput.Note3, userInput.Note4, userInput.Note5})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -276,6 +277,60 @@ func (hc *Controller) Validate(c echo.Context) error {
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "berhasil memvalidasi panen",
+	})
+}
+
+func (hc *Controller) Update(c echo.Context) error {
+	harvestID, err := primitive.ObjectIDFromHex(c.Param("harvest-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id panen tidak valid",
+		})
+	}
+
+	farmerID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	userInput := request.SubmitHarvest{}
+	c.Bind(&userInput)
+
+	validationErr := userInput.Validate()
+	if validationErr != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "validasi gagal",
+			Error:   validationErr,
+		})
+	}
+
+	inputDomain := userInput.ToDomain()
+	inputDomain.ID = harvestID
+
+	updateImages, statusCode, err := helper.GetUpdateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"}, util.ConvertArrayStringToBool(userInput.IsChange), util.ConvertArrayStringToBool(userInput.IsDelete))
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	_, statusCode, err = hc.harvestUC.UpdateHarvest(inputDomain, farmerID, updateImages, []string{userInput.Note1, userInput.Note2, userInput.Note3, userInput.Note4, userInput.Note5})
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil memperbarui riwayat perawatan",
 	})
 }
 

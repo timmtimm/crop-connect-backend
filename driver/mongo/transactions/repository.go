@@ -5,6 +5,8 @@ import (
 	"crop_connect/business/transactions"
 	"crop_connect/constant"
 	"crop_connect/dto"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -44,8 +46,8 @@ var (
 	lookupBatch = bson.M{
 		"$lookup": bson.M{
 			"from":         "batchs",
-			"localField":   "_id",
-			"foreignField": "transactionID",
+			"localField":   "batchID",
+			"foreignField": "_id",
 			"as":           "batch_info",
 		},
 	}
@@ -444,8 +446,7 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 					"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
 				},
 			},
-		}, lookupProposal, lookupCommodity,
-	}
+		}, lookupProposal, lookupCommodity}
 
 	if farmerID != primitive.NilObjectID {
 		pipeline = append(pipeline, bson.M{
@@ -460,6 +461,12 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 			"_id": "$commodity_info._id",
 			"commodity_info": bson.M{
 				"$arrayElemAt": bson.A{"$commodity_info", 0},
+			},
+		},
+	}, bson.M{
+		"$match": bson.M{
+			"commodity_info.deletedAt": bson.M{
+				"$exists": false,
 			},
 		},
 	}, bson.M{
@@ -478,14 +485,14 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 	})
 
 	// // Convert to JSON
-	// jsonData, err := json.Marshal(pipeline)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	jsonData, err := json.Marshal(pipeline)
+	if err != nil {
+		panic(err)
+	}
 
-	// // Print JSON
-	// fmt.Println("SEBELUM APPEND")
-	// fmt.Println(string(jsonData))
+	// Print JSON
+	fmt.Println("SEBELUM APPEND")
+	fmt.Println(string(jsonData))
 
 	cursor, err := tr.collection.Aggregate(ctx, pipeline)
 	if err != nil {
@@ -591,13 +598,30 @@ func (tr *TransactionRepository) Update(domain *transactions.Domain) (transactio
 	return *domain, nil
 }
 
-func (tr *TransactionRepository) RejectPendingByTransactedID(transactedID primitive.ObjectID) error {
+func (tr *TransactionRepository) RejectPendingByProposalID(proposalID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	_, err := tr.collection.UpdateMany(ctx, bson.M{
-		"transactedID": transactedID,
-		"status":       constant.TransactionStatusPending,
+		"proposalID": proposalID,
+		"status":     constant.TransactionStatusPending,
+	}, bson.M{
+		"$set": bson.M{
+			"status":    constant.TransactionStatusRejected,
+			"updatedAt": primitive.NewDateTimeFromTime(time.Now()),
+		},
+	})
+
+	return err
+}
+
+func (tr *TransactionRepository) RejectPendingByBatchID(batchID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	_, err := tr.collection.UpdateMany(ctx, bson.M{
+		"batchID": batchID,
+		"status":  constant.TransactionStatusPending,
 	}, bson.M{
 		"$set": bson.M{
 			"status":    constant.TransactionStatusRejected,

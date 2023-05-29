@@ -242,13 +242,11 @@ func (tru *TreatmentRecordUseCase) UpdateTreatmentRecord(domain *Domain, farmerI
 
 	if treatmentRecord.Date > primitive.NewDateTimeFromTime(time.Now()) {
 		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan belum bisa diisi")
-	}
-
-	if treatmentRecord.Status == constant.TreatmentRecordStatusApproved {
+	} else if treatmentRecord.Status == constant.TreatmentRecordStatusApproved {
 		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan sudah diterima")
 	}
 
-	if len(updateImages) > 0 || len(notes) > 0 {
+	if len(updateImages) > 0 && len(notes) > 0 {
 		imageURLs := []string{}
 		for _, imageAndNote := range treatmentRecord.Treatment {
 			imageURLs = append(imageURLs, imageAndNote.ImageURL)

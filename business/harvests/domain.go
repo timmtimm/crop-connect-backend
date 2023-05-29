@@ -2,6 +2,7 @@ package harvests
 
 import (
 	"crop_connect/dto"
+	"crop_connect/helper"
 	"mime/multipart"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -52,6 +53,7 @@ type UseCase interface {
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByBatchID(batchID primitive.ObjectID) (Domain, int, error)
 	CountByYear(year int) (float64, int, error)
+	UpdateHarvest(domain *Domain, farmerID primitive.ObjectID, updateImages []*helper.UpdateImage, notes []string) (Domain, int, error)
 	// Update
 	Validate(domain *Domain, validatorID primitive.ObjectID) (Domain, int, error)
 	// Delete
