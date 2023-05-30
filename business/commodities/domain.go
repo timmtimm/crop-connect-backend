@@ -55,6 +55,7 @@ type Repository interface {
 	CountTotalCommodity(year int) (int, error)
 	CountTotalCommodityByFarmer(farmerID primitive.ObjectID) (int, error)
 	GetByCode(code primitive.ObjectID) (Domain, error)
+	GetPerennialsByFarmerID(farmerID primitive.ObjectID) ([]Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -72,6 +73,7 @@ type UseCase interface {
 	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error)
 	CountTotalCommodityByFarmer(farmerID primitive.ObjectID) (int, int, error)
 	CountTotalCommodity(year int) (int, int, error)
+	GetPerennialsByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain, updateImage []*helper.UpdateImage) (Domain, int, error)
 	// Delete

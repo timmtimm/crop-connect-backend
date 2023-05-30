@@ -338,6 +338,14 @@ func (pc *Controller) GetByID(c echo.Context) error {
 }
 
 func (pc *Controller) GetForPerennials(c echo.Context) error {
+	commodityID, err := primitive.ObjectIDFromHex(c.Param("commodity-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id komoditas tidak valid",
+		})
+	}
+
 	userID, err := helper.GetUIDFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
@@ -346,7 +354,7 @@ func (pc *Controller) GetForPerennials(c echo.Context) error {
 		})
 	}
 
-	proposals, statusCode, err := pc.proposalUC.GetForPerennials(userID)
+	proposals, statusCode, err := pc.proposalUC.GetForPerennials(commodityID, userID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

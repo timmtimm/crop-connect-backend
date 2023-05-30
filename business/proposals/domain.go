@@ -49,7 +49,7 @@ type Repository interface {
 	StatisticByYear(year int) ([]dto.StatisticByYear, error)
 	CountTotalProposalByFarmer(farmerID primitive.ObjectID) (int, error)
 	GetByQuery(query Query) ([]Domain, int, error)
-	GetForPerennials(farmerID primitive.ObjectID) ([]Domain, error)
+	GetForPerennials(commodityID primitive.ObjectID, farmerID primitive.ObjectID) ([]Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	UnsetRejectReason(id primitive.ObjectID) (Domain, error)
@@ -69,7 +69,7 @@ type UseCase interface {
 	CountTotalProposalByFarmer(farmerID primitive.ObjectID) (int, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error)
-	GetForPerennials(farmerID primitive.ObjectID) ([]Domain, int, error)
+	GetForPerennials(commodityID primitive.ObjectID, farmerID primitive.ObjectID) ([]Domain, int, error)
 	// Update
 	Update(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	UpdateCommodityID(OldCommodityID primitive.ObjectID, NewCommodityID primitive.ObjectID) (int, error)

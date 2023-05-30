@@ -260,6 +260,38 @@ func (cc *Controller) CountTotalCommodityByFarmer(c echo.Context) error {
 	})
 }
 
+func (cc *Controller) GetPerennialsByFarmerID(c echo.Context) error {
+	farmerID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	commodities, statusCode, err := cc.commodityUC.GetPerennialsByFarmerID(farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	commodityResponse, statusCode, err := response.FromDomainArray(commodities, cc.userUC, cc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan komoditas perenial petani",
+		Data:    commodityResponse,
+	})
+}
+
 /*
 Update
 */

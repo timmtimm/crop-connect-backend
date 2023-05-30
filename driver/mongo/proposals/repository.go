@@ -324,16 +324,21 @@ func (pr *ProposalRepository) GetByQuery(query proposals.Query) ([]proposals.Dom
 	return ToDomainArray(result), countResult.Total, nil
 }
 
-func (pr *ProposalRepository) GetForPerennials(farmerID primitive.ObjectID) ([]proposals.Domain, error) {
+func (pr *ProposalRepository) GetForPerennials(commodityID primitive.ObjectID, farmerID primitive.ObjectID) ([]proposals.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	pipeline := []interface{}{
-		lookupCommodity, bson.M{
+		bson.M{
+			"$match": bson.M{
+				"commodityID": commodityID,
+				"status":      constant.ProposalStatusApproved,
+				"isAvailable": true,
+				"deletedAt":   bson.M{"$exists": false},
+			},
+		}, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": farmerID,
-				"status":                  constant.ProposalStatusApproved,
-				"deletedAt":               bson.M{"$exists": false},
 			},
 		},
 	}
