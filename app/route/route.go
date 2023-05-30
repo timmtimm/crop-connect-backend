@@ -73,6 +73,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	commodity.DELETE("/:commodity-id", ctrl.CommodityController.Delete, _middleware.CheckOneRole(constant.RoleFarmer))
 	commodity.GET("/statistic-total", ctrl.CommodityController.CountTotalCommodity, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
 	commodity.GET("/farmer-total/:farmer-id", ctrl.CommodityController.CountTotalCommodityByFarmer)
+	commodity.GET("/perennials", ctrl.CommodityController.GetPerennialsByFarmerID, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	proposal := apiV1.Group("/proposal")
 	proposal.GET("/commodity/:commodity-id", ctrl.ProposalController.GetByCommodityIDForBuyer)
@@ -85,7 +86,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	proposal.GET("/statistic", ctrl.ProposalController.StatisticByYear, _middleware.CheckOneRole(constant.RoleAdmin))
 	proposal.GET("/farmer-total/:farmer-id", ctrl.ProposalController.CountTotalProposalByFarmer)
 	proposal.GET("", ctrl.ProposalController.GetByPaginationAndQuery, _middleware.CheckOneRole(constant.RoleFarmer))
-	proposal.GET("/perennials", ctrl.ProposalController.GetForPerennials, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.GET("/perennials/:commodity-id", ctrl.ProposalController.GetForPerennials, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	transaction := apiV1.Group("/transaction")
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))

@@ -170,8 +170,8 @@ func (pu *ProposalUseCase) GetByIDAndFarmerID(id primitive.ObjectID, farmerID pr
 	return proposal, http.StatusOK, nil
 }
 
-func (pu *ProposalUseCase) GetForPerennials(farmerID primitive.ObjectID) ([]Domain, int, error) {
-	proposals, err := pu.proposalRepository.GetForPerennials(farmerID)
+func (pu *ProposalUseCase) GetForPerennials(commodityID primitive.ObjectID, farmerID primitive.ObjectID) ([]Domain, int, error) {
+	proposals, err := pu.proposalRepository.GetForPerennials(commodityID, farmerID)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
 	}

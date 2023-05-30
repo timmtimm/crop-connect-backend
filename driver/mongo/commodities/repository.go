@@ -407,6 +407,26 @@ func (cr *CommodityRepository) GetByCode(code primitive.ObjectID) (commodities.D
 	return result.ToDomain(), err
 }
 
+func (cr *CommodityRepository) GetPerennialsByFarmerID(farmerID primitive.ObjectID) ([]commodities.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	cursor, err := cr.collection.Find(ctx, bson.M{
+		"farmerID":  farmerID,
+		"deletedAt": bson.M{"$exists": false},
+	})
+	if err != nil {
+		return []commodities.Domain{}, err
+	}
+
+	var result []Model
+	if err := cursor.All(ctx, &result); err != nil {
+		return []commodities.Domain{}, err
+	}
+
+	return ToDomainArray(result), nil
+}
+
 /*
 Update
 */
