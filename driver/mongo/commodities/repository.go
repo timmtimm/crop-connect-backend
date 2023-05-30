@@ -412,8 +412,9 @@ func (cr *CommodityRepository) GetPerennialsByFarmerID(farmerID primitive.Object
 	defer cancel()
 
 	cursor, err := cr.collection.Find(ctx, bson.M{
-		"farmerID":  farmerID,
-		"deletedAt": bson.M{"$exists": false},
+		"farmerID":     farmerID,
+		"isPerennials": true,
+		"deletedAt":    bson.M{"$exists": false},
 	})
 	if err != nil {
 		return []commodities.Domain{}, err
