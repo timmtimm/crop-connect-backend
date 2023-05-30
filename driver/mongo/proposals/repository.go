@@ -324,6 +324,34 @@ func (pr *ProposalRepository) GetByQuery(query proposals.Query) ([]proposals.Dom
 	return ToDomainArray(result), countResult.Total, nil
 }
 
+func (pr *ProposalRepository) GetForPerennials(farmerID primitive.ObjectID) ([]proposals.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		lookupCommodity, bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": farmerID,
+				"status":                  constant.ProposalStatusApproved,
+				"deletedAt":               bson.M{"$exists": false},
+			},
+		},
+	}
+
+	cursor, err := pr.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return []proposals.Domain{}, err
+	}
+
+	var result []Model
+
+	if err := cursor.All(ctx, &result); err != nil {
+		return []proposals.Domain{}, err
+	}
+
+	return ToDomainArray(result), nil
+}
+
 /*
 Update
 */
