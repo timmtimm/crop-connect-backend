@@ -22,18 +22,10 @@ func NewRepository(db *mongo.Database) batchs.Repository {
 }
 
 var (
-	lookupTransaction = bson.M{
-		"$lookup": bson.M{
-			"from":         "transactions",
-			"localField":   "transactionID",
-			"foreignField": "_id",
-			"as":           "transaction_info",
-		},
-	}
 	lookupProposal = bson.M{
 		"$lookup": bson.M{
 			"from":         "proposals",
-			"localField":   "transaction_info.proposalID",
+			"localField":   "proposalID",
 			"foreignField": "_id",
 			"as":           "proposal_info",
 		},
@@ -127,7 +119,7 @@ func (br *BatchRepository) GetByFarmerID(farmerID primitive.ObjectID) ([]batchs.
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	pipeline := bson.A{lookupTransaction, lookupProposal, lookupCommodity, bson.M{
+	pipeline := bson.A{lookupProposal, lookupCommodity, bson.M{
 		"$match": bson.M{
 			"commodity_info.farmerID": farmerID,
 		},
@@ -148,7 +140,7 @@ func (br *BatchRepository) GetByCommodityCode(commodityCode primitive.ObjectID) 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	pipeline := bson.A{lookupTransaction, lookupProposal, lookupCommodity, bson.M{
+	pipeline := bson.A{lookupProposal, lookupCommodity, bson.M{
 		"$match": bson.M{
 			"commodity_info.code": commodityCode,
 		},
@@ -191,35 +183,8 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 		})
 	}
 
-	lookupTransaction := bson.M{
-		"$lookup": bson.M{
-			"from":         "transactions",
-			"localField":   "transactionID",
-			"foreignField": "_id",
-			"as":           "transaction_info",
-		},
-	}
-
-	lookupProposal := bson.M{
-		"$lookup": bson.M{
-			"from":         "proposals",
-			"localField":   "transaction_info.proposalID",
-			"foreignField": "_id",
-			"as":           "proposal_info",
-		},
-	}
-
-	lookupCommodity := bson.M{
-		"$lookup": bson.M{
-			"from":         "commodities",
-			"localField":   "proposal_info.commodityID",
-			"foreignField": "_id",
-			"as":           "commodity_info",
-		},
-	}
-
 	if query.Commodity != "" {
-		pipeline = append(pipeline, lookupTransaction, lookupProposal, lookupCommodity, bson.M{
+		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.name": bson.M{
 					"$regex":   query.Commodity,
@@ -236,7 +201,7 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 			},
 		})
 	} else if query.FarmerID != primitive.NilObjectID {
-		pipeline = append(pipeline, lookupTransaction, lookupProposal, lookupCommodity, bson.M{
+		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},
@@ -321,8 +286,6 @@ func (br *BatchRepository) GetByTransactionID(transactionID primitive.ObjectID, 
 	}
 
 	if farmerID != primitive.NilObjectID || buyerID != primitive.NilObjectID {
-		pipeline = append(pipeline, lookupTransaction)
-
 		if farmerID != primitive.NilObjectID {
 			pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 				"$match": bson.M{
