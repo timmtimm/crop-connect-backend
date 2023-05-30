@@ -40,7 +40,7 @@ func (pu *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (
 		return http.StatusInternalServerError, errors.New("gagal mengambil data daerah")
 	}
 
-	_, err = pu.commodityRepository.GetByIDAndFarmerID(domain.CommodityID, farmerID)
+	commodity, err := pu.commodityRepository.GetByIDAndFarmerID(domain.CommodityID, farmerID)
 	if err == mongo.ErrNoDocuments {
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	} else if err != nil {
@@ -49,6 +49,10 @@ func (pu *ProposalUseCase) Create(domain *Domain, farmerID primitive.ObjectID) (
 
 	_, err = pu.proposalRepository.GetByCommodityIDAndName(domain.CommodityID, domain.Name)
 	if err == mongo.ErrNoDocuments {
+		if commodity.IsPerennials {
+			domain.IsAvailable = true
+		}
+
 		domain.ID = primitive.NewObjectID()
 		domain.Code = primitive.NewObjectID()
 		domain.Status = constant.ProposalStatusPending
@@ -164,6 +168,15 @@ func (pu *ProposalUseCase) GetByIDAndFarmerID(id primitive.ObjectID, farmerID pr
 	}
 
 	return proposal, http.StatusOK, nil
+}
+
+func (pu *ProposalUseCase) GetForPerennials(farmerID primitive.ObjectID) ([]Domain, int, error) {
+	proposals, err := pu.proposalRepository.GetForPerennials(farmerID)
+	if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mengambil data proposal")
+	}
+
+	return proposals, http.StatusOK, nil
 }
 
 /*

@@ -337,6 +337,38 @@ func (pc *Controller) GetByID(c echo.Context) error {
 	})
 }
 
+func (pc *Controller) GetForPerennials(c echo.Context) error {
+	userID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "token tidak valid",
+		})
+	}
+
+	proposals, statusCode, err := pc.proposalUC.GetForPerennials(userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	proposalResponse, statusCode, err := response.FromDomainArrayToProposalWithCommodity(proposals, pc.userUC, pc.commodityUC, pc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, helper.BaseResponse{
+		Status:  http.StatusOK,
+		Message: "berhasil mendapatkan proposal",
+		Data:    proposalResponse,
+	})
+}
+
 /*
 Update
 */

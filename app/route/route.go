@@ -85,6 +85,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	proposal.GET("/statistic", ctrl.ProposalController.StatisticByYear, _middleware.CheckOneRole(constant.RoleAdmin))
 	proposal.GET("/farmer-total/:farmer-id", ctrl.ProposalController.CountTotalProposalByFarmer)
 	proposal.GET("", ctrl.ProposalController.GetByPaginationAndQuery, _middleware.CheckOneRole(constant.RoleFarmer))
+	proposal.GET("/perennials", ctrl.ProposalController.GetForPerennials, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	transaction := apiV1.Group("/transaction")
 	transaction.GET("", ctrl.TransactionController.GetUserTransactionWithPagination, _middleware.CheckManyRole([]string{constant.RoleBuyer, constant.RoleFarmer}))
