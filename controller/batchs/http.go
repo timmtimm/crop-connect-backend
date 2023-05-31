@@ -191,6 +191,38 @@ func (bc *Controller) CountByYear(c echo.Context) error {
 	})
 }
 
+func (bc *Controller) GetByID(c echo.Context) error {
+	batchID, err := primitive.ObjectIDFromHex(c.Param("batch-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id batch tidak valid",
+		})
+	}
+
+	batch, statusCode, err := bc.batchUC.GetByID(batchID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	batchResponse, statusCode, err := response.FromDomain(batch, bc.proposalUC, bc.commodityUC, bc.userUC, bc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan batch",
+		Data:    batchResponse,
+	})
+}
+
 /*
 Update
 */
