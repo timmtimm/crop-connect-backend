@@ -36,6 +36,8 @@ type Repository interface {
 	GetByQuery(query Query) ([]Domain, int, error)
 	CountByYear(year int) (int, error)
 	GetByTransactionID(transactionID primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, error)
+	GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
+	GetForTransactionByID(id primitive.ObjectID) (Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -49,6 +51,8 @@ type UseCase interface {
 	GetByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
 	GetByPaginationAndQuery(query Query) ([]Domain, int, int, error)
 	CountByYear(year int) (int, int, error)
+	GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
+	GetForTransactionByID(id primitive.ObjectID) (Domain, int, error)
 	// Update
 	// Cancel(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete
