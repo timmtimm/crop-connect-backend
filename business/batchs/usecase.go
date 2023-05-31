@@ -41,7 +41,7 @@ func (bu *BatchUseCase) Create(proposalID primitive.ObjectID, farmerID primitive
 
 	if proposal.Status != constant.ProposalStatusApproved {
 		return http.StatusBadRequest, errors.New("proposal belum disetujui")
-	} else if proposal.IsAvailable == false {
+	} else if !proposal.IsAvailable {
 		return http.StatusBadRequest, errors.New("proposal tidak tersedia")
 	}
 
@@ -139,6 +139,33 @@ func (bu *BatchUseCase) CountByYear(year int) (int, int, error) {
 	}
 
 	return statistic, http.StatusOK, nil
+}
+
+func (bc *BatchUseCase) GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error) {
+	_, err := bc.commodityRepository.GetByID(commodityID)
+	if err == mongo.ErrNoDocuments {
+		return []Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	batchs, err := bc.batchRepository.GetForTransactionByCommodityID(commodityID)
+	if err != nil {
+		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+	}
+
+	return batchs, http.StatusOK, nil
+}
+
+func (bc *BatchUseCase) GetForTransactionByID(id primitive.ObjectID) (Domain, int, error) {
+	batch, err := bc.batchRepository.GetForTransactionByID(id)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
+	}
+
+	return batch, http.StatusOK, nil
 }
 
 /*
