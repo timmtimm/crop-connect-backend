@@ -21,6 +21,7 @@ type Batch struct {
 	EstimatedHarvestDate primitive.DateTime                     `json:"estimatedHarvestDate"`
 	Status               string                                 `json:"status"`
 	CancelReason         string                                 `json:"cancelReason,omitempty"`
+	IsAvailable          bool                                   `json:"isAvailable"`
 	CreatedAt            primitive.DateTime                     `json:"createdAt"`
 	UpdatedAt            primitive.DateTime                     `json:"updatedAt,omitempty"`
 }
@@ -43,6 +44,7 @@ func FromDomain(domain batchs.Domain, proposalUC proposals.UseCase, commodityUC 
 		EstimatedHarvestDate: domain.EstimatedHarvestDate,
 		Status:               domain.Status,
 		CancelReason:         domain.CancelReason,
+		IsAvailable:          domain.IsAvailable,
 		CreatedAt:            domain.CreatedAt,
 		UpdatedAt:            domain.UpdatedAt,
 	}, http.StatusOK, nil
@@ -68,6 +70,7 @@ type BatchWithoutProposal struct {
 	EstimatedHarvestDate primitive.DateTime `json:"estimatedHarvestDate"`
 	Status               string             `json:"status"`
 	CancelReason         string             `json:"cancelReason,omitempty"`
+	IsAvailable          bool               `json:"isAvailable"`
 	CreatedAt            primitive.DateTime `json:"createdAt"`
 	UpdatedAt            primitive.DateTime `json:"updatedAt,omitempty"`
 }
@@ -79,6 +82,7 @@ func FromDomainWithoutProposal(domain *batchs.Domain) BatchWithoutProposal {
 		EstimatedHarvestDate: domain.EstimatedHarvestDate,
 		Status:               domain.Status,
 		CancelReason:         domain.CancelReason,
+		IsAvailable:          domain.IsAvailable,
 		CreatedAt:            domain.CreatedAt,
 		UpdatedAt:            domain.UpdatedAt,
 	}

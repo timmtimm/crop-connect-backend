@@ -104,6 +104,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	batch.POST("/create/:proposal-id", ctrl.BatchController.CreateForPerennials, _middleware.CheckOneRole(constant.RoleFarmer))
 	batch.GET("/commodity/:commodity-id", ctrl.BatchController.GetByCommodityID)
 	batch.GET("/statistic-total", ctrl.BatchController.CountByYear, _middleware.CheckManyRole([]string{constant.RoleAdmin, constant.RoleValidator}))
+	batch.GET("/:batch-id", ctrl.BatchController.GetByID, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
 	// batch.PUT("/cancel/:batch-id", ctrl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	treatmentRecord := apiV1.Group("/treatment-record")
