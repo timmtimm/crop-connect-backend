@@ -19,14 +19,15 @@ import (
 )
 
 type Buyer struct {
-	ID         primitive.ObjectID                 `json:"_id"`
-	Commodity  commodityResponse.Commodity        `json:"commodity"`
-	Proposal   proposalResponse.Buyer             `json:"proposal"`
-	Batch      batchResponse.BatchWithoutProposal `json:"batch"`
-	Address    string                             `json:"address"`
-	Status     string                             `json:"status"`
-	TotalPrice float64                            `json:"totalPrice"`
-	CreatedAt  primitive.DateTime                 `json:"createdAt"`
+	ID              primitive.ObjectID                 `json:"_id"`
+	Commodity       commodityResponse.Commodity        `json:"commodity"`
+	Proposal        proposalResponse.Buyer             `json:"proposal"`
+	Batch           batchResponse.BatchWithoutProposal `json:"batch"`
+	Address         string                             `json:"address"`
+	TransactionType string                             `json:"transactionType"`
+	Status          string                             `json:"status"`
+	TotalPrice      float64                            `json:"totalPrice"`
+	CreatedAt       primitive.DateTime                 `json:"createdAt"`
 }
 
 func FromDomainToBuyer(domain *transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Buyer, int, error) {
@@ -51,14 +52,15 @@ func FromDomainToBuyer(domain *transactions.Domain, batchUC batchs.UseCase, prop
 	}
 
 	return Buyer{
-		ID:         domain.ID,
-		Commodity:  commodity,
-		Proposal:   proposalResponse.FromDomainToBuyer(&proposal),
-		Batch:      batchResponse.FromDomainWithoutProposal(&batch),
-		Address:    domain.Address,
-		Status:     domain.Status,
-		TotalPrice: domain.TotalPrice,
-		CreatedAt:  domain.CreatedAt,
+		ID:              domain.ID,
+		Commodity:       commodity,
+		Proposal:        proposalResponse.FromDomainToBuyer(&proposal),
+		Batch:           batchResponse.FromDomainWithoutProposal(&batch),
+		Address:         domain.Address,
+		Status:          domain.Status,
+		TransactionType: domain.TransactionType,
+		TotalPrice:      domain.TotalPrice,
+		CreatedAt:       domain.CreatedAt,
 	}, http.StatusOK, nil
 }
 
@@ -77,15 +79,16 @@ func FromDomainArrayToBuyer(domain []transactions.Domain, batchUC batchs.UseCase
 }
 
 type All struct {
-	ID         primitive.ObjectID          `json:"_id"`
-	Buyer      userResponse.User           `json:"buyer"`
-	Commodity  commodityResponse.Commodity `json:"commodity"`
-	Proposal   proposalResponse.Buyer      `json:"proposal"`
-	Batch      batchResponse.Batch         `json:"batch"`
-	Address    string                      `json:"address"`
-	Status     string                      `json:"status"`
-	TotalPrice float64                     `json:"totalPrice"`
-	CreatedAt  primitive.DateTime          `json:"createdAt"`
+	ID              primitive.ObjectID          `json:"_id"`
+	Buyer           userResponse.User           `json:"buyer"`
+	Commodity       commodityResponse.Commodity `json:"commodity"`
+	Proposal        proposalResponse.Buyer      `json:"proposal"`
+	Batch           batchResponse.Batch         `json:"batch"`
+	Address         string                      `json:"address"`
+	Status          string                      `json:"status"`
+	TransactionType string                      `json:"transactionType"`
+	TotalPrice      float64                     `json:"totalPrice"`
+	CreatedAt       primitive.DateTime          `json:"createdAt"`
 }
 
 func FromDomainToFarmer(domain *transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (All, int, error) {
@@ -120,14 +123,15 @@ func FromDomainToFarmer(domain *transactions.Domain, batchUC batchs.UseCase, pro
 	}
 
 	return All{
-		ID:         domain.ID,
-		Buyer:      buyerResponse,
-		Commodity:  commodity,
-		Proposal:   proposalResponse.FromDomainToBuyer(&proposal),
-		Address:    domain.Address,
-		Status:     domain.Status,
-		TotalPrice: domain.TotalPrice,
-		CreatedAt:  domain.CreatedAt,
+		ID:              domain.ID,
+		Buyer:           buyerResponse,
+		Commodity:       commodity,
+		Proposal:        proposalResponse.FromDomainToBuyer(&proposal),
+		Address:         domain.Address,
+		TransactionType: domain.TransactionType,
+		Status:          domain.Status,
+		TotalPrice:      domain.TotalPrice,
+		CreatedAt:       domain.CreatedAt,
 	}, http.StatusOK, nil
 }
 
@@ -224,15 +228,16 @@ func FromDomainToTransactionStatisticForCommodityPage(totalTransaction int, tota
 }
 
 type TransactionAnnuals struct {
-	ID         primitive.ObjectID                 `json:"_id"`
-	Buyer      userResponse.User                  `json:"buyer"`
-	Commodity  commodityResponse.Commodity        `json:"commodity"`
-	Proposal   proposalResponse.Buyer             `json:"proposal"`
-	Batch      batchResponse.BatchWithoutProposal `json:"batch"`
-	Address    string                             `json:"address"`
-	Status     string                             `json:"status"`
-	TotalPrice float64                            `json:"totalPrice"`
-	CreatedAt  primitive.DateTime                 `json:"createdAt"`
+	ID              primitive.ObjectID                 `json:"_id"`
+	Buyer           userResponse.User                  `json:"buyer"`
+	Commodity       commodityResponse.Commodity        `json:"commodity"`
+	Proposal        proposalResponse.Buyer             `json:"proposal"`
+	Batch           batchResponse.BatchWithoutProposal `json:"batch"`
+	Address         string                             `json:"address"`
+	TransactionType string                             `json:"transactionType"`
+	Status          string                             `json:"status"`
+	TotalPrice      float64                            `json:"totalPrice"`
+	CreatedAt       primitive.DateTime                 `json:"createdAt"`
 }
 
 func ConvertToTransactionResponse(domain *transactions.Domain, batchUC batchs.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (interface{}, int, error) {
@@ -247,12 +252,13 @@ func ConvertToTransactionResponse(domain *transactions.Domain, batchUC batchs.Us
 	}
 
 	response := TransactionAnnuals{
-		ID:         domain.ID,
-		Buyer:      buyerResponse,
-		Address:    domain.Address,
-		Status:     domain.Status,
-		TotalPrice: domain.TotalPrice,
-		CreatedAt:  domain.CreatedAt,
+		ID:              domain.ID,
+		Buyer:           buyerResponse,
+		Address:         domain.Address,
+		TransactionType: domain.TransactionType,
+		Status:          domain.Status,
+		TotalPrice:      domain.TotalPrice,
+		CreatedAt:       domain.CreatedAt,
 	}
 
 	if domain.TransactionType == constant.TransactionTypeAnnuals {
