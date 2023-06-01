@@ -141,7 +141,6 @@ func (tu *TransactionUseCase) Create(domain *Domain) (int, error) {
 
 		_, err = tu.transactionRepository.GetByBuyerIDBatchIDAndStatus(domain.BuyerID, domain.BatchID, constant.TransactionStatusPending)
 		if err == mongo.ErrNoDocuments {
-
 			proposal, err := tu.proposalRepository.GetByIDWithoutDeleted(batch.ProposalID)
 			if err == mongo.ErrNoDocuments {
 				return http.StatusNotFound, errors.New("proposal tidak ditemukan")

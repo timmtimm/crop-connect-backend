@@ -260,6 +260,7 @@ func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, ye
 							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
 							"$lte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month+1), 1, 0, 0, 0, 0, time.UTC)),
 						},
+						"status": constant.TransactionStatusAccepted,
 					},
 				},
 			}
@@ -271,6 +272,7 @@ func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, ye
 							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
 							"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
 						},
+						"status": constant.TransactionStatusAccepted,
 					},
 				},
 			}
