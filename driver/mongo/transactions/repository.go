@@ -260,7 +260,6 @@ func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, ye
 							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
 							"$lte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month+1), 1, 0, 0, 0, 0, time.UTC)),
 						},
-						"status": constant.TransactionStatusAccepted,
 					},
 				},
 			}
@@ -272,7 +271,6 @@ func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, ye
 							"$gte": primitive.NewDateTimeFromTime(time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)),
 							"$lte": primitive.NewDateTimeFromTime(time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)),
 						},
-						"status": constant.TransactionStatusAccepted,
 					},
 				},
 			}
@@ -290,8 +288,8 @@ func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, ye
 			bson.M{
 				"$lookup": bson.M{
 					"from":         "batchs",
-					"localField":   "_id",
-					"foreignField": "transactionID",
+					"localField":   "batchID",
+					"foreignField": "_id",
 					"as":           "batch_info",
 				},
 			}, bson.M{
@@ -328,7 +326,11 @@ func (tr *TransactionRepository) StatisticByYear(farmerID primitive.ObjectID, ye
 						"$sum": 1,
 					},
 					"totalIncome": bson.M{
-						"$sum": "$totalPrice",
+						"$sum": bson.M{
+							"$cond": bson.A{
+								bson.M{"$eq": bson.A{"$status", constant.TransactionStatusAccepted}},
+								"$totalPrice", 0},
+						},
 					},
 					"totalWeight": bson.M{
 						"$sum": bson.M{
