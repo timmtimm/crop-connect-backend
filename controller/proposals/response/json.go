@@ -15,8 +15,9 @@ import (
 
 type Admin struct {
 	ID                    primitive.ObjectID          `json:"_id"`
-	Validator             userReponse.User            `json:"validator"`
+	Validator             interface{}                 `json:"validator,omitempty"`
 	Commodity             commodityResponse.Commodity `json:"commodity"`
+	Code                  primitive.ObjectID          `json:"code"`
 	Name                  string                      `json:"name"`
 	Description           string                      `json:"description"`
 	Status                string                      `json:"status"`
@@ -30,9 +31,17 @@ type Admin struct {
 }
 
 func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase, regionUC regions.UseCase) (Admin, int, error) {
-	validator, statusCode, err := userUC.GetByID(domain.ValidatorID)
-	if err != nil {
-		return Admin{}, statusCode, err
+	var validatorResponse userReponse.User
+	if domain.ValidatorID != primitive.NilObjectID {
+		validator, statusCode, err := userUC.GetByID(domain.ValidatorID)
+		if err != nil {
+			return Admin{}, statusCode, err
+		}
+
+		validatorResponse, statusCode, err = userReponse.FromDomain(validator, regionUC)
+		if err != nil {
+			return Admin{}, statusCode, err
+		}
 	}
 
 	commodity, statusCode, err := commodityUC.GetByID(domain.CommodityID)
@@ -45,15 +54,11 @@ func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodity
 		return Admin{}, statusCode, err
 	}
 
-	validatorResponse, statusCode, err := userReponse.FromDomain(validator, regionUC)
-	if err != nil {
-		return Admin{}, statusCode, err
-	}
-
 	return Admin{
 		ID:                    domain.ID,
 		Validator:             validatorResponse,
 		Commodity:             commodityResponse,
+		Code:                  domain.Code,
 		Name:                  domain.Name,
 		Description:           domain.Description,
 		Status:                domain.Status,
@@ -65,6 +70,19 @@ func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodity
 		UpdatedAt:             domain.UpdatedAt,
 		DeletedAt:             domain.DeletedAt,
 	}, http.StatusOK, nil
+}
+
+func FromDomainArrayToAdmin(domain []proposals.Domain, userUC users.UseCase, commodityUC commodities.UseCase, regionUC regions.UseCase) ([]Admin, int, error) {
+	var response []Admin
+	for _, value := range domain {
+		admin, statusCode, err := FromDomainToAdmin(&value, userUC, commodityUC, regionUC)
+		if err != nil {
+			return []Admin{}, statusCode, err
+		}
+		response = append(response, admin)
+	}
+
+	return response, http.StatusOK, nil
 }
 
 type Buyer struct {
@@ -102,6 +120,7 @@ type ProposalWithCommodity struct {
 	ID                    primitive.ObjectID          `json:"_id"`
 	Commodity             commodityResponse.Commodity `json:"commodity"`
 	Region                regionResponse.Response     `json:"region"`
+	Code                  primitive.ObjectID          `json:"code"`
 	Name                  string                      `json:"name"`
 	Description           string                      `json:"description"`
 	EstimatedTotalHarvest float64                     `json:"estimatedTotalHarvest"`
@@ -132,6 +151,7 @@ func FromDomainToProposalWithCommodity(domain *proposals.Domain, userUC users.Us
 		ID:                    domain.ID,
 		Commodity:             commodityResponse,
 		Region:                regionResponse.FromDomain(&region),
+		Code:                  domain.Code,
 		Name:                  domain.Name,
 		Description:           domain.Description,
 		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,
