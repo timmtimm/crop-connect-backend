@@ -273,52 +273,6 @@ func (br *BatchRepository) CountByYear(year int) (int, error) {
 	return result.Total, nil
 }
 
-func (br *BatchRepository) GetByTransactionID(transactionID primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (batchs.Domain, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	pipeline := []interface{}{
-		bson.M{
-			"$match": bson.M{
-				"transactionID": transactionID,
-			},
-		},
-	}
-
-	if farmerID != primitive.NilObjectID || buyerID != primitive.NilObjectID {
-		if farmerID != primitive.NilObjectID {
-			pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
-				"$match": bson.M{
-					"commodity_info.farmerID": farmerID,
-				},
-			})
-		}
-
-		if buyerID != primitive.NilObjectID {
-			pipeline = append(pipeline, bson.M{
-				"$match": bson.M{
-					"transaction_info.buyerID": buyerID,
-				},
-			})
-		}
-	}
-
-	cursor, err := br.collection.Aggregate(ctx, pipeline)
-	if err != nil {
-		return batchs.Domain{}, err
-	}
-
-	var result Model
-	for cursor.Next(ctx) {
-		err := cursor.Decode(&result)
-		if err != nil {
-			return batchs.Domain{}, err
-		}
-	}
-
-	return result.ToDomain(), nil
-}
-
 func (br *BatchRepository) GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]batchs.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -362,6 +316,72 @@ func (br *BatchRepository) GetForTransactionByID(id primitive.ObjectID) (batchs.
 	}
 
 	return result.ToDomain(), nil
+}
+
+func (br *BatchRepository) GetForHarvestByCommmodityID(commodityID primitive.ObjectID) ([]batchs.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$lookup": bson.M{
+				"from": "harvests",
+				"let":  bson.M{"batchID": "$_id"},
+				"pipeline": bson.A{
+					bson.M{
+						"$match": bson.M{
+							"$expr": bson.M{"$eq": bson.A{"$batchID", "$$batchID"}},
+						}}},
+				"as": "harvest_info",
+			},
+		}, bson.M{
+			"$match": bson.M{
+				"harvest_info": bson.M{"$size": 0},
+			},
+		}, bson.M{
+			"$project": bson.M{
+				"_id":                  "$_id",
+				"proposalID":           "$proposalID",
+				"name":                 "$name",
+				"estimatedHarvestDate": "$estimatedHarvestDate",
+				"status":               "$status",
+				"isAvailable":          "$isAvailable",
+				"createdAt":            "$createdAt",
+				"harvest_info": bson.M{
+					"$arrayElemAt": bson.A{"$harvest_info", 0},
+				},
+			},
+		}, lookupProposal, lookupCommodity, bson.M{
+			"$project": bson.M{
+				"_id":                  "$_id",
+				"proposalID":           "$proposalID",
+				"name":                 "$name",
+				"estimatedHarvestDate": "$estimatedHarvestDate",
+				"status":               "$status",
+				"isAvailable":          "$isAvailable",
+				"createdAt":            "$createdAt",
+				"commodity_info": bson.M{
+					"$arrayElemAt": bson.A{"$commodity_info", 0},
+				},
+			},
+		}, bson.M{
+			"$match": bson.M{
+				"commodity_info._id": commodityID,
+			},
+		},
+	}
+
+	cursor, err := br.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return []batchs.Domain{}, err
+	}
+
+	var result []Model
+	if err := cursor.All(ctx, &result); err != nil {
+		return []batchs.Domain{}, err
+	}
+
+	return ToDomainArray(result), nil
 }
 
 /*

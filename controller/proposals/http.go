@@ -227,12 +227,23 @@ func (pc *Controller) CountTotalProposalByFarmer(c echo.Context) error {
 }
 
 func (pc *Controller) GetByPaginationAndQuery(c echo.Context) error {
-	userID, err := helper.GetUIDFromToken(c)
+	token, err := helper.GetPayloadFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
 			Status:  http.StatusUnauthorized,
 			Message: "token tidak valid",
 		})
+	}
+
+	farmerID := primitive.NilObjectID
+	if token.Role == constant.RoleFarmer {
+		farmerID, err = primitive.ObjectIDFromHex(token.UID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+				Status:  http.StatusBadRequest,
+				Message: "token tidak valid",
+			})
+		}
 	}
 
 	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "status", "plantingArea", "estimatedTotalHarvest", "isAvailable", "createdAt"})
@@ -256,7 +267,7 @@ func (pc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		Limit:       queryPagination.Limit,
 		Sort:        queryPagination.Sort,
 		Order:       queryPagination.Order,
-		FarmerID:    userID,
+		FarmerID:    farmerID,
 		CommodityID: queryparam.CommodityID,
 		Name:        queryparam.Name,
 		Status:      queryparam.Status,
@@ -270,7 +281,7 @@ func (pc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		})
 	}
 
-	proposalResponse, statusCode, err := response.FromDomainArrayToProposalWithCommodity(proposals, pc.userUC, pc.commodityUC, pc.regionUC)
+	proposalResponse, statusCode, err := response.FromDomainArrayToAdmin(proposals, pc.userUC, pc.commodityUC, pc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -314,12 +325,25 @@ func (pc *Controller) GetByID(c echo.Context) error {
 		}
 	}
 
-	proposal, statusCode, err := pc.proposalUC.GetByIDAndFarmerID(proposalID, farmerID)
-	if err != nil {
-		return c.JSON(statusCode, helper.BaseResponse{
-			Status:  statusCode,
-			Message: err.Error(),
-		})
+	var proposal proposals.Domain
+	var statusCode int
+
+	if farmerID != primitive.NilObjectID {
+		proposal, statusCode, err = pc.proposalUC.GetByIDAndFarmerID(proposalID, farmerID)
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
+	} else {
+		proposal, statusCode, err = pc.proposalUC.GetByID(proposalID)
+		if err != nil {
+			return c.JSON(statusCode, helper.BaseResponse{
+				Status:  statusCode,
+				Message: err.Error(),
+			})
+		}
 	}
 
 	proposalResponse, statusCode, err := response.FromDomainToProposalWithCommodity(&proposal, pc.userUC, pc.commodityUC, pc.regionUC)

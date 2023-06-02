@@ -6,7 +6,6 @@ import (
 	"crop_connect/business/proposals"
 	"crop_connect/business/regions"
 	"crop_connect/business/users"
-	"errors"
 	"net/http"
 
 	proposalResponse "crop_connect/controller/proposals/response"
@@ -27,14 +26,14 @@ type Batch struct {
 }
 
 func FromDomain(domain batchs.Domain, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Batch, int, error) {
-	proposal, statusCode, err := proposalUC.GetByID(domain.ProposalID)
+	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(domain.ProposalID)
 	if err != nil {
-		return Batch{}, statusCode, errors.New("gagal mendapatkan transaksi")
+		return Batch{}, statusCode, err
 	}
 
 	responseForProposal, statusCode, err := proposalResponse.FromDomainToProposalWithCommodity(&proposal, userUC, commodityUC, regionUC)
 	if err != nil {
-		return Batch{}, statusCode, errors.New("gagal mendapatkan transaksi")
+		return Batch{}, statusCode, err
 	}
 
 	return Batch{

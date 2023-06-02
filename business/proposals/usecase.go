@@ -225,6 +225,7 @@ func (pu *ProposalUseCase) Update(domain *Domain, farmerID primitive.ObjectID) (
 		}
 
 		domain.ID = primitive.NewObjectID()
+		domain.Code = proposal.Code
 		domain.CommodityID = proposal.CommodityID
 		domain.Status = constant.ProposalStatusPending
 		domain.CreatedAt = proposal.CreatedAt
