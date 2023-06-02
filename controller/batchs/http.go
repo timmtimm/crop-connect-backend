@@ -287,6 +287,46 @@ func (bc *Controller) GetForTransactionByID(c echo.Context) error {
 	})
 }
 
+func (bc *Controller) GetForHarvestByCommmodityID(c echo.Context) error {
+	commodityID, err := primitive.ObjectIDFromHex(c.Param("commodity-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id komoditas tidak valid",
+		})
+	}
+
+	farmerID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+
+	batch, statusCode, err := bc.batchUC.GetForHarvestByCommmodityIDAndFarmerID(commodityID, farmerID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	batchResponse, statusCode, err := response.FromDomainArray(batch, bc.proposalUC, bc.commodityUC, bc.userUC, bc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan batch",
+		Data:    batchResponse,
+	})
+}
+
 /*
 Update
 */
