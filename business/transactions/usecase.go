@@ -5,7 +5,6 @@ import (
 	"crop_connect/business/commodities"
 	"crop_connect/business/proposals"
 	"crop_connect/constant"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -200,11 +199,29 @@ func (tu *TransactionUseCase) GetByPaginationAndQuery(query Query) ([]Domain, in
 }
 
 func (tu *TransactionUseCase) GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
-	transaction, err := tu.transactionRepository.GetByIDAndBuyerIDOrFarmerID(id, buyerID, farmerID)
+	transaction, err := tu.transactionRepository.GetByIDAndBuyerID(id, buyerID)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, http.StatusNotFound, errors.New("transaksi tidak ditemukan")
 	} else if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan transaksi")
+	}
+
+	proposal, err := tu.proposalRepository.GetByIDWithoutDeleted(transaction.ProposalID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
+	}
+
+	commodity, err := tu.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	if farmerID != primitive.NilObjectID && farmerID != commodity.FarmerID {
+		return Domain{}, http.StatusForbidden, errors.New("transaksi tidak ditemukan")
 	}
 
 	return transaction, http.StatusOK, nil
@@ -242,9 +259,6 @@ func (tu *TransactionUseCase) StatisticTopCommodity(farmerID primitive.ObjectID,
 	if err != nil {
 		return []StatisticTopCommodity{}, http.StatusInternalServerError, err
 	}
-
-	json, _ := json.Marshal(statistics)
-	fmt.Println(string(json))
 
 	domainStatisticCommodity := []StatisticTopCommodity{}
 	for _, statistic := range statistics {
@@ -379,7 +393,7 @@ func (tu *TransactionUseCase) MakeDecision(domain *Domain, farmerID primitive.Ob
 }
 
 func (tu *TransactionUseCase) CancelOnPending(id primitive.ObjectID, buyerID primitive.ObjectID) (int, error) {
-	transaction, err := tu.transactionRepository.GetByIDAndBuyerIDOrFarmerID(id, buyerID, primitive.NilObjectID)
+	transaction, err := tu.transactionRepository.GetByIDAndBuyerID(id, buyerID)
 	if err != nil {
 		return http.StatusNotFound, errors.New("transaksi tidak ditemukan")
 	}

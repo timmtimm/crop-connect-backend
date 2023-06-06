@@ -183,18 +183,15 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 		})
 	}
 
-	if query.Commodity != "" {
+	if query.CommodityID != primitive.NilObjectID {
 		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
-				"commodity_info.name": bson.M{
-					"$regex":   query.Commodity,
-					"$options": "i",
-				},
+				"proposal_info.commodityID": query.CommodityID,
 			},
 		})
 	}
 
-	if query.Commodity != "" && query.FarmerID != primitive.NilObjectID {
+	if query.CommodityID != primitive.NilObjectID && query.FarmerID != primitive.NilObjectID {
 		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,

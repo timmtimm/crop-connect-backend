@@ -10,6 +10,7 @@ import (
 	"crop_connect/helper/cloudinary"
 	"crop_connect/util"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"time"
@@ -51,18 +52,25 @@ func (tru *TreatmentRecordUseCase) CheckFarmerID(id primitive.ObjectID, farmerID
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
 	}
 
-	proposal, err := tru.proposalRepository.GetByID(batch.ProposalID)
+	proposal, err := tru.proposalRepository.GetByIDWithoutDeleted(batch.ProposalID)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
 	} else if err != nil {
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
 	}
 
-	commodity, err := tru.commodityRepository.GetByIDAndFarmerID(proposal.CommodityID, farmerID)
+	fmt.Println("test a 1")
+	commodity, err := tru.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	} else if err != nil {
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
+	}
+
+	fmt.Println("test a 2")
+	fmt.Println(commodity.FarmerID, farmerID)
+	if commodity.FarmerID != farmerID {
+		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusForbidden, errors.New("riwayat perawatan tidak ditemukan")
 	}
 
 	return treatmentRecord, batch, proposal, commodity, http.StatusOK, nil
@@ -91,7 +99,7 @@ func (tru *TreatmentRecordUseCase) RequestToFarmer(domain *Domain) (Domain, int,
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan jumlah riwayat perawatan")
 	}
 
-	newestTreatmentRecord, err := tru.treatmentRecordRepository.GetNewestByBatchID(domain.BatchID)
+	newestTreatmentRecord, err := tru.treatmentRecordRepository.GetNewestByBatchIDAndStatus(domain.BatchID, "")
 	if err != mongo.ErrNoDocuments {
 		if newestTreatmentRecord.Status != constant.TreatmentRecordStatusApproved {
 			return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan terakhir belum selesai")
@@ -171,9 +179,22 @@ func (tru *TreatmentRecordUseCase) StatisticByYear(year int) ([]dto.StatisticByY
 }
 
 func (tru *TreatmentRecordUseCase) GetByIDAndFarmerID(id primitive.ObjectID, farmerID primitive.ObjectID) (Domain, int, error) {
-	treatmentRecord, _, _, _, statusCode, err := tru.CheckFarmerID(id, farmerID)
-	if err != nil {
-		return Domain{}, statusCode, err
+	var treatmentRecord Domain
+	var statusCode int
+	var err error
+
+	if farmerID != primitive.NilObjectID {
+		treatmentRecord, _, _, _, statusCode, err = tru.CheckFarmerID(id, farmerID)
+		if err != nil {
+			return Domain{}, statusCode, err
+		}
+	} else {
+		treatmentRecord, err = tru.treatmentRecordRepository.GetByID(id)
+		if err == mongo.ErrNoDocuments {
+			return Domain{}, http.StatusNotFound, errors.New("riwayat perawatan tidak ditemukan")
+		} else if err != nil {
+			return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan")
+		}
 	}
 
 	return treatmentRecord, http.StatusOK, nil
@@ -199,9 +220,9 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 
 	var imageURLs []string
 
-	if len(images) != len(notes) {
-		return Domain{}, http.StatusBadRequest, errors.New("jumlah gambar dan catatan tidak sama")
-	}
+	// if len(images) != len(notes) {
+	// 	return Domain{}, http.StatusBadRequest, errors.New("jumlah gambar dan catatan tidak sama")
+	// }
 
 	if len(images) > 0 {
 		imageURLs, err = tru.cloudinary.UploadManyWithGeneratedFilename(constant.CloudinaryFolderTreatmentRecords, images)
@@ -254,22 +275,18 @@ func (tru *TreatmentRecordUseCase) UpdateTreatmentRecord(domain *Domain, farmerI
 
 		newImageURLs, err := tru.cloudinary.UpdateArrayImage(constant.CloudinaryFolderCommodities, imageURLs, updateImages)
 		if err != nil {
-			return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate gambar")
+			return Domain{}, http.StatusInternalServerError, err
 		}
 
+		tempImageAndNotes := []dto.ImageAndNote{}
 		for i := 0; i < len(newImageURLs); i++ {
-			if len(newImageURLs) == i {
-				treatmentRecord.Treatment = append(treatmentRecord.Treatment, dto.ImageAndNote{
-					ImageURL: newImageURLs[i],
-					Note:     notes[i],
-				})
-			} else {
-				treatmentRecord.Treatment[i] = dto.ImageAndNote{
-					ImageURL: newImageURLs[i],
-					Note:     notes[i],
-				}
-			}
+			tempImageAndNotes = append(tempImageAndNotes, dto.ImageAndNote{
+				ImageURL: newImageURLs[i],
+				Note:     notes[i],
+			})
 		}
+
+		treatmentRecord.Treatment = tempImageAndNotes
 	} else {
 		return Domain{}, http.StatusBadRequest, errors.New("gambar dan catatan tidak boleh kosong")
 	}

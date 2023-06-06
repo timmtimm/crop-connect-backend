@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FilterQuery struct {
 	Commodity string
-	Batch     string
+	BatchID   primitive.ObjectID
 	Number    int
 	Status    string
 }
@@ -21,9 +22,10 @@ type FilterQuery struct {
 func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 	filter := FilterQuery{
 		Commodity: c.QueryParam("commodity"),
-		Batch:     c.QueryParam("batch"),
 		Status:    c.QueryParam("status"),
 	}
+
+	var err error
 
 	if filter.Status != "" {
 		if !util.CheckStringOnArray([]string{constant.TreatmentRecordStatusApproved, constant.TreatmentRecordStatusPending, constant.TreatmentRecordStatusRevision, constant.TreatmentRecordStatusWaitingResponse}, filter.Status) {
@@ -31,13 +33,18 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 		}
 	}
 
+	if batch := c.QueryParam("batchID"); batch != "" {
+		filter.BatchID, err = primitive.ObjectIDFromHex(batch)
+		if err != nil {
+			return FilterQuery{}, errors.New("batchID harus berupa hex")
+		}
+	}
+
 	if number := c.QueryParam("number"); number != "" {
-		numberInt, err := strconv.Atoi(number)
+		filter.Number, err = strconv.Atoi(number)
 		if err != nil {
 			return FilterQuery{}, errors.New("number harus berupa angka")
 		}
-
-		filter.Number = numberInt
 	}
 
 	return filter, nil

@@ -18,7 +18,7 @@ import (
 )
 
 type TreatmentRecord struct {
-	ID           primitive.ObjectID                     `json:"id"`
+	ID           primitive.ObjectID                     `json:"_id"`
 	Requester    userResponse.User                      `json:"requester"`
 	Accepter     interface{}                            `json:"accepter,omitempty"`
 	Proposal     proposalResponse.ProposalWithCommodity `json:"proposal"`

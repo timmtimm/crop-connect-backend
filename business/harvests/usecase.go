@@ -69,48 +69,48 @@ Create
 */
 
 func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.ObjectID, images []*multipart.FileHeader, notes []string) (Domain, int, error) {
-	newestTreatmentRecord, err := hu.treatmentRecordRepository.GetNewestByBatchID(domain.BatchID)
-	if err == mongo.ErrNoDocuments {
-		return Domain{}, http.StatusNotFound, errors.New("batch belum memiliki riwayat perawatan")
-	} else if err != nil {
-		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan terbaru")
-	}
-
-	if newestTreatmentRecord.Date > domain.Date {
-		return Domain{}, http.StatusBadRequest, errors.New("tanggal panen tidak boleh lebih awal dari tanggal perawatan terakhir")
-	} else if domain.Date > primitive.NewDateTimeFromTime(time.Now()) {
-		return Domain{}, http.StatusBadRequest, errors.New("tanggal panen tidak boleh lebih dari tanggal hari ini")
-	}
-
-	batch, err := hu.batchRepository.GetByID(domain.BatchID)
+	checkBatch, err := hu.batchRepository.GetByID(domain.BatchID)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")
 	} else if err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
 	}
 
-	checkHarvest, err := hu.harvestRepository.GetByBatchID(domain.BatchID)
+	_, _, statusCode, err := hu.CheckFarmerIDByProposalID(checkBatch.ProposalID, farmerID)
+	if err != nil {
+		return Domain{}, statusCode, err
+	}
+	newestTreatmentRecord, err := hu.treatmentRecordRepository.GetNewestByBatchIDAndStatus(domain.BatchID, constant.TreatmentRecordStatusApproved)
 	if err == mongo.ErrNoDocuments {
-		_, _, statusCode, err := hu.CheckFarmerIDByProposalID(batch.ProposalID, farmerID)
-		if err != nil {
-			return Domain{}, statusCode, err
-		}
-
+		return Domain{}, http.StatusNotFound, errors.New("batch belum memiliki riwayat perawatan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan terbaru")
+	}
+	if newestTreatmentRecord.Date > domain.Date {
+		return Domain{}, http.StatusBadRequest, errors.New("tanggal panen tidak boleh lebih awal dari tanggal perawatan terakhir")
+	} else if domain.Date > primitive.NewDateTimeFromTime(time.Now()) {
+		return Domain{}, http.StatusBadRequest, errors.New("tanggal panen tidak boleh lebih dari tanggal hari ini")
+	}
+	checkHarvest, err := hu.harvestRepository.GetByBatchIDAndStatus(domain.BatchID, "")
+	if err == mongo.ErrNoDocuments {
 		var imageURLs []string
-		notes = util.RemoveNilStringInArray(notes)
 
 		if len(images) > 0 && len(notes) > 0 {
+
 			imageURLs, err = hu.cloudinary.UploadManyWithGeneratedFilename(constant.CloudinaryFolderHarvests, images)
 			if err != nil {
 				return Domain{}, http.StatusInternalServerError, errors.New("gagal mengunggah gambar")
 			}
 
+			tempImageAndNotes := []dto.ImageAndNote{}
 			for i := 0; i < len(imageURLs); i++ {
-				domain.Harvest = append(domain.Harvest, dto.ImageAndNote{
+				tempImageAndNotes = append(tempImageAndNotes, dto.ImageAndNote{
 					ImageURL: imageURLs[i],
 					Note:     notes[i],
 				})
 			}
+
+			domain.Harvest = tempImageAndNotes
 		} else {
 			return Domain{}, http.StatusBadRequest, errors.New("gambar dan catatan tidak boleh kosong")
 		}
@@ -142,8 +142,8 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 Read
 */
 
-func (hu *HarvestUseCase) GetByBatchID(batchID primitive.ObjectID) (Domain, int, error) {
-	harvest, err := hu.harvestRepository.GetByBatchID(batchID)
+func (hu *HarvestUseCase) GetByBatchIDAndStatus(batchID primitive.ObjectID, status string) (Domain, int, error) {
+	harvest, err := hu.harvestRepository.GetByBatchIDAndStatus(batchID, status)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, http.StatusNotFound, errors.New("hasil panen tidak ditemukan")
 	} else if err != nil {
@@ -169,6 +169,17 @@ func (hu *HarvestUseCase) CountByYear(year int) (float64, int, error) {
 	}
 
 	return count, http.StatusOK, nil
+}
+
+func (hu *HarvestUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
+	harvest, err := hu.harvestRepository.GetByID(id)
+	if err == mongo.ErrNoDocuments {
+		return Domain{}, http.StatusNotFound, errors.New("hasil panen tidak ditemukan")
+	} else if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan hasil panen")
+	}
+
+	return harvest, http.StatusOK, nil
 }
 
 /*

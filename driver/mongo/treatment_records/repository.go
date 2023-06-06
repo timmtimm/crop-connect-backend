@@ -71,14 +71,20 @@ func (trr *TreatmentRecordRepository) Create(domain *treatmentRecord.Domain) (tr
 Read
 */
 
-func (trr *TreatmentRecordRepository) GetNewestByBatchID(batchID primitive.ObjectID) (treatmentRecord.Domain, error) {
+func (trr *TreatmentRecordRepository) GetNewestByBatchIDAndStatus(batchID primitive.ObjectID, status string) (treatmentRecord.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	var result Model
-	err := trr.collection.FindOne(ctx, bson.M{
+	filter := bson.M{
 		"batchID": batchID,
-	}, &options.FindOneOptions{
+	}
+
+	if status != "" {
+		filter["status"] = status
+	}
+
+	var result Model
+	err := trr.collection.FindOne(ctx, filter, &options.FindOneOptions{
 		Sort: bson.M{
 			"createdAt": -1,
 		},
@@ -158,109 +164,31 @@ func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([
 		})
 	}
 
-	if query.Batch != "" {
+	if query.BatchID != primitive.NilObjectID {
 		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
-				"createdAt": bson.M{
-					"$gte": query.Batch,
-				},
+				"batchID": query.BatchID,
 			},
 		})
 	}
 
 	if query.Commodity != "" {
-		lookup1 := bson.M{
-			"$lookup": bson.M{
-				"from":         "batchs",
-				"localField":   "batchID",
-				"foreignField": "_id",
-				"as":           "batch_info",
-			},
-		}
-
-		lookup2 := bson.M{
-			"$lookup": bson.M{
-				"from":         "transactions",
-				"localField":   "batch_info.transactionID",
-				"foreignField": "_id",
-				"as":           "transaction_info",
-			},
-		}
-
-		lookup3 := bson.M{
-			"$lookup": bson.M{
-				"from":         "proposals",
-				"localField":   "transaction_info.proposalID",
-				"foreignField": "_id",
-				"as":           "proposal_info",
-			},
-		}
-
-		lookup4 := bson.M{
-			"$lookup": bson.M{
-				"from":         "commodities",
-				"localField":   "proposal_info.commodityID",
-				"foreignField": "_id",
-				"as":           "commodity_info",
-			},
-		}
-
-		match := bson.M{
+		pipeline = append(pipeline, lookupBatch, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.name": bson.M{
 					"$regex":   query.Commodity,
 					"$options": "i",
 				},
 			},
-		}
-
-		pipeline = append(pipeline, lookup1, lookup2, lookup3, lookup4, match)
+		})
 	}
 
 	if query.FarmerID != primitive.NilObjectID && query.Commodity == "" {
-		lookup1 := bson.M{
-			"$lookup": bson.M{
-				"from":         "batchs",
-				"localField":   "batchID",
-				"foreignField": "_id",
-				"as":           "batch_info",
-			},
-		}
-
-		lookup2 := bson.M{
-			"$lookup": bson.M{
-				"from":         "transactions",
-				"localField":   "batch_info.transactionID",
-				"foreignField": "_id",
-				"as":           "transaction_info",
-			},
-		}
-
-		lookup3 := bson.M{
-			"$lookup": bson.M{
-				"from":         "proposals",
-				"localField":   "transaction_info.proposalID",
-				"foreignField": "_id",
-				"as":           "proposal_info",
-			},
-		}
-
-		lookup4 := bson.M{
-			"$lookup": bson.M{
-				"from":         "commodities",
-				"localField":   "proposal_info.commodityID",
-				"foreignField": "_id",
-				"as":           "commodity_info",
-			},
-		}
-
-		match := bson.M{
+		pipeline = append(pipeline, lookupBatch, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},
-		}
-
-		pipeline = append(pipeline, lookup1, lookup2, lookup3, lookup4, match)
+		})
 	} else if query.FarmerID != primitive.NilObjectID && query.Commodity != "" {
 		match := bson.M{
 			"$match": bson.M{

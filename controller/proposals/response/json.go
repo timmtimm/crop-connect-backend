@@ -44,7 +44,7 @@ func FromDomainToAdmin(domain *proposals.Domain, userUC users.UseCase, commodity
 		}
 	}
 
-	commodity, statusCode, err := commodityUC.GetByID(domain.CommodityID)
+	commodity, statusCode, err := commodityUC.GetByIDWithoutDeleted(domain.CommodityID)
 	if err != nil {
 		return Admin{}, statusCode, err
 	}
@@ -87,6 +87,7 @@ func FromDomainArrayToAdmin(domain []proposals.Domain, userUC users.UseCase, com
 
 type Buyer struct {
 	ID                    primitive.ObjectID `json:"_id"`
+	Code                  primitive.ObjectID `json:"code"`
 	Name                  string             `json:"name"`
 	Description           string             `json:"description"`
 	EstimatedTotalHarvest float64            `json:"estimatedTotalHarvest"`
@@ -98,6 +99,7 @@ type Buyer struct {
 func FromDomainToBuyer(domain *proposals.Domain) Buyer {
 	return Buyer{
 		ID:                    domain.ID,
+		Code:                  domain.Code,
 		Name:                  domain.Name,
 		Description:           domain.Description,
 		EstimatedTotalHarvest: domain.EstimatedTotalHarvest,

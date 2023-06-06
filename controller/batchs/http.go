@@ -7,6 +7,7 @@ import (
 	"crop_connect/business/regions"
 	"crop_connect/business/transactions"
 	"crop_connect/business/users"
+	"crop_connect/constant"
 	"crop_connect/controller/batchs/request"
 	"crop_connect/controller/batchs/response"
 	"crop_connect/helper"
@@ -84,7 +85,7 @@ func (bc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		})
 	}
 
-	farmerID, err := helper.GetUIDFromToken(c)
+	token, err := helper.GetPayloadFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
 			Status:  http.StatusUnauthorized,
@@ -101,14 +102,25 @@ func (bc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 	}
 
 	batchQuery := batchs.Query{
-		Skip:      queryPagination.Skip,
-		Limit:     queryPagination.Limit,
-		Sort:      queryPagination.Sort,
-		Order:     queryPagination.Order,
-		FarmerID:  farmerID,
-		Commodity: queryParam.Commodity,
-		Name:      queryParam.Name,
-		Status:    queryParam.Status,
+		Skip:        queryPagination.Skip,
+		Limit:       queryPagination.Limit,
+		Sort:        queryPagination.Sort,
+		Order:       queryPagination.Order,
+		CommodityID: queryParam.CommodityID,
+		Name:        queryParam.Name,
+		Status:      queryParam.Status,
+	}
+
+	if token.Role == constant.RoleFarmer {
+		farmerID, err := helper.GetUIDFromToken(c)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+				Status:  http.StatusUnauthorized,
+				Message: err.Error(),
+			})
+		}
+
+		batchQuery.FarmerID = farmerID
 	}
 
 	batchs, totalData, statusCode, err := bc.batchUC.GetByPaginationAndQuery(batchQuery)

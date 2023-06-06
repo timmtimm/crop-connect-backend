@@ -82,7 +82,14 @@ func (hc *Controller) SubmitHarvest(c echo.Context) error {
 		})
 	}
 
-	inputDomain := userInput.ToDomain()
+	inputDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
 	inputDomain.BatchID = batchID
 
 	_, statusCode, err = hc.harvestUC.SubmitHarvest(inputDomain, userID, images, []string{userInput.Note1, userInput.Note2, userInput.Note3, userInput.Note4, userInput.Note5})
@@ -129,13 +136,13 @@ func (hc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 	}
 
 	harvestQuery := harvests.Query{
-		Skip:      queryPagination.Skip,
-		Limit:     queryPagination.Limit,
-		Sort:      queryPagination.Sort,
-		Order:     queryPagination.Order,
-		Commodity: queryParam.Commodity,
-		Batch:     queryParam.Batch,
-		Status:    queryParam.Status,
+		Skip:        queryPagination.Skip,
+		Limit:       queryPagination.Limit,
+		Sort:        queryPagination.Sort,
+		Order:       queryPagination.Order,
+		CommodityID: queryParam.CommodityID,
+		BatchID:     queryParam.BatchID,
+		Status:      queryParam.Status,
 	}
 
 	if token.Role == constant.RoleFarmer {
@@ -183,7 +190,7 @@ func (hc *Controller) GetByBatchID(c echo.Context) error {
 		})
 	}
 
-	harvest, statusCode, err := hc.harvestUC.GetByBatchID(batchID)
+	harvest, statusCode, err := hc.harvestUC.GetByBatchIDAndStatus(batchID, constant.HarvestStatusApproved)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -227,6 +234,38 @@ func (hc *Controller) CountByYear(c echo.Context) error {
 		Status:  statusCode,
 		Message: "berhasil mendapatkan jumlah panen",
 		Data:    count,
+	})
+}
+
+func (hc *Controller) GetByID(c echo.Context) error {
+	harvestID, err := primitive.ObjectIDFromHex(c.Param("harvest-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id panen tidak valid",
+		})
+	}
+
+	harvest, statusCode, err := hc.harvestUC.GetByID(harvestID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	harvestResponses, statusCode, err := response.FromDomain(&harvest, hc.batchUC, hc.transactionUC, hc.proposalUC, hc.commodityUC, hc.userUC, hc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan panen",
+		Data:    harvestResponses,
 	})
 }
 
@@ -309,7 +348,14 @@ func (hc *Controller) Update(c echo.Context) error {
 		})
 	}
 
-	inputDomain := userInput.ToDomain()
+	inputDomain, err := userInput.ToDomain()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
 	inputDomain.ID = harvestID
 
 	updateImages, statusCode, err := helper.GetUpdateImageRequest(c, []string{"image1", "image2", "image3", "image4", "image5"}, util.ConvertArrayStringToBool(userInput.IsChange), util.ConvertArrayStringToBool(userInput.IsDelete))
