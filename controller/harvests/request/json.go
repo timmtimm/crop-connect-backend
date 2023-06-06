@@ -4,6 +4,7 @@ import (
 	"crop_connect/business/harvests"
 	"crop_connect/helper"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,24 +14,34 @@ import (
 )
 
 type SubmitHarvest struct {
-	Date         time.Time `form:"date" json:"date" validate:"required"`
-	TotalHarvest float64   `form:"totalHarvest" json:"totalHarvest" validate:"required,number"`
-	Condition    string    `form:"condition" json:"condition" validate:"required"`
-	Note1        string    `form:"note1" json:"note1"`
-	Note2        string    `form:"note2" json:"note2"`
-	Note3        string    `form:"note3" json:"note3"`
-	Note4        string    `form:"note4" json:"note4"`
-	Note5        string    `form:"note5" json:"note5"`
-	IsChange     string    `form:"isChange" json:"isChange"`
-	IsDelete     string    `form:"isDelete" json:"isDelete"`
+	Date         string `form:"date" json:"date" validate:"required"`
+	TotalHarvest string `form:"totalHarvest" json:"totalHarvest" validate:"required,number"`
+	Condition    string `form:"condition" json:"condition" validate:"required"`
+	Note1        string `form:"note1" json:"note1"`
+	Note2        string `form:"note2" json:"note2"`
+	Note3        string `form:"note3" json:"note3"`
+	Note4        string `form:"note4" json:"note4"`
+	Note5        string `form:"note5" json:"note5"`
+	IsChange     string `form:"isChange" json:"isChange"`
+	IsDelete     string `form:"isDelete" json:"isDelete"`
 }
 
-func (req *SubmitHarvest) ToDomain() *harvests.Domain {
-	return &harvests.Domain{
-		Date:         primitive.NewDateTimeFromTime(req.Date),
-		TotalHarvest: req.TotalHarvest,
-		Condition:    req.Condition,
+func (req *SubmitHarvest) ToDomain() (*harvests.Domain, error) {
+	date, err := time.Parse("2006-01-02", req.Date)
+	if err != nil {
+		return &harvests.Domain{}, errors.New("startDate harus berupa tanggal")
 	}
+
+	totalHarvest, err := strconv.ParseFloat(req.TotalHarvest, 64)
+	if err != nil {
+		return &harvests.Domain{}, errors.New("totalHarvest harus berupa angka")
+	}
+
+	return &harvests.Domain{
+		Date:         primitive.NewDateTimeFromTime(date),
+		TotalHarvest: totalHarvest,
+		Condition:    req.Condition,
+	}, nil
 }
 
 func (req *SubmitHarvest) Validate() []helper.ValidationError {

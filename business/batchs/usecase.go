@@ -96,7 +96,6 @@ Read
 */
 
 func (bu *BatchUseCase) GetByID(id primitive.ObjectID) (Domain, int, error) {
-	fmt.Println(id)
 	batch, err := bu.batchRepository.GetByID(id)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, http.StatusNotFound, errors.New("batch tidak ditemukan")

@@ -15,14 +15,14 @@ type Domain struct {
 }
 
 type Query struct {
-	Skip      int64
-	Limit     int64
-	Sort      string
-	Order     int
-	FarmerID  primitive.ObjectID
-	Commodity string
-	Name      string
-	Status    string
+	Skip        int64
+	Limit       int64
+	Sort        string
+	Order       int
+	FarmerID    primitive.ObjectID
+	CommodityID primitive.ObjectID
+	Name        string
+	Status      string
 }
 
 type Repository interface {

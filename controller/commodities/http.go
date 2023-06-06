@@ -325,7 +325,7 @@ func (cc *Controller) Update(c echo.Context) error {
 		})
 	}
 
-	commodity, statusCode, err := cc.commodityUC.GetByIDAndFarmerID(commodityID, userID)
+	_, statusCode, err := cc.commodityUC.GetByIDAndFarmerID(commodityID, userID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -345,7 +345,7 @@ func (cc *Controller) Update(c echo.Context) error {
 	userDomain.ID = commodityID
 	userDomain.FarmerID = userID
 
-	_, statusCode, err = cc.commodityUC.Update(userDomain, updateImage)
+	newCommodity, statusCode, err := cc.commodityUC.Update(userDomain, updateImage)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -353,7 +353,7 @@ func (cc *Controller) Update(c echo.Context) error {
 		})
 	}
 
-	statusCode, err = cc.proposalUC.UpdateCommodityID(commodityID, commodity.ID)
+	statusCode, err = cc.proposalUC.UpdateCommodityID(commodityID, newCommodity.ID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

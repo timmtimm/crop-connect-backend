@@ -31,7 +31,7 @@ type Query struct {
 	Order     int
 	FarmerID  primitive.ObjectID
 	Commodity string
-	Batch     string
+	BatchID   primitive.ObjectID
 	Number    int
 	Status    string
 }
@@ -40,7 +40,7 @@ type Repository interface {
 	// Create
 	Create(domain *Domain) (Domain, error)
 	// Read
-	GetNewestByBatchID(batchID primitive.ObjectID) (Domain, error)
+	GetNewestByBatchIDAndStatus(batchID primitive.ObjectID, status string) (Domain, error)
 	CountByBatchID(batchID primitive.ObjectID) (int, error)
 	GetByID(id primitive.ObjectID) (Domain, error)
 	GetByBatchID(batchID primitive.ObjectID) ([]Domain, error)
