@@ -33,12 +33,24 @@ type Harvest struct {
 }
 
 func FromDomain(domain *harvests.Domain, batchUC batchs.UseCase, transactionUC transactions.UseCase, proposalUC proposals.UseCase, commodityUC commodities.UseCase, userUC users.UseCase, regionUC regions.UseCase) (Harvest, int, error) {
-	harvestResponse := Harvest{}
+	harvestResponse := Harvest{
+		ID:           domain.ID.Hex(),
+		Date:         domain.Date,
+		Status:       domain.Status,
+		TotalHarvest: domain.TotalHarvest,
+		Condition:    domain.Condition,
+		Harvest:      domain.Harvest,
+		RevisionNote: domain.RevisionNote,
+		CreatedAt:    domain.CreatedAt,
+		UpdatedAt:    domain.UpdatedAt,
+	}
 
 	batch, statusCode, err := batchUC.GetByID(domain.BatchID)
 	if err != nil {
 		return Harvest{}, statusCode, err
 	}
+
+	harvestResponse.Batch = batchResponse.FromDomainWithoutProposal(&batch)
 
 	proposal, statusCode, err := proposalUC.GetByID(batch.ProposalID)
 	if err != nil {
@@ -49,6 +61,8 @@ func FromDomain(domain *harvests.Domain, batchUC batchs.UseCase, transactionUC t
 	if err != nil {
 		return Harvest{}, statusCode, err
 	}
+
+	harvestResponse.Proposal = proposalResponse
 
 	if domain.AccepterID != primitive.NilObjectID {
 		accepter, statusCode, err := userUC.GetByID(domain.AccepterID)
@@ -62,20 +76,6 @@ func FromDomain(domain *harvests.Domain, batchUC batchs.UseCase, transactionUC t
 		}
 
 		harvestResponse.Accepter = accepterResponse
-	}
-
-	harvestResponse = Harvest{
-		ID:           domain.ID.Hex(),
-		Proposal:     proposalResponse,
-		Batch:        batchResponse.FromDomainWithoutProposal(&batch),
-		Date:         domain.Date,
-		Status:       domain.Status,
-		TotalHarvest: domain.TotalHarvest,
-		Condition:    domain.Condition,
-		Harvest:      domain.Harvest,
-		RevisionNote: domain.RevisionNote,
-		CreatedAt:    domain.CreatedAt,
-		UpdatedAt:    domain.UpdatedAt,
 	}
 
 	return harvestResponse, http.StatusOK, nil

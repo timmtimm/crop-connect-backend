@@ -29,7 +29,7 @@ type SubmitHarvest struct {
 func (req *SubmitHarvest) ToDomain() (*harvests.Domain, error) {
 	date, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
-		return &harvests.Domain{}, errors.New("startDate harus berupa tanggal")
+		return &harvests.Domain{}, errors.New("date harus berupa tanggal")
 	}
 
 	totalHarvest, err := strconv.ParseFloat(req.TotalHarvest, 64)

@@ -204,8 +204,8 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 	}
 
 	if domain.Status == constant.HarvestStatusApproved {
-		domain.AccepterID = validatorID
-		domain.RevisionNote = ""
+		harvest.AccepterID = validatorID
+		harvest.RevisionNote = ""
 
 		batch, err := hu.batchRepository.GetByID(harvest.BatchID)
 		if err == mongo.ErrNoDocuments {
@@ -249,6 +249,11 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 	harvest.Status = domain.Status
 	harvest.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
+	_, err = hu.harvestRepository.Update(&harvest)
+	if err != nil {
+		return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui hasil panen")
+	}
+
 	return *domain, http.StatusOK, nil
 }
 
@@ -287,19 +292,15 @@ func (hu *HarvestUseCase) UpdateHarvest(domain *Domain, farmerID primitive.Objec
 			return Domain{}, http.StatusInternalServerError, errors.New("gagal mengupdate gambar")
 		}
 
+		tempImageAndNotes := []dto.ImageAndNote{}
 		for i := 0; i < len(newImageURLs); i++ {
-			if len(newImageURLs) == i {
-				harvest.Harvest = append(harvest.Harvest, dto.ImageAndNote{
-					ImageURL: newImageURLs[i],
-					Note:     notes[i],
-				})
-			} else {
-				harvest.Harvest[i] = dto.ImageAndNote{
-					ImageURL: newImageURLs[i],
-					Note:     notes[i],
-				}
-			}
+			tempImageAndNotes = append(tempImageAndNotes, dto.ImageAndNote{
+				ImageURL: newImageURLs[i],
+				Note:     notes[i],
+			})
 		}
+
+		harvest.Harvest = tempImageAndNotes
 	} else {
 		return Domain{}, http.StatusBadRequest, errors.New("gambar dan catatan tidak boleh kosong")
 	}
