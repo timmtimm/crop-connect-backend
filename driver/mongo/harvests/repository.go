@@ -21,6 +21,35 @@ func NewRepository(db *mongo.Database) harvests.Repository {
 	}
 }
 
+var (
+	lookupBatch = bson.M{
+		"$lookup": bson.M{
+			"from":         "batchs",
+			"localField":   "batchID",
+			"foreignField": "_id",
+			"as":           "batch_info",
+		},
+	}
+
+	lookupProposal = bson.M{
+		"$lookup": bson.M{
+			"from":         "proposals",
+			"localField":   "batch_info.proposalID",
+			"foreignField": "_id",
+			"as":           "proposal_info",
+		},
+	}
+
+	lookupCommodity = bson.M{
+		"$lookup": bson.M{
+			"from":         "commodities",
+			"localField":   "proposal_info.commodityID",
+			"foreignField": "_id",
+			"as":           "commodity_info",
+		},
+	}
+)
+
 /*
 Create
 */
@@ -56,14 +85,20 @@ func (hr *HarvestRepository) GetByID(id primitive.ObjectID) (harvests.Domain, er
 	return result.ToDomain(), nil
 }
 
-func (hr *HarvestRepository) GetByBatchID(batchID primitive.ObjectID) (harvests.Domain, error) {
+func (hr *HarvestRepository) GetByBatchIDAndStatus(batchID primitive.ObjectID, status string) (harvests.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	var result Model
-	err := hr.collection.FindOne(ctx, bson.M{
+	filter := bson.M{
 		"batchID": batchID,
-	}).Decode(&result)
+	}
+
+	if status != "" {
+		filter["status"] = status
+	}
+
+	var result Model
+	err := hr.collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		return harvests.Domain{}, err
 	}
@@ -85,72 +120,30 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 		})
 	}
 
-	lookupBatch := bson.M{
-		"$lookup": bson.M{
-			"from":         "batchs",
-			"localField":   "batchID",
-			"foreignField": "_id",
-			"as":           "batch_info",
-		},
-	}
-
-	lookupTransaction := bson.M{
-		"$lookup": bson.M{
-			"from":         "transactions",
-			"localField":   "batch_info.transactionID",
-			"foreignField": "_id",
-			"as":           "transaction_info",
-		},
-	}
-
-	lookupProposal := bson.M{
-		"$lookup": bson.M{
-			"from":         "proposals",
-			"localField":   "transaction_info.proposalID",
-			"foreignField": "_id",
-			"as":           "proposal_info",
-		},
-	}
-
-	lookupCommodity := bson.M{
-		"$lookup": bson.M{
-			"from":         "commodities",
-			"localField":   "proposal_info.commodityID",
-			"foreignField": "_id",
-			"as":           "commodity_info",
-		},
-	}
-
-	if query.Batch != "" {
-		pipeline = append(pipeline, lookupBatch, bson.M{
-			"$match": bson.M{
-				"batch_info.name": query.Batch,
-			},
-		})
-	}
-
-	if query.Commodity != "" && query.Batch != "" {
-		pipeline = append(pipeline, lookupTransaction, lookupProposal, lookupCommodity, bson.M{
-			"$match": bson.M{
-				"commodity_info.name": query.Commodity,
-			},
-		})
-	} else if query.Commodity != "" && query.Batch == "" {
-		pipeline = append(pipeline, lookupBatch, lookupTransaction, lookupProposal, lookupCommodity, bson.M{
-			"$match": bson.M{
-				"commodity_info.name": query.Commodity,
-			},
-		})
-	}
-
-	if query.FarmerID != primitive.NilObjectID && query.Commodity != "" {
+	if query.BatchID != primitive.NilObjectID {
 		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"batchID": query.BatchID,
+			},
+		})
+	}
+
+	if query.CommodityID != primitive.NilObjectID {
+		pipeline = append(pipeline, lookupBatch, lookupProposal, bson.M{
+			"$match": bson.M{
+				"proposal_info.commodityID": query.CommodityID,
+			},
+		})
+	}
+
+	if query.FarmerID != primitive.NilObjectID && query.CommodityID != primitive.NilObjectID {
+		pipeline = append(pipeline, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},
 		})
-	} else if query.FarmerID != primitive.NilObjectID && query.Commodity == "" {
-		pipeline = append(pipeline, lookupBatch, lookupTransaction, lookupProposal, bson.M{
+	} else if query.FarmerID != primitive.NilObjectID && query.CommodityID == primitive.NilObjectID {
+		pipeline = append(pipeline, lookupBatch, lookupBatch, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},

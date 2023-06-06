@@ -30,7 +30,7 @@ func RemoveNilStringInArray(array []string) []string {
 func ConvertArrayStringToBool(arrayString string) []bool {
 	boolArray := []bool{}
 
-	array := strings.Split(arrayString, ",")
+	array := strings.Split(strings.Trim(arrayString, "[]"), ",")
 	for _, value := range array {
 		if value == "true" {
 			boolArray = append(boolArray, true)

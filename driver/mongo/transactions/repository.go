@@ -5,8 +5,6 @@ import (
 	"crop_connect/business/transactions"
 	"crop_connect/constant"
 	"crop_connect/dto"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -211,7 +209,7 @@ func (tr *TransactionRepository) GetByQuery(query transactions.Query) ([]transac
 	return ToDomainArray(result), countResult.Total, nil
 }
 
-func (tr *TransactionRepository) GetByIDAndBuyerIDOrFarmerID(id primitive.ObjectID, buyerID primitive.ObjectID, farmerID primitive.ObjectID) (transactions.Domain, error) {
+func (tr *TransactionRepository) GetByIDAndBuyerID(id primitive.ObjectID, buyerID primitive.ObjectID) (transactions.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -221,8 +219,6 @@ func (tr *TransactionRepository) GetByIDAndBuyerIDOrFarmerID(id primitive.Object
 
 	if buyerID != primitive.NilObjectID {
 		filter["buyerID"] = buyerID
-	} else if farmerID != primitive.NilObjectID {
-		filter["farmerID"] = farmerID
 	}
 
 	var result Model
@@ -489,14 +485,14 @@ func (tr *TransactionRepository) StatisticTopCommodity(farmerID primitive.Object
 	})
 
 	// // Convert to JSON
-	jsonData, err := json.Marshal(pipeline)
-	if err != nil {
-		panic(err)
-	}
+	// jsonData, err := json.Marshal(pipeline)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	// Print JSON
-	fmt.Println("SEBELUM APPEND")
-	fmt.Println(string(jsonData))
+	// // Print JSON
+	// fmt.Println("SEBELUM APPEND")
+	// fmt.Println(string(jsonData))
 
 	cursor, err := tr.collection.Aggregate(ctx, pipeline)
 	if err != nil {

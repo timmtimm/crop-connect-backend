@@ -128,6 +128,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	harvest.PUT("/validate/:harvest-id", ctrl.HarvestController.Validate, _middleware.CheckOneRole(constant.RoleValidator))
 	harvest.GET("/statistic-total", ctrl.HarvestController.CountByYear, _middleware.CheckOneRole(constant.RoleAdmin))
 	harvest.PUT("/:harvest-id", ctrl.HarvestController.Update, _middleware.CheckOneRole(constant.RoleFarmer))
+	harvest.GET("/:harvest-id", ctrl.HarvestController.GetByID, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
 
 	region := apiV1.Group("/region")
 	region.GET("/province", ctrl.RegionController.GetByCountry)

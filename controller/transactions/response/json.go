@@ -13,6 +13,7 @@ import (
 	batchResponse "crop_connect/controller/batchs/response"
 	commodityResponse "crop_connect/controller/commodities/response"
 	proposalResponse "crop_connect/controller/proposals/response"
+	regionResponse "crop_connect/controller/regions/response"
 	userResponse "crop_connect/controller/users/response"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -20,6 +21,7 @@ import (
 
 type Buyer struct {
 	ID              primitive.ObjectID                 `json:"_id"`
+	Region          regionResponse.Response            `json:"region"`
 	Commodity       commodityResponse.Commodity        `json:"commodity"`
 	Proposal        proposalResponse.Buyer             `json:"proposal"`
 	Batch           batchResponse.BatchWithoutProposal `json:"batch"`
@@ -51,8 +53,14 @@ func FromDomainToBuyer(domain *transactions.Domain, batchUC batchs.UseCase, prop
 		return Buyer{}, statusCode, err
 	}
 
+	region, statusCode, err := regionUC.GetByID(domain.RegionID)
+	if err != nil {
+		return Buyer{}, statusCode, err
+	}
+
 	return Buyer{
 		ID:              domain.ID,
+		Region:          regionResponse.FromDomain(&region),
 		Commodity:       commodity,
 		Proposal:        proposalResponse.FromDomainToBuyer(&proposal),
 		Batch:           batchResponse.FromDomainWithoutProposal(&batch),
@@ -80,6 +88,7 @@ func FromDomainArrayToBuyer(domain []transactions.Domain, batchUC batchs.UseCase
 
 type All struct {
 	ID              primitive.ObjectID          `json:"_id"`
+	Region          regionResponse.Response     `json:"region"`
 	Buyer           userResponse.User           `json:"buyer"`
 	Commodity       commodityResponse.Commodity `json:"commodity"`
 	Proposal        proposalResponse.Buyer      `json:"proposal"`
@@ -122,8 +131,14 @@ func FromDomainToFarmer(domain *transactions.Domain, batchUC batchs.UseCase, pro
 		return All{}, statusCode, err
 	}
 
+	region, statusCode, err := regionUC.GetByID(domain.RegionID)
+	if err != nil {
+		return All{}, statusCode, err
+	}
+
 	return All{
 		ID:              domain.ID,
+		Region:          regionResponse.FromDomain(&region),
 		Buyer:           buyerResponse,
 		Commodity:       commodity,
 		Proposal:        proposalResponse.FromDomainToBuyer(&proposal),
@@ -229,6 +244,7 @@ func FromDomainToTransactionStatisticForCommodityPage(totalTransaction int, tota
 
 type TransactionAnnuals struct {
 	ID              primitive.ObjectID                 `json:"_id"`
+	Region          regionResponse.Response            `json:"region"`
 	Buyer           userResponse.User                  `json:"buyer"`
 	Commodity       commodityResponse.Commodity        `json:"commodity"`
 	Proposal        proposalResponse.Buyer             `json:"proposal"`
@@ -251,8 +267,14 @@ func ConvertToTransactionResponse(domain *transactions.Domain, batchUC batchs.Us
 		return TransactionAnnuals{}, statusCode, err
 	}
 
+	region, statusCode, err := regionUC.GetByID(domain.RegionID)
+	if err != nil {
+		return TransactionAnnuals{}, statusCode, err
+	}
+
 	response := TransactionAnnuals{
 		ID:              domain.ID,
+		Region:          regionResponse.FromDomain(&region),
 		Buyer:           buyerResponse,
 		Address:         domain.Address,
 		TransactionType: domain.TransactionType,
