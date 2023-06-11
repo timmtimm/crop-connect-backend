@@ -11,7 +11,8 @@ import (
 )
 
 type Generate struct {
-	Email string `form:"email" json:"email" validate:"required,email"`
+	Domain string `form:"domain" json:"domain" validate:"required"`
+	Email  string `form:"email" json:"email" validate:"required,email"`
 }
 
 func (req *Generate) ToDomain() *forgotPassword.Domain {

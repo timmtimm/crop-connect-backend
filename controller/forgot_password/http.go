@@ -35,7 +35,7 @@ func (fpc *Controller) Generate(c echo.Context) error {
 		})
 	}
 
-	statusCode, _ := fpc.forgotPasswordUC.Generate(userInput.Email)
+	statusCode, _ := fpc.forgotPasswordUC.Generate(userInput.Domain, userInput.Email)
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "jika email terdaftar, maka akan dikirimkan link untuk mereset password",
