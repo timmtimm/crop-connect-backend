@@ -181,15 +181,53 @@ func (cc *Controller) GetByID(c echo.Context) error {
 }
 
 func (cc *Controller) GetForFarmer(c echo.Context) error {
-	userID, err := helper.GetUIDFromToken(c)
+	queryPagination, err := helper.PaginationToQuery(c, []string{"name", "plantingPeriod", "pricePerKg", "isAvailable", "createdAt"})
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
-			Status:  http.StatusUnauthorized,
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
 			Message: err.Error(),
 		})
 	}
 
-	commodities, statusCode, err := cc.commodityUC.GetByFarmerID(userID)
+	queryParam, err := request.QueryParamValidation(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	queryRegion, err := request.QueryValidationForRegion(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: err.Error(),
+		})
+	}
+
+	farmerID, err := helper.GetUIDFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusForbidden, helper.BaseResponse{
+			Status:  http.StatusForbidden,
+			Message: err.Error(),
+		})
+	}
+
+	commodities, totalData, statusCode, err := cc.commodityUC.GetByPaginationAndQuery(commodities.Query{
+		Skip:     queryPagination.Skip,
+		Limit:    queryPagination.Limit,
+		Sort:     queryPagination.Sort,
+		Order:    queryPagination.Order,
+		Name:     queryParam.Name,
+		Farmer:   queryParam.Farmer,
+		FarmerID: farmerID,
+		MinPrice: queryParam.MinPrice,
+		MaxPrice: queryParam.MaxPrice,
+		Province: queryRegion.Province,
+		Regency:  queryRegion.Regency,
+		District: queryRegion.District,
+		RegionID: queryRegion.RegionID,
+	})
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,
@@ -206,9 +244,10 @@ func (cc *Controller) GetForFarmer(c echo.Context) error {
 	}
 
 	return c.JSON(statusCode, helper.BaseResponse{
-		Status:  statusCode,
-		Message: "berhasil mendapatkan komoditas",
-		Data:    commodityResponse,
+		Status:     statusCode,
+		Message:    "berhasil mendapatkan komoditas",
+		Data:       commodityResponse,
+		Pagination: helper.ConvertToPaginationResponse(queryPagination, totalData),
 	})
 }
 

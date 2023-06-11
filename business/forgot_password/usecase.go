@@ -33,7 +33,7 @@ var errorResponse = errors.New("token tidak dapat digunakan")
 Create
 */
 
-func (fpu *ForgotPasswordUseCase) Generate(email string) (int, error) {
+func (fpu *ForgotPasswordUseCase) Generate(appDomain string, email string) (int, error) {
 	_, err := fpu.userRepository.GetByEmail(email)
 	if err != nil {
 		return http.StatusCreated, errors.New("email tidak terdaftar")
@@ -53,7 +53,8 @@ func (fpu *ForgotPasswordUseCase) Generate(email string) (int, error) {
 	}
 
 	_, _, err = fpu.mailgun.SendOneMailUsingTemplate("Lupa password Crop Connect?", constant.MailgunForgotPasswordTemplate, domain.Email, "", map[string]string{
-		"token": domain.Token,
+		"domain": appDomain,
+		"token":  domain.Token,
 	})
 	if err != nil {
 		if err := fpu.forgotPasswordRepository.HardDelete(domain.ID); err != nil {
