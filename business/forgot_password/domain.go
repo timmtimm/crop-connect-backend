@@ -25,7 +25,7 @@ type Repository interface {
 
 type UseCase interface {
 	// Create
-	Generate(email string) (int, error)
+	Generate(appDomain string, email string) (int, error)
 	// Read
 	ValidateToken(token string) (int, error)
 	// Update
