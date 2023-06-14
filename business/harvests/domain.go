@@ -29,7 +29,9 @@ type Query struct {
 	Order       int
 	FarmerID    primitive.ObjectID
 	CommodityID primitive.ObjectID
+	Commodity   string
 	BatchID     primitive.ObjectID
+	Batch       string
 	Status      string
 }
 

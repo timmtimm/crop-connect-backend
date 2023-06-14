@@ -110,6 +110,12 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
+	var (
+		checkLookupBatch     = false
+		checkLookupProposal  = false
+		checkLookupCommodity = false
+	)
+
 	pipeline := []interface{}{}
 
 	if query.Status != "" {
@@ -126,6 +132,15 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 				"batchID": query.BatchID,
 			},
 		})
+	} else if query.Batch != "" {
+		pipeline = append(pipeline, lookupBatch, bson.M{
+			"$match": bson.M{
+				"batch_info.name": bson.M{
+					"$regex":   query.Batch,
+					"$options": "i",
+				},
+			},
+		})
 	}
 
 	if query.CommodityID != primitive.NilObjectID {
@@ -134,16 +149,41 @@ func (hr *HarvestRepository) GetByQuery(query harvests.Query) ([]harvests.Domain
 				"proposal_info.commodityID": query.CommodityID,
 			},
 		})
-	}
 
-	if query.FarmerID != primitive.NilObjectID && query.CommodityID != primitive.NilObjectID {
-		pipeline = append(pipeline, lookupCommodity, bson.M{
+		checkLookupBatch = true
+		checkLookupProposal = true
+	} else if query.Commodity != "" {
+		pipeline = append(pipeline, lookupBatch, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
-				"commodity_info.farmerID": query.FarmerID,
+				"commodity_info.name": bson.M{
+					"$regex":   query.Commodity,
+					"$options": "i",
+				},
 			},
 		})
-	} else if query.FarmerID != primitive.NilObjectID && query.CommodityID == primitive.NilObjectID {
-		pipeline = append(pipeline, lookupBatch, lookupBatch, lookupProposal, lookupCommodity, bson.M{
+
+		checkLookupBatch = true
+		checkLookupProposal = true
+		checkLookupCommodity = true
+	}
+
+	if query.FarmerID != primitive.NilObjectID {
+		if !checkLookupBatch {
+			pipeline = append(pipeline, lookupBatch)
+			checkLookupBatch = true
+		}
+
+		if !checkLookupProposal {
+			pipeline = append(pipeline, lookupProposal)
+			checkLookupProposal = true
+		}
+
+		if !checkLookupCommodity {
+			pipeline = append(pipeline, lookupCommodity)
+			checkLookupCommodity = true
+		}
+
+		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},

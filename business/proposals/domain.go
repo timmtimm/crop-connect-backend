@@ -31,6 +31,7 @@ type Query struct {
 	Sort        string
 	Order       int
 	CommodityID primitive.ObjectID
+	Commodity   string
 	FarmerID    primitive.ObjectID
 	Name        string
 	Status      string

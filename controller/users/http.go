@@ -301,6 +301,38 @@ func (uc *Controller) GetByPaginationAndQueryForAdmin(c echo.Context) error {
 	})
 }
 
+func (uc *Controller) GetByIDForAdmin(c echo.Context) error {
+	userID, err := primitive.ObjectIDFromHex(c.Param("user-id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
+			Status:  http.StatusBadRequest,
+			Message: "id user tidak valid",
+		})
+	}
+
+	user, statusCode, err := uc.userUC.GetByID(userID)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	userResponse, statusCode, err := response.FromDomain(user, uc.regionUC)
+	if err != nil {
+		return c.JSON(statusCode, helper.BaseResponse{
+			Status:  statusCode,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(statusCode, helper.BaseResponse{
+		Status:  statusCode,
+		Message: "berhasil mendapatkan data user",
+		Data:    userResponse,
+	})
+}
+
 func (uc *Controller) StatisticNewUserByYear(c echo.Context) error {
 	year, err := request.QueryParamValidationYear(c)
 	if err != nil {

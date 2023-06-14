@@ -51,6 +51,8 @@ type Query struct {
 	Sort      string
 	Order     int
 	Commodity string
+	Proposal  string
+	Batch     string
 	FarmerID  primitive.ObjectID
 	BuyerID   primitive.ObjectID
 	Status    string

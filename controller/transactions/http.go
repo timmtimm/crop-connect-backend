@@ -119,6 +119,8 @@ func (tc *Controller) GetUserTransactionWithPagination(c echo.Context) error {
 		Sort:      queryPagination.Sort,
 		Order:     queryPagination.Order,
 		Commodity: queryParam.Commodity,
+		Proposal:  queryParam.Proposal,
+		Batch:     queryParam.Batch,
 		Status:    queryParam.Status,
 		StartDate: queryParam.StartDate,
 		EndDate:   queryParam.EndDate,

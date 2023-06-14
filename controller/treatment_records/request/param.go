@@ -13,8 +13,11 @@ import (
 )
 
 type FilterQuery struct {
+	Farmer    string
+	FarmerID  primitive.ObjectID
 	Commodity string
 	BatchID   primitive.ObjectID
+	Batch     string
 	Number    int
 	Status    string
 }
@@ -23,6 +26,8 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 	filter := FilterQuery{
 		Commodity: c.QueryParam("commodity"),
 		Status:    c.QueryParam("status"),
+		Farmer:    c.QueryParam("farmer"),
+		Batch:     c.QueryParam("batch"),
 	}
 
 	var err error
@@ -37,6 +42,13 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 		filter.BatchID, err = primitive.ObjectIDFromHex(batch)
 		if err != nil {
 			return FilterQuery{}, errors.New("batchID harus berupa hex")
+		}
+	}
+
+	if farmer := c.QueryParam("farmerID"); farmer != "" {
+		filter.BatchID, err = primitive.ObjectIDFromHex(farmer)
+		if err != nil {
+			return FilterQuery{}, errors.New("farmerID harus berupa hex")
 		}
 	}
 

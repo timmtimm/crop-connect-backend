@@ -141,7 +141,9 @@ func (hc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		Sort:        queryPagination.Sort,
 		Order:       queryPagination.Order,
 		CommodityID: queryParam.CommodityID,
+		Commodity:   queryParam.Commodity,
 		BatchID:     queryParam.BatchID,
+		Batch:       queryParam.Batch,
 		Status:      queryParam.Status,
 	}
 
