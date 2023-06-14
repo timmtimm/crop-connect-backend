@@ -5,6 +5,7 @@ import (
 	"crop_connect/business/proposals"
 	"crop_connect/business/regions"
 	"crop_connect/business/users"
+	"crop_connect/constant"
 	"crop_connect/controller/commodities/request"
 	"crop_connect/controller/commodities/response"
 	"crop_connect/helper"
@@ -205,12 +206,23 @@ func (cc *Controller) GetForFarmer(c echo.Context) error {
 		})
 	}
 
-	farmerID, err := helper.GetUIDFromToken(c)
+	token, err := helper.GetPayloadFromToken(c)
 	if err != nil {
-		return c.JSON(http.StatusForbidden, helper.BaseResponse{
-			Status:  http.StatusForbidden,
+		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+			Status:  http.StatusUnauthorized,
 			Message: err.Error(),
 		})
+	}
+
+	farmerID := queryParam.FarmerID
+	if token.Role == constant.RoleFarmer {
+		farmerID, err = primitive.ObjectIDFromHex(token.UID)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
+				Status:  http.StatusUnauthorized,
+				Message: "token tidak valid",
+			})
+		}
 	}
 
 	commodities, totalData, statusCode, err := cc.commodityUC.GetByPaginationAndQuery(commodities.Query{

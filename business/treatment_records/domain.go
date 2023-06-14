@@ -29,9 +29,11 @@ type Query struct {
 	Limit     int64
 	Sort      string
 	Order     int
+	Farmer    string
 	FarmerID  primitive.ObjectID
 	Commodity string
 	BatchID   primitive.ObjectID
+	Batch     string
 	Number    int
 	Status    string
 }

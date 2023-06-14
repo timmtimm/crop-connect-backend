@@ -53,6 +53,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	user.GET("/profile", ctrl.UserController.GetProfile, _middleware.Authenticated())
 	user.PUT("/profile", ctrl.UserController.UpdateProfile, _middleware.Authenticated())
 	user.GET("", ctrl.UserController.GetByPaginationAndQueryForAdmin, _middleware.CheckOneRole(constant.RoleAdmin))
+	user.GET("/:user-id", ctrl.UserController.GetByIDForAdmin, _middleware.CheckOneRole(constant.RoleAdmin))
 	user.GET("/farmer", ctrl.UserController.GetFarmerByPaginationAndQueryForBuyer)
 	user.GET("/farmer/:farmer-id", ctrl.UserController.GetFarmerByIDForBuyer)
 	user.PUT("/change-password", ctrl.UserController.UpdatePassword, _middleware.Authenticated())

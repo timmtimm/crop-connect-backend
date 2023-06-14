@@ -14,13 +14,17 @@ import (
 
 type FilterQuery struct {
 	CommodityID primitive.ObjectID
+	Commodity   string
 	BatchID     primitive.ObjectID
+	Batch       string
 	Status      string
 }
 
 func QueryParamValidation(c echo.Context) (FilterQuery, error) {
 	filter := FilterQuery{
-		Status: c.QueryParam("status"),
+		Status:    c.QueryParam("status"),
+		Commodity: c.QueryParam("commodity"),
+		Batch:     c.QueryParam("batch"),
 	}
 
 	var err error

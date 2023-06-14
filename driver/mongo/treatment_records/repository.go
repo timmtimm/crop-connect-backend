@@ -49,6 +49,15 @@ var (
 			"as":           "commodity_info",
 		},
 	}
+
+	lookupFarmer = bson.M{
+		"$lookup": bson.M{
+			"from":         "users",
+			"localField":   "commodity_info.farmerID",
+			"foreignField": "_id",
+			"as":           "farmer_info",
+		},
+	}
 )
 
 /*
@@ -146,6 +155,13 @@ func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
+	var (
+		checkLookupBatch     = false
+		checkLookupProposal  = false
+		checkLookupCommodity = false
+		checkLookupFarmer    = false
+	)
+
 	pipeline := []interface{}{}
 
 	if query.Status != "" {
@@ -170,10 +186,26 @@ func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([
 				"batchID": query.BatchID,
 			},
 		})
+	} else if query.Batch != "" {
+		pipeline = append(pipeline, lookupBatch, bson.M{
+			"$match": bson.M{
+				"batch_info.name": bson.M{
+					"$regex":   query.Batch,
+					"$options": "i",
+				},
+			},
+		})
+
+		checkLookupBatch = true
 	}
 
 	if query.Commodity != "" {
-		pipeline = append(pipeline, lookupBatch, lookupProposal, lookupCommodity, bson.M{
+		if !checkLookupBatch {
+			pipeline = append(pipeline, lookupBatch)
+			checkLookupBatch = true
+		}
+
+		pipeline = append(pipeline, lookupProposal, lookupCommodity, bson.M{
 			"$match": bson.M{
 				"commodity_info.name": bson.M{
 					"$regex":   query.Commodity,
@@ -181,22 +213,62 @@ func (trr *TreatmentRecordRepository) GetByQuery(query treatmentRecord.Query) ([
 				},
 			},
 		})
+
+		checkLookupBatch = true
+		checkLookupProposal = true
+		checkLookupCommodity = true
 	}
 
-	if query.FarmerID != primitive.NilObjectID && query.Commodity == "" {
-		pipeline = append(pipeline, lookupBatch, lookupProposal, lookupCommodity, bson.M{
+	if query.FarmerID != primitive.NilObjectID {
+		if !checkLookupBatch {
+			pipeline = append(pipeline, lookupBatch)
+			checkLookupBatch = true
+		}
+
+		if !checkLookupProposal {
+			pipeline = append(pipeline, lookupProposal)
+			checkLookupProposal = true
+		}
+
+		if !checkLookupCommodity {
+			pipeline = append(pipeline, lookupCommodity)
+			checkLookupCommodity = true
+		}
+
+		pipeline = append(pipeline, bson.M{
 			"$match": bson.M{
 				"commodity_info.farmerID": query.FarmerID,
 			},
 		})
-	} else if query.FarmerID != primitive.NilObjectID && query.Commodity != "" {
-		match := bson.M{
-			"$match": bson.M{
-				"commodity_info.farmerID": query.FarmerID,
-			},
+	} else if query.Farmer != "" {
+		if !checkLookupBatch {
+			pipeline = append(pipeline, lookupBatch)
+			checkLookupBatch = true
 		}
 
-		pipeline = append(pipeline, match)
+		if !checkLookupProposal {
+			pipeline = append(pipeline, lookupProposal)
+			checkLookupProposal = true
+		}
+
+		if !checkLookupCommodity {
+			pipeline = append(pipeline, lookupCommodity)
+			checkLookupCommodity = true
+		}
+
+		if !checkLookupFarmer {
+			pipeline = append(pipeline, lookupFarmer)
+			checkLookupFarmer = true
+		}
+
+		pipeline = append(pipeline, bson.M{
+			"$match": bson.M{
+				"farmer_info.name": bson.M{
+					"$regex":   query.Farmer,
+					"$options": "i",
+				},
+			},
+		})
 	}
 
 	paginationSkip := bson.M{

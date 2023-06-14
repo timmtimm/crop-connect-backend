@@ -248,6 +248,15 @@ func (pr *ProposalRepository) GetByQuery(query proposals.Query) ([]proposals.Dom
 				"commodityID": query.CommodityID,
 			},
 		})
+	} else if query.Commodity != "" {
+		pipeline = append(pipeline, lookupCommodity, bson.M{
+			"$match": bson.M{
+				"commodity_info.name": bson.M{
+					"$regex":   query.Commodity,
+					"$options": "i",
+				},
+			},
+		})
 	}
 
 	if query.FarmerID != primitive.NilObjectID {
