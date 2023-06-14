@@ -11,6 +11,8 @@ import (
 
 type FilterQuery struct {
 	Commodity string
+	Proposal  string
+	Batch     string
 	FarmerID  primitive.ObjectID
 	BuyerID   primitive.ObjectID
 	Status    string
@@ -22,6 +24,8 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 	filter := FilterQuery{
 		Commodity: c.QueryParam("commodity"),
 		Status:    c.QueryParam("status"),
+		Proposal:  c.QueryParam("proposal"),
+		Batch:     c.QueryParam("batch"),
 	}
 
 	if startDate := c.QueryParam("startDate"); startDate != "" {

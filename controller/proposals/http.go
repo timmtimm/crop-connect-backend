@@ -269,6 +269,7 @@ func (pc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		Order:       queryPagination.Order,
 		FarmerID:    farmerID,
 		CommodityID: queryparam.CommodityID,
+		Commodity:   queryparam.Commodity,
 		Name:        queryparam.Name,
 		Status:      queryparam.Status,
 	}

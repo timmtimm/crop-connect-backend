@@ -13,6 +13,7 @@ import (
 
 type FilterQuery struct {
 	CommodityID primitive.ObjectID
+	Commodity   string
 	FarmerID    primitive.ObjectID
 	Name        string
 	Status      string
@@ -20,7 +21,8 @@ type FilterQuery struct {
 
 func QueryParamValidation(c echo.Context) (FilterQuery, error) {
 	filter := FilterQuery{
-		Name: c.QueryParam("name"),
+		Name:      c.QueryParam("name"),
+		Commodity: c.QueryParam("commodity"),
 	}
 
 	if status := c.QueryParam("status"); status != "" {
