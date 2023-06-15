@@ -40,7 +40,7 @@ func FromDomain(domain treatmentRecord.Domain, batchUC batchs.UseCase, transacti
 		return nil, statusCode, err
 	}
 
-	proposal, statusCode, err := proposalUC.GetByID(batch.ProposalID)
+	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(batch.ProposalID)
 	if err != nil {
 		return nil, statusCode, err
 	}

@@ -52,7 +52,7 @@ func FromDomain(domain *harvests.Domain, batchUC batchs.UseCase, transactionUC t
 
 	harvestResponse.Batch = batchResponse.FromDomainWithoutProposal(&batch)
 
-	proposal, statusCode, err := proposalUC.GetByID(batch.ProposalID)
+	proposal, statusCode, err := proposalUC.GetByIDWithoutDeleted(batch.ProposalID)
 	if err != nil {
 		return Harvest{}, statusCode, err
 	}
