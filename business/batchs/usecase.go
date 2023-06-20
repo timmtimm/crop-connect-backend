@@ -83,6 +83,10 @@ func (bu *BatchUseCase) Create(proposalID primitive.ObjectID, farmerID primitive
 		CreatedAt:            primitive.NewDateTimeFromTime(time.Now()),
 	}
 
+	if !commodity.IsPerennials {
+		domain.IsAvailable = false
+	}
+
 	_, err = bu.batchRepository.Create(domain)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("gagal membuat batch")
