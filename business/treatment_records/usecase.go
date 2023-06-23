@@ -59,7 +59,6 @@ func (tru *TreatmentRecordUseCase) CheckFarmerID(id primitive.ObjectID, farmerID
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
 	}
 
-	fmt.Println("test a 1")
 	commodity, err := tru.commodityRepository.GetByIDWithoutDeleted(proposal.CommodityID)
 	if err == mongo.ErrNoDocuments {
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
@@ -67,7 +66,6 @@ func (tru *TreatmentRecordUseCase) CheckFarmerID(id primitive.ObjectID, farmerID
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
 	}
 
-	fmt.Println("test a 2")
 	fmt.Println(commodity.FarmerID, farmerID)
 	if commodity.FarmerID != farmerID {
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusForbidden, errors.New("riwayat perawatan tidak ditemukan")
