@@ -13,7 +13,6 @@ import (
 	"crop_connect/controller/treatment_records/response"
 	"crop_connect/helper"
 	"crop_connect/util"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -288,7 +287,6 @@ func (trc *Controller) GetByID(c echo.Context) error {
 		}
 	}
 
-	fmt.Println("test 1")
 	treatmentRecord, statusCode, err := trc.treatmentRecordUC.GetByIDAndFarmerID(treatmentRecordID, farmerID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
@@ -297,7 +295,6 @@ func (trc *Controller) GetByID(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("test 2")
 	treatmentRecordResponse, statusCode, err := response.FromDomain(treatmentRecord, trc.batchUC, trc.transactionUC, trc.proposalUC, trc.commodityUC, trc.userUC, trc.regionUC)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
@@ -306,7 +303,6 @@ func (trc *Controller) GetByID(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("test 3")
 	return c.JSON(statusCode, helper.BaseResponse{
 		Status:  statusCode,
 		Message: "berhasil mendapatkan riwayat perawtan",
