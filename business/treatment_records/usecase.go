@@ -329,6 +329,7 @@ func (tru *TreatmentRecordUseCase) Validate(domain *Domain, validatorID primitiv
 		treatmentRecord.RevisionNote = domain.RevisionNote
 	} else {
 		treatmentRecord.AccepterID = validatorID
+		treatmentRecord.RevisionNote = ""
 	}
 
 	_, err = tru.treatmentRecordRepository.Update(&treatmentRecord)
