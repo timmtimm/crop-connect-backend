@@ -205,12 +205,22 @@ func (br *BatchRepository) GetByQuery(query batchs.Query) ([]batchs.Domain, int,
 		})
 	}
 
-	cursor, err := br.collection.Aggregate(ctx, pipeline)
+	pipelineForCount := make([]interface{}, len(pipeline))
+	copy(pipelineForCount, pipeline)
+	cursorCount, err := br.collection.Aggregate(ctx, append(pipelineForCount, bson.M{
+		"$count": "total",
+	}))
 	if err != nil {
 		return nil, 0, err
 	}
 
-	cursorCount, err := br.collection.Aggregate(ctx, append(pipeline, bson.M{"$count": "totalDocument"}))
+	cursor, err := br.collection.Aggregate(ctx, append(pipeline, bson.M{
+		"$skip": query.Skip,
+	}, bson.M{
+		"$limit": query.Limit,
+	}, bson.M{
+		"$sort": bson.M{query.Sort: query.Order},
+	}))
 	if err != nil {
 		return nil, 0, err
 	}
