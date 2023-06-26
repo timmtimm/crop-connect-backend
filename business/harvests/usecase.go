@@ -96,7 +96,6 @@ func (hu *HarvestUseCase) SubmitHarvest(domain *Domain, farmerID primitive.Objec
 		var imageURLs []string
 
 		if len(images) > 0 && len(notes) > 0 {
-
 			imageURLs, err = hu.cloudinary.UploadManyWithGeneratedFilename(constant.CloudinaryFolderHarvests, images)
 			if err != nil {
 				return Domain{}, http.StatusInternalServerError, errors.New("gagal mengunggah gambar")
