@@ -173,6 +173,7 @@ func (cu *CommodityUseCase) Update(domain *Domain, updateImage []*helper.UpdateI
 
 	domain.ID = primitive.NewObjectID()
 	domain.Code = commodity.Code
+	domain.IsPerennials = commodity.IsPerennials
 	domain.CreatedAt = commodity.CreatedAt
 	domain.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
