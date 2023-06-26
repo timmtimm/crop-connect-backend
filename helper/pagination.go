@@ -3,6 +3,7 @@ package helper
 import (
 	"crop_connect/util"
 	"errors"
+	"math"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -88,6 +89,6 @@ func ConvertToPaginationResponse(query QueryPagination, totalData int) Page {
 		Size:        int(query.Limit),
 		TotalData:   totalData,
 		CurrentPage: int(query.Skip/query.Limit) + 1,
-		TotalPage:   int(totalData/int(query.Limit)) + 1,
+		TotalPage:   int(math.Ceil(float64(totalData) / float64(query.Limit))),
 	}
 }
