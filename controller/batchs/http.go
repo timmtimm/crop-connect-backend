@@ -106,6 +106,7 @@ func (bc *Controller) GetByPaginationAndQuery(c echo.Context) error {
 		Limit:       queryPagination.Limit,
 		Sort:        queryPagination.Sort,
 		Order:       queryPagination.Order,
+		FarmerID:    queryParam.FarmerID,
 		CommodityID: queryParam.CommodityID,
 		Name:        queryParam.Name,
 		Status:      queryParam.Status,
