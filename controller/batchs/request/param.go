@@ -13,6 +13,7 @@ import (
 )
 
 type FilterQuery struct {
+	FarmerID    primitive.ObjectID
 	CommodityID primitive.ObjectID
 	Name        string
 	Status      string
@@ -22,6 +23,15 @@ func QueryParamValidationForBuyer(c echo.Context) (FilterQuery, error) {
 	filter := FilterQuery{
 		Name:   c.QueryParam("name"),
 		Status: c.QueryParam("status"),
+	}
+
+	if farmerID := c.QueryParam("farmerID"); farmerID != "" {
+		farmerID, err := primitive.ObjectIDFromHex(farmerID)
+		if err != nil {
+			return FilterQuery{}, errors.New("farmerID harus berupa hex")
+		}
+
+		filter.FarmerID = farmerID
 	}
 
 	if filter.Status != "" {
