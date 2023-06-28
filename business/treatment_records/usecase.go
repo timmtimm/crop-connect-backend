@@ -208,7 +208,7 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 		return Domain{}, statusCode, err
 	}
 
-	if treatmentRecord.Date > primitive.NewDateTimeFromTime(time.Now()) {
+	if treatmentRecord.Date > primitive.NewDateTimeFromTime(time.Now().Add(7*time.Hour)) {
 		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan belum bisa diisi")
 	}
 
