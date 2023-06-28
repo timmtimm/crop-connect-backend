@@ -141,14 +141,14 @@ func (bu *BatchUseCase) CountByYear(year int) (int, int, error) {
 }
 
 func (bc *BatchUseCase) GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error) {
-	_, err := bc.commodityRepository.GetByID(commodityID)
+	commodity, err := bc.commodityRepository.GetByID(commodityID)
 	if err == mongo.ErrNoDocuments {
 		return []Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	} else if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
 	}
 
-	batchs, err := bc.batchRepository.GetForTransactionByCommodityID(commodityID)
+	batchs, err := bc.batchRepository.GetForTransactionByCommodityCode(commodity.Code)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan batch")
 	}
