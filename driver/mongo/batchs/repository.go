@@ -309,6 +309,35 @@ func (br *BatchRepository) GetForTransactionByCommodityID(commodityID primitive.
 	return ToDomainArray(result), nil
 }
 
+func (br *BatchRepository) GetForTransactionByCommodityCode(commodityCode primitive.ObjectID) ([]batchs.Domain, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	pipeline := []interface{}{
+		bson.M{
+			"$match": bson.M{
+				"isAvailable": true,
+			},
+		}, lookupProposal, lookupCommodity, bson.M{
+			"$match": bson.M{
+				"commodity_info.code": commodityCode,
+			},
+		},
+	}
+
+	cursor, err := br.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return []batchs.Domain{}, err
+	}
+
+	var result []Model
+	if err := cursor.All(ctx, &result); err != nil {
+		return []batchs.Domain{}, err
+	}
+
+	return ToDomainArray(result), nil
+}
+
 func (br *BatchRepository) GetForTransactionByID(id primitive.ObjectID) (batchs.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()

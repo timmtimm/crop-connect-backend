@@ -36,6 +36,7 @@ type Repository interface {
 	GetByQuery(query Query) ([]Domain, int, error)
 	CountByYear(year int) (int, error)
 	GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
+	GetForTransactionByCommodityCode(commodityCode primitive.ObjectID) ([]Domain, error)
 	GetForTransactionByID(id primitive.ObjectID) (Domain, error)
 	GetForHarvestByCommmodityID(commodityID primitive.ObjectID) ([]Domain, error)
 	// Update
