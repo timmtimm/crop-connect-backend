@@ -167,8 +167,8 @@ func (bc *BatchUseCase) GetForTransactionByID(id primitive.ObjectID) (Domain, in
 	return batch, http.StatusOK, nil
 }
 
-func (bc *BatchUseCase) GetForHarvestByCommmodityIDAndFarmerID(commodityID primitive.ObjectID, farmerID primitive.ObjectID) ([]Domain, int, error) {
-	commodity, err := bc.commodityRepository.GetByID(commodityID)
+func (bc *BatchUseCase) GetForHarvestByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error) {
+	commodity, err := bc.commodityRepository.GetByID(farmerID)
 	if err == mongo.ErrNoDocuments {
 		return []Domain{}, http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	} else if err != nil {
@@ -179,7 +179,7 @@ func (bc *BatchUseCase) GetForHarvestByCommmodityIDAndFarmerID(commodityID primi
 		return []Domain{}, http.StatusBadRequest, errors.New("komoditas tidak ditemukan")
 	}
 
-	batchs, err := bc.batchRepository.GetForHarvestByCommmodityID(commodityID)
+	batchs, err := bc.batchRepository.GetForHarvestByFarmerID(farmerID)
 	if err != nil {
 		return []Domain{}, http.StatusInternalServerError, err
 	}

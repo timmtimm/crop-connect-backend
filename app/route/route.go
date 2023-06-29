@@ -108,7 +108,7 @@ func (ctrl *ControllerList) Init(e *echo.Echo) {
 	batch.GET("/:batch-id", ctrl.BatchController.GetByID, _middleware.CheckManyRole([]string{constant.RoleFarmer, constant.RoleValidator}))
 	batch.GET("/transaction/commodity/:commodity-id", ctrl.BatchController.GetForTransactionByCommodityID)
 	batch.GET("/transaction/id/:batch-id", ctrl.BatchController.GetForTransactionByID)
-	batch.GET("/harvest/:commodity-id", ctrl.BatchController.GetForHarvestByCommmodityID, _middleware.CheckOneRole(constant.RoleFarmer))
+	batch.GET("/harvest", ctrl.BatchController.GetForHarvestByCommmodityID, _middleware.CheckOneRole(constant.RoleFarmer))
 	// batch.PUT("/cancel/:batch-id", ctrl.BatchController.Cancel, _middleware.CheckOneRole(constant.RoleFarmer))
 
 	treatmentRecord := apiV1.Group("/treatment-record")
