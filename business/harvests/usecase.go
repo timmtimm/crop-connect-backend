@@ -222,18 +222,16 @@ func (hu *HarvestUseCase) Validate(domain *Domain, validatorID primitive.ObjectI
 		}
 
 		proposal, err := hu.proposalRepository.GetByID(batch.ProposalID)
-		if err == mongo.ErrNoDocuments {
-			return Domain{}, http.StatusNotFound, errors.New("proposal tidak ditemukan")
-		} else if err != nil {
+		if err == nil {
+			proposal.IsAvailable = true
+			proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+			_, err = hu.proposalRepository.Update(&proposal)
+			if err != nil {
+				return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
+			}
+		} else if err != nil && err != mongo.ErrNoDocuments {
 			return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan proposal")
-		}
-
-		proposal.IsAvailable = true
-		proposal.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
-
-		_, err = hu.proposalRepository.Update(&proposal)
-		if err != nil {
-			return Domain{}, http.StatusInternalServerError, errors.New("gagal memperbarui proposal")
 		}
 	}
 
