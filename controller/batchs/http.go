@@ -301,14 +301,6 @@ func (bc *Controller) GetForTransactionByID(c echo.Context) error {
 }
 
 func (bc *Controller) GetForHarvestByCommmodityID(c echo.Context) error {
-	commodityID, err := primitive.ObjectIDFromHex(c.Param("commodity-id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, helper.BaseResponse{
-			Status:  http.StatusBadRequest,
-			Message: "id komoditas tidak valid",
-		})
-	}
-
 	farmerID, err := helper.GetUIDFromToken(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, helper.BaseResponse{
@@ -317,7 +309,7 @@ func (bc *Controller) GetForHarvestByCommmodityID(c echo.Context) error {
 		})
 	}
 
-	batch, statusCode, err := bc.batchUC.GetForHarvestByCommmodityIDAndFarmerID(commodityID, farmerID)
+	batch, statusCode, err := bc.batchUC.GetForHarvestByFarmerID(farmerID)
 	if err != nil {
 		return c.JSON(statusCode, helper.BaseResponse{
 			Status:  statusCode,

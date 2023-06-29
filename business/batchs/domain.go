@@ -38,7 +38,7 @@ type Repository interface {
 	GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]Domain, error)
 	GetForTransactionByCommodityCode(commodityCode primitive.ObjectID) ([]Domain, error)
 	GetForTransactionByID(id primitive.ObjectID) (Domain, error)
-	GetForHarvestByCommmodityID(commodityID primitive.ObjectID) ([]Domain, error)
+	GetForHarvestByFarmerID(farmerID primitive.ObjectID) ([]Domain, error)
 	// Update
 	Update(domain *Domain) (Domain, error)
 	// Delete
@@ -54,7 +54,7 @@ type UseCase interface {
 	CountByYear(year int) (int, int, error)
 	GetForTransactionByCommodityID(commodityID primitive.ObjectID) ([]Domain, int, error)
 	GetForTransactionByID(id primitive.ObjectID) (Domain, int, error)
-	GetForHarvestByCommmodityIDAndFarmerID(commodityID primitive.ObjectID, farmerID primitive.ObjectID) ([]Domain, int, error)
+	GetForHarvestByFarmerID(farmerID primitive.ObjectID) ([]Domain, int, error)
 	// Update
 	// Cancel(domain *Domain, farmerID primitive.ObjectID) (int, error)
 	// Delete

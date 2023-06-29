@@ -354,7 +354,7 @@ func (br *BatchRepository) GetForTransactionByID(id primitive.ObjectID) (batchs.
 	return result.ToDomain(), nil
 }
 
-func (br *BatchRepository) GetForHarvestByCommmodityID(commodityID primitive.ObjectID) ([]batchs.Domain, error) {
+func (br *BatchRepository) GetForHarvestByFarmerID(farmerID primitive.ObjectID) ([]batchs.Domain, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -402,7 +402,7 @@ func (br *BatchRepository) GetForHarvestByCommmodityID(commodityID primitive.Obj
 			},
 		}, bson.M{
 			"$match": bson.M{
-				"commodity_info._id": commodityID,
+				"commodity_info.farmerID": farmerID,
 			},
 		},
 	}

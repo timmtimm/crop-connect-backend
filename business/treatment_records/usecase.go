@@ -10,7 +10,6 @@ import (
 	"crop_connect/helper/cloudinary"
 	"crop_connect/util"
 	"errors"
-	"fmt"
 	"mime/multipart"
 	"net/http"
 	"time"
@@ -66,7 +65,6 @@ func (tru *TreatmentRecordUseCase) CheckFarmerID(id primitive.ObjectID, farmerID
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan komoditas")
 	}
 
-	fmt.Println(commodity.FarmerID, farmerID)
 	if commodity.FarmerID != farmerID {
 		return Domain{}, batchs.Domain{}, proposals.Domain{}, commodities.Domain{}, http.StatusForbidden, errors.New("riwayat perawatan tidak ditemukan")
 	}
@@ -208,7 +206,7 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 		return Domain{}, statusCode, err
 	}
 
-	if treatmentRecord.Date > primitive.NewDateTimeFromTime(time.Now().UTC()) {
+	if treatmentRecord.Date > primitive.NewDateTimeFromTime(time.Now().Add(7*time.Hour)) {
 		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan belum bisa diisi")
 	}
 
@@ -217,10 +215,6 @@ func (tru *TreatmentRecordUseCase) FillTreatmentRecord(domain *Domain, farmerID 
 	}
 
 	var imageURLs []string
-
-	// if len(images) != len(notes) {
-	// 	return Domain{}, http.StatusBadRequest, errors.New("jumlah gambar dan catatan tidak sama")
-	// }
 
 	if len(images) > 0 {
 		imageURLs, err = tru.cloudinary.UploadManyWithGeneratedFilename(constant.CloudinaryFolderTreatmentRecords, images)
@@ -259,7 +253,7 @@ func (tru *TreatmentRecordUseCase) UpdateTreatmentRecord(domain *Domain, farmerI
 		return Domain{}, statusCode, err
 	}
 
-	if treatmentRecord.Date > primitive.NewDateTimeFromTime(time.Now()) {
+	if treatmentRecord.Date > primitive.NewDateTimeFromTime(time.Now().Add(7*time.Hour)) {
 		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan belum bisa diisi")
 	} else if treatmentRecord.Status == constant.TreatmentRecordStatusApproved {
 		return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan sudah diterima")
