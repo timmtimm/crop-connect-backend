@@ -205,6 +205,10 @@ func (pr *ProposalRepository) CountTotalProposalByFarmer(farmerID primitive.Obje
 				},
 			},
 		}, bson.M{
+			"$match": bson.M{
+				"commodity_info.farmerID": farmerID,
+			},
+		}, bson.M{
 			"$group": bson.M{
 				"_id": nil,
 				"total": bson.M{
