@@ -99,15 +99,13 @@ func (tru *TreatmentRecordUseCase) RequestToFarmer(domain *Domain) (Domain, int,
 	if err != mongo.ErrNoDocuments {
 		if newestTreatmentRecord.Status != constant.TreatmentRecordStatusApproved {
 			return Domain{}, http.StatusBadRequest, errors.New("riwayat perawatan terakhir belum selesai")
+		} else if primitive.NewDateTimeFromTime(time.Now()) >= domain.Date {
+			return Domain{}, http.StatusBadRequest, errors.New("tanggal perawatan harus lebih besar dari tanggal hari ini")
 		} else if newestTreatmentRecord.Date >= domain.Date {
 			return Domain{}, http.StatusBadRequest, errors.New("tanggal perawatan harus lebih besar dari tanggal perawatan terakhir")
 		} else if domain.Date > batch.EstimatedHarvestDate {
 			return Domain{}, http.StatusBadRequest, errors.New("tanggal perawatan harus lebih kecil dari tanggal perkiraan panen")
 		}
-		// FOR TESTING PURPOSE
-		/* else if primitive.NewDateTimeFromTime(time.Now()) >= domain.Date {
-			return Domain{}, http.StatusBadRequest, errors.New("tanggal perawatan harus lebih besar dari tanggal hari ini")
-		} */
 	} else if err != mongo.ErrNoDocuments && err != nil {
 		return Domain{}, http.StatusInternalServerError, errors.New("gagal mendapatkan riwayat perawatan terakhir")
 	}
