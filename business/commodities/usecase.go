@@ -204,11 +204,6 @@ func (cu *CommodityUseCase) Delete(id primitive.ObjectID, farmerID primitive.Obj
 		return http.StatusNotFound, errors.New("komoditas tidak ditemukan")
 	}
 
-	err = cu.cloudinary.DeleteManyByURL(constant.CloudinaryFolderCommodities, commodity.ImageURLs)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("gagal menghapus gambar")
-	}
-
 	err = cu.commoditiesRepository.Delete(commodity.ID)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("gagal menghapus komoditas")
